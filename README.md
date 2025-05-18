@@ -43,5 +43,5 @@ By contributing you agree to follow our [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## Team Members:
 Abdullah Mansoor  abdullahmansoor608@gmail.com
-Abdullah Iftikhar BSCS23070@itu.edu.pk
+Abdullah Iftikhar ai868419@itu.edu.pk
 Abdul Moiz        contact@moizmoiz.com
