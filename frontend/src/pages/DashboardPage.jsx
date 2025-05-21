@@ -2,11 +2,14 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useAuthStore } from "../store/authStore";
 import { formatDate } from "../utils/date";
-import { BookmarkIcon, BellIcon, Search, User, MessageSquare, Briefcase, Star, Menu } from "lucide-react";
+import { BookmarkIcon, BellIcon, User, MessageSquare, Briefcase, Star, Menu } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import SearchBar from "../components/SearchBar";
 
 const DashboardPage = () => {
 	const { user, logout } = useAuthStore();
 	const [isClient, setIsClient] = useState(true); // Set based on user role, for now hardcoding as client
+	const navigate = useNavigate();
 	
 	useEffect(() => {
 		// Check user role and set client state
@@ -69,9 +72,8 @@ const DashboardPage = () => {
 						</div>
 						<div className="flex items-center">
 							<div className="flex-shrink-0 flex items-center space-x-4">
-								<button type="button" className="p-2 text-gray-500 hover:text-gray-700 focus:outline-none">
-									<Search className="h-5 w-5" />
-								</button>
+								{/* Search component */}
+								<SearchBar />
 								<button type="button" className="p-2 text-gray-500 hover:text-gray-700 focus:outline-none">
 									<BookmarkIcon className="h-5 w-5" />
 								</button>
