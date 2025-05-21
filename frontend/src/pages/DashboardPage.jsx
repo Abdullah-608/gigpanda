@@ -60,13 +60,7 @@ const DashboardPage = () => {
 									Dashboard
 								</a>
 								<a href="#" className="border-b-2 border-transparent hover:border-gray-300 text-gray-500 hover:text-gray-700 px-1 pt-5 pb-4 text-sm font-medium">
-									Projects
-								</a>
-								<a href="#" className="border-b-2 border-transparent hover:border-gray-300 text-gray-500 hover:text-gray-700 px-1 pt-5 pb-4 text-sm font-medium">
 									Messages
-								</a>
-								<a href="#" className="border-b-2 border-transparent hover:border-gray-300 text-gray-500 hover:text-gray-700 px-1 pt-5 pb-4 text-sm font-medium">
-									Find Work
 								</a>
 							</div>
 						</div>
