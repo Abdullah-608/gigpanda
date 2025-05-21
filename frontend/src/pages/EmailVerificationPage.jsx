@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuthStore } from "../store/authStore";
 import toast from "react-hot-toast";
@@ -11,6 +11,7 @@ const EmailVerificationPage = () => {
   const [isResending, setIsResending] = useState(false);
   const inputRefs = useRef([]);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const { error, isLoading, verifyEmail, resendVerificationCode } = useAuthStore();
 
@@ -54,7 +55,11 @@ const EmailVerificationPage = () => {
     const verificationCode = code.join("");
     try {
       await verifyEmail(verificationCode);
-      navigate("/");
+      
+      // Check if there's a redirect path in the location state
+      const redirectPath = location.state?.redirectAfterVerification || "/dashboard";
+      navigate(redirectPath);
+      
       toast.success("Email verified successfully");
     } catch (error) {
       console.log(error);

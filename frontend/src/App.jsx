@@ -8,6 +8,7 @@ import EmailVerificationPage from "./pages/EmailVerificationPage";
 import DashboardPage from "./pages/DashboardPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
+import ProfileSetupPage from "./pages/ProfileSetupPage"; // Import the new ProfileSetupPage
 
 import LoadingSpinner from "./components/LoadingSpinner";
 
@@ -108,6 +109,16 @@ function App() {
 						<RedirectAuthenticatedUser>
 							<ResetPasswordPage />
 						</RedirectAuthenticatedUser>
+					}
+				/>
+                
+				{/* Profile Setup Page - accessible only for authenticated users */}
+				<Route
+					path='/profile-setup'
+					element={
+						<ProtectedRoute>
+							<ProfileSetupPage />
+						</ProtectedRoute>
 					}
 				/>
                 

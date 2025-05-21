@@ -31,6 +31,19 @@ const userSchema = new mongoose.Schema({
     resetPasswordExpiresAt:Date,
     verificationToken:String,
     verificationTokenExpiresAt:Date,
+    profile: {
+        bio: String,
+        country: String,
+        pictureUrl: String,
+        languages: [String],
+        skills: [String],
+        education: [String],
+        certifications: [String],
+        companyName: String,
+        companyInfo: String,
+        companyLink: String,
+        pastProjects: [String]
+    },
 },{timestamps:true});
 
 export const User =mongoose.model('User',userSchema);

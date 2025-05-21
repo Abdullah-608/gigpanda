@@ -3,6 +3,7 @@ import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import { generateTokenAndSetCookies } from '../utils/generateTokenAndSetCookies.js';
 import { sendPasswordResetEmail, sendVerificationEmail, sendWelcomeEmail,sendResetSuccessEmail } from '../emailServices/email.js';
+import jwt from 'jsonwebtoken';
 
 /**     
  * User Signup Controller
@@ -142,6 +143,9 @@ export const verifyEmail = async(req,res)=>{
     user.verificationTokenExpiresAt=undefined
     await user.save();
 
+    // Generate new JWT token and set cookies after successful verification
+    generateTokenAndSetCookies(res, user._id);
+
     await sendWelcomeEmail(user.email,user.name);
 
     res.status(200).json({
@@ -150,13 +154,71 @@ export const verifyEmail = async(req,res)=>{
       user:{
         ...user._doc,
         password:undefined,
-
       }
     })
     
   } catch (error) {
     console.log("Error in Verifying Email",error)
     res.status(500).json({success:false,message:"Server error"})
+  }
+}
+
+export const resendVerification = async(req, res) => {
+  try {
+    // Extract token from cookies
+    const token = req.cookies.jwt;
+    
+    if (!token) {
+      return res.status(401).json({ 
+        success: false, 
+        message: "Authentication required" 
+      });
+    }
+    
+    // Verify JWT token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    
+    // Find the user
+    const user = await User.findById(decoded.userId);
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
+      });
+    }
+    
+    // If user is already verified
+    if (user.isVerified) {
+      return res.status(400).json({
+        success: false,
+        message: "Email is already verified"
+      });
+    }
+    
+    // Generate a new 6-digit verification token
+    const verificationToken = Math.floor(100000 + Math.random() * 900000).toString();
+    
+    // Update user with new verification token
+    user.verificationToken = verificationToken;
+    user.verificationTokenExpiresAt = Date.now() + 24 * 60 * 60 * 1000; // 24 hours validity
+    
+    await user.save();
+    
+    // Send new verification email
+    await sendVerificationEmail(user.email, verificationToken);
+    
+    res.status(200).json({
+      success: true,
+      message: "Verification code has been resent to your email"
+    });
+    
+  } catch (error) {
+    console.log("Error in Resending Verification Email", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while resending verification code"
+    });
   }
 }
 

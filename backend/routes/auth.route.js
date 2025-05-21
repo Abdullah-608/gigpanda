@@ -1,6 +1,6 @@
 import express from "express";
-import { Logout, Signin, Signup,verifyEmail,forgotPassword,resetPassword
-    ,checkAuth
+import { Logout, Signin, Signup, verifyEmail, forgotPassword, resetPassword,
+    checkAuth, resendVerification
 } from "../controllers/auth.controller.js";
 import { verifyToken } from "../middleware/verifyToken.js";
 
@@ -13,6 +13,7 @@ router.post("/login",Signin);
 router.post("/logout",Logout);
 
 router.post("/verify-email",verifyEmail);
+router.post("/resend-verification",resendVerification);
 router.post("/forgot-password",forgotPassword);
 router.post("/reset-password/:token",resetPassword);
 

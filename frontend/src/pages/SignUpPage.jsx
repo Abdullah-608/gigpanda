@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import { Eye, EyeOff, ArrowRight, Lock, Mail, User } from "lucide-react";
@@ -24,7 +24,12 @@ const SignUpPage = () => {
 
     try {
       await signup(email, password, name, role);
-      navigate("/verify-email");
+      navigate("/verify-email", { 
+        state: { 
+          redirectAfterVerification: "/profile-setup",
+          userName: name
+        } 
+      });
     } catch (error) {
       console.log(error);
     }
