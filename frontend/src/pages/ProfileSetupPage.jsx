@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useAuthStore } from "../store/authStore";
 import { useUserStore } from "../store/userStore";
+import { motion } from "framer-motion";
 
 // Import the components from the integrate project
 // We'll create these files next
@@ -41,6 +42,50 @@ function ProfileSetupPage() {
     
     const steps = ['Personal', 'Professional'];
     
+    // Generate floating bamboo elements for decoration
+    const generateBambooElements = () => {
+        return Array.from({ length: 8 }).map((_, i) => (
+            <motion.div
+                key={i}
+                className="absolute bg-white/10 rounded-full"
+                initial={{
+                    x: Math.random() * 100 - 50,
+                    y: Math.random() * 100 - 50,
+                    opacity: 0,
+                    scale: 0.5
+                }}
+                animate={{
+                    x: [
+                        Math.random() * 100 - 50,
+                        Math.random() * 100 - 50,
+                        Math.random() * 100 - 50,
+                        Math.random() * 100 - 50
+                    ],
+                    y: [
+                        Math.random() * 100 - 50,
+                        Math.random() * 100 - 50,
+                        Math.random() * 100 - 50,
+                        Math.random() * 100 - 50
+                    ],
+                    opacity: [0.3, 0.6, 0.4, 0.3],
+                    scale: [0.5, 0.8, 0.6, 0.5]
+                }}
+                transition={{
+                    duration: 20 + Math.random() * 10,
+                    repeat: Infinity,
+                    ease: "linear"
+                }}
+                style={{
+                    width: `${20 + Math.random() * 40}px`,
+                    height: `${80 + Math.random() * 120}px`,
+                    left: `${Math.random() * 100}%`,
+                    top: `${Math.random() * 100}%`,
+                    transformOrigin: "center"
+                }}
+            />
+        ));
+    };
+    
     const updateFormData = (data) => {
         console.log("Raw data received in updateFormData:", data);
         
@@ -75,9 +120,7 @@ function ProfileSetupPage() {
     
     const handleProfessionalSubmit = (data) => {
         console.log("Professional data received directly:", data);
-        // Store the professional data directly - no nesting
         setLatestProfessionalData(data);
-        // Update the form data - wrap it for the form structure
         updateFormData({ professional: data });
         
         // Instead of waiting for state updates, pass the data directly to complete setup
@@ -168,39 +211,117 @@ function ProfileSetupPage() {
     };
 
     return (
-        <div className="container mx-auto max-w-4xl bg-white bg-opacity-90 backdrop-blur-sm rounded-xl shadow-lg p-6 my-6">
-            <h1 className="text-2xl font-bold mb-6 text-center">Complete Your Profile</h1>
-            
-            {/* Stepper */}
-            <div className="mb-8">
-                <ProgressStepper
-                    steps={steps}
-                    activeStep={activeStep - 1}
-                    completed={completedSteps}
-                />
+        <div className="w-full max-w-[65%] md:max-w-[65rem] mx-auto flex overflow-hidden rounded-2xl shadow-xl">
+            {/* Left Panel - Decorative */}
+            <div className="hidden md:block w-1/3 bg-gradient-to-br from-green-600 to-green-800 relative">
+                <div className="absolute inset-0 overflow-hidden">
+                    {/* Bamboo pattern */}
+                    <svg width="100%" height="100%" className="absolute top-0 left-0 opacity-10">
+                        <pattern id="bamboo-pattern" width="30" height="30" patternUnits="userSpaceOnUse">
+                            <line x1="15" y1="0" x2="15" y2="30" stroke="white" strokeWidth="2" strokeDasharray="1 4" />
+                        </pattern>
+                        <rect width="100%" height="100%" fill="url(#bamboo-pattern)" />
+                    </svg>
+                    
+                    {/* Floating bamboo elements */}
+                    {generateBambooElements()}
+                    
+                    {/* Animated circles */}
+                    <motion.div
+                        className="absolute w-40 h-40 rounded-full bg-white/5"
+                        animate={{
+                            scale: [1, 1.2, 1],
+                            x: [0, 20, 0],
+                            y: [0, -20, 0]
+                        }}
+                        transition={{
+                            duration: 8,
+                            repeat: Infinity,
+                            ease: "easeInOut"
+                        }}
+                        style={{ top: '20%', left: '30%' }}
+                    />
+                    <motion.div
+                        className="absolute w-60 h-60 rounded-full bg-white/5"
+                        animate={{
+                            scale: [1, 0.8, 1],
+                            x: [0, -10, 0],
+                            y: [0, 30, 0]
+                        }}
+                        transition={{
+                            duration: 10,
+                            repeat: Infinity,
+                            ease: "easeInOut"
+                        }}
+                        style={{ bottom: '10%', right: '-20%' }}
+                    />
+                </div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="text-white p-8 text-center z-10">
+                        <motion.h2 
+                            className="text-3xl font-bold mb-4"
+                            initial={{ opacity: 0, y: -20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.6, delay: 0.2 }}
+                        >
+                            {activeStep === 1 ? "Tell Us About Yourself" : "Professional Details"}
+                        </motion.h2>
+                        <motion.p 
+                            className="opacity-80"
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.6, delay: 0.4 }}
+                        >
+                            {activeStep === 1 
+                                ? "Let's create your professional profile." 
+                                : "Share your expertise with potential clients."}
+                        </motion.p>
+                    </div>
+                </div>
             </div>
 
-            {/* Form Steps */}
-            <div className="transition-all duration-300">
-                {activeStep === 1 && (
-                    <PersonalInfoCard
-                        formData={formData.personal || {}}
-                        updateFormData={(data) => updateFormData({ personal: data })}
-                        onNext={nextStep}
-                    />
-                )}
-                
-                {activeStep === 2 && (
-                    <ProfessionalInfoCard
-                        formData={formData.professional || {}}
-                        updateFormData={handleProfessionalSubmit}
-                        onBack={prevStep}
-                        onComplete={handleCompleteSetup}
-                        isSubmitting={isSubmitting || isSubmittingProfile}
-                        userType={userType}
-                    />
-                )}
-            </div>
+            {/* Right Panel - Form */}
+            <motion.div 
+                className="w-full md:w-2/3 bg-white p-8"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.4 }}
+            >
+                <div className="max-w-3xl mx-auto">
+                    <h1 className="text-2xl font-bold mb-6 text-center">Complete Your Profile</h1>
+                    
+                    {/* Stepper */}
+                    <div className="mb-8">
+                        <ProgressStepper
+                            steps={steps}
+                            activeStep={activeStep - 1}
+                            completed={completedSteps}
+                        />
+                    </div>
+
+                    {/* Form Steps */}
+                    <div className="transition-all duration-300">
+                        {activeStep === 1 && (
+                            <PersonalInfoCard
+                                formData={formData.personal || {}}
+                                updateFormData={(data) => updateFormData({ personal: data })}
+                                onNext={nextStep}
+                            />
+                        )}
+                        
+                        {activeStep === 2 && (
+                            <ProfessionalInfoCard
+                                formData={formData.professional || {}}
+                                updateFormData={handleProfessionalSubmit}
+                                onBack={prevStep}
+                                onComplete={handleCompleteSetup}
+                                isSubmitting={isSubmitting || isSubmittingProfile}
+                                userType={userType}
+                            />
+                        )}
+                    </div>
+                </div>
+            </motion.div>
         </div>
     );
 }
