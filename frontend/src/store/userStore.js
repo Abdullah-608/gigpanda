@@ -14,8 +14,10 @@ export const useUserStore = create((set) => ({
     updateProfile: async (profileData) => {
         set({ isLoading: true, error: null });
         try {
-            console.log('Sending profile update request with data:', JSON.stringify(profileData, null, 2));
-            const response = await axios.post(`${API_URL}/profile`, profileData);
+            // Clone the data to prevent any unintended modifications
+            const dataToSend = JSON.parse(JSON.stringify(profileData));
+            console.log('Sending profile update request with data:', JSON.stringify(dataToSend, null, 2));
+            const response = await axios.post(`${API_URL}/profile`, dataToSend);
             console.log('Profile update response:', response.data);
             set({
                 profile: response.data.user.profile,

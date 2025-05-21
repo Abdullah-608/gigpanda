@@ -57,9 +57,10 @@ const ProfessionalInfoCard = ({ formData, updateFormData, onBack, onComplete, is
       certifications: certifications.filter(cert => cert.trim() !== '')
     };
 
-    console.log('Submitting professional data from ProfessionalInfoCard:', professionalData);
-    updateFormData({ professional: professionalData });
-    onComplete();
+    console.log('Professional data being submitted:', professionalData);
+    // Send the data directly, not wrapped in a professional object
+    updateFormData(professionalData);
+    // The parent component now handles completion timing
   };
   
   // Array field handlers for client

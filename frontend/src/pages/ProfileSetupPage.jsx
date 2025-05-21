@@ -43,94 +43,88 @@ function ProfileSetupPage() {
     
     const updateFormData = (data) => {
         console.log("Raw data received in updateFormData:", data);
+        
+        // Fix professional data nesting if needed
+        let professionalData = data.professional;
+        if (professionalData && professionalData.professional) {
+            professionalData = professionalData.professional;
+        }
+        
         setFormData(prevData => {
             const newData = { ...prevData };
             
             // Handle personal data
             if (data.personal) {
-                newData.personal = { ...newData.personal, ...data.personal };
+                newData.personal = { ...prevData.personal, ...data.personal };
             }
             
-            // Handle professional data
-            if (data.professional) {
-                console.log("Setting professional data:", data.professional);
-                newData.professional = data.professional;
+            // Handle professional data - fixed
+            if (professionalData) {
+                newData.professional = professionalData;
             }
             
             console.log("Updated form data:", newData);
+            // Update ref immediately
+            formDataRef.current = newData;
             return newData;
         });
     };
     
-    const nextStep = () => {
-        if (activeStep === 1) {
-            setCompletedSteps([0]);
-        }
-        setActiveStep(activeStep + 1);
+    // Store professional data directly when submitted
+    const [latestProfessionalData, setLatestProfessionalData] = useState(null);
+    
+    const handleProfessionalSubmit = (data) => {
+        console.log("Professional data received directly:", data);
+        // Store the professional data directly - no nesting
+        setLatestProfessionalData(data);
+        // Update the form data - wrap it for the form structure
+        updateFormData({ professional: data });
+        
+        // Instead of waiting for state updates, pass the data directly to complete setup
+        const timer = setTimeout(() => {
+            handleCompleteSetupWithData(data);
+        }, 100);
+        
+        return () => clearTimeout(timer);
     };
     
-    const prevStep = () => {
-        if (activeStep === 2) {
-            setCompletedSteps([]);
-        }
-        setActiveStep(activeStep - 1);
-    };
-    
-    const handleCompleteSetup = async () => {
+    // New function that takes professional data directly as a parameter
+    const handleCompleteSetupWithData = async (professionalData) => {
         setIsSubmitting(true);
         try {
-            // Use the ref to get the latest form data
-            const currentFormData = formDataRef.current;
-            console.log('Current form data before API call:', currentFormData);
+            console.log('Professional data passed directly:', professionalData);
             
             // Structure the data for the API
             const structuredData = {
                 email: user.email,
                 userType: userType,
                 personal: {
-                    name: currentFormData.personal?.name || user.name || 'Anonymous User',
-                    bio: currentFormData.personal?.bio || 'No bio provided',
-                    country: currentFormData.personal?.country || 'Not Specified',
-                    pictureUrl: currentFormData.personal?.pictureUrl || 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
-                    languages: Array.isArray(currentFormData.personal?.languages) && currentFormData.personal.languages.length > 0 ? currentFormData.personal.languages : ['English']
+                    name: formData.personal?.name || user.name || 'Anonymous User',
+                    bio: formData.personal?.bio || 'No bio provided',
+                    country: formData.personal?.country || 'Not Specified',
+                    pictureUrl: formData.personal?.pictureUrl || 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
+                    languages: Array.isArray(formData.personal?.languages) && formData.personal.languages.length > 0 ? formData.personal.languages : ['English']
                 }
             };
 
-            // Handle professional data based on user type
+            // Handle professional data based on user type - using directly passed data
             if (userType === 'freelancer') {
-                console.log('Professional data from form:', currentFormData.professional);
-                if (currentFormData.professional) {
-                    structuredData.professional = {
-                        skills: currentFormData.professional.skills || ['Not Specified'],
-                        education: currentFormData.professional.education || ['Not Specified'],
-                        certifications: currentFormData.professional.certifications || ['None']
-                    };
-                } else {
-                    structuredData.professional = {
-                        skills: ['Not Specified'],
-                        education: ['Not Specified'],
-                        certifications: ['None']
-                    };
-                }
+                console.log('Using directly passed professional data:', professionalData);
+                structuredData.professional = {
+                    skills: professionalData?.skills || ['Not Specified'],
+                    education: professionalData?.education || ['Not Specified'],
+                    certifications: professionalData?.certifications || ['None']
+                };
             } else {
-                if (currentFormData.professional) {
-                    structuredData.professional = {
-                        companyName: currentFormData.professional.companyName || 'Not Specified',
-                        companyInfo: currentFormData.professional.companyInfo || 'Not Specified',
-                        companyLink: currentFormData.professional.companyLink || 'https://example.com',
-                        pastProjects: currentFormData.professional.pastProjects || ['None']
-                    };
-                } else {
-                    structuredData.professional = {
-                        companyName: 'Not Specified',
-                        companyInfo: 'Not Specified',
-                        companyLink: 'https://example.com',
-                        pastProjects: ['None']
-                    };
-                }
+                structuredData.professional = {
+                    companyName: professionalData?.companyName || 'Not Specified',
+                    companyInfo: professionalData?.companyInfo || 'Not Specified',
+                    companyLink: professionalData?.companyLink || 'https://example.com',
+                    pastProjects: professionalData?.pastProjects || ['None']
+                };
             }
 
-            console.log('Final structured data being sent to API:', structuredData);
+            console.log('Final structured data being sent to API:', JSON.stringify(structuredData, null, 2));
 
             // Use the store to update profile
             const response = await updateProfile(structuredData);
@@ -150,6 +144,27 @@ function ProfileSetupPage() {
         } finally {
             setIsSubmitting(false);
         }
+    };
+    
+    // Keep this for backward compatibility - it should now rarely be called directly
+    const handleCompleteSetup = async () => {
+        // Use form data as fallback
+        const professionalData = formData.professional || {};
+        handleCompleteSetupWithData(professionalData);
+    };
+
+    const nextStep = () => {
+        if (activeStep === 1) {
+            setCompletedSteps([0]);
+        }
+        setActiveStep(activeStep + 1);
+    };
+    
+    const prevStep = () => {
+        if (activeStep === 2) {
+            setCompletedSteps([]);
+        }
+        setActiveStep(activeStep - 1);
     };
 
     return (
@@ -178,7 +193,7 @@ function ProfileSetupPage() {
                 {activeStep === 2 && (
                     <ProfessionalInfoCard
                         formData={formData.professional || {}}
-                        updateFormData={(data) => updateFormData({ professional: data })}
+                        updateFormData={handleProfessionalSubmit}
                         onBack={prevStep}
                         onComplete={handleCompleteSetup}
                         isSubmitting={isSubmitting || isSubmittingProfile}
