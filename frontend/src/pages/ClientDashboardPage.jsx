@@ -227,7 +227,7 @@ const ClientDashboardPage = () => {
 						>
 							<div className="flex items-center justify-between mb-6">
 								<h2 className="text-xl font-bold text-gray-800">Latest Posts</h2>
-								<div className="flex items-center space-x-2">
+								< div className="flex items-center space-x-2">
 									<button 
 										onClick={handleRefreshPosts}
 										disabled={isLoading}
