@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import FloatingShape from "./components/FloatingShape";
 
 import LandingPage from "./pages/LandingPage"; // Import the new landing page
@@ -6,6 +6,8 @@ import SignUpPage from "./pages/SignUpPage";
 import LoginPage from "./pages/LoginPage";
 import EmailVerificationPage from "./pages/EmailVerificationPage";
 import DashboardPage from "./pages/DashboardPage";
+import ClientDashboardPage from "./pages/ClientDashboardPage";
+import FreelancerDashboardPage from "./pages/FreelancerDashboardPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import ProfileSetupPage from "./pages/ProfileSetupPage"; // Import the new ProfileSetupPage
@@ -44,6 +46,7 @@ const RedirectAuthenticatedUser = ({ children }) => {
 
 function App() {
 	const { isCheckingAuth, checkAuth } = useAuthStore();
+	const location = useLocation();
 
 	useEffect(() => {
 		checkAuth();
@@ -51,6 +54,59 @@ function App() {
 
 	if (isCheckingAuth) return <LoadingSpinner />;
 
+	// Check if current route is a dashboard route
+	const isDashboardRoute = ['/dashboard', '/client-dashboard', '/freelancer-dashboard', '/profile-setup'].includes(location.pathname);
+
+	// For dashboard routes, render without background
+	if (isDashboardRoute) {
+		return (
+			<div className="min-h-screen">
+				<Routes>
+					<Route
+						path='/dashboard'
+						element={
+							<ProtectedRoute>
+								<DashboardPage />
+							</ProtectedRoute>
+						}
+					/>
+
+					{/* Client Dashboard */}
+					<Route
+						path='/client-dashboard'
+						element={
+							<ProtectedRoute>
+								<ClientDashboardPage />
+							</ProtectedRoute>
+						}
+					/>
+
+					{/* Freelancer Dashboard */}
+					<Route
+						path='/freelancer-dashboard'
+						element={
+							<ProtectedRoute>
+								<FreelancerDashboardPage />
+							</ProtectedRoute>
+						}
+					/>
+					
+					{/* Profile Setup Page - accessible only for authenticated users */}
+					<Route
+						path='/profile-setup'
+						element={
+							<ProtectedRoute>
+								<ProfileSetupPage />
+							</ProtectedRoute>
+						}
+					/>
+				</Routes>
+				<Toaster />
+			</div>
+		);
+	}
+
+	// For auth pages, render with green background and floating shapes
 	return (
 		<div
 			className='min-h-screen bg-gradient-to-br
@@ -63,16 +119,6 @@ function App() {
 			<Routes>
 				{/* Landing page as the default route */}
 				<Route path='/' element={<LandingPage />} />
-                
-				{/* Dashboard is now at /dashboard */}
-				<Route
-					path='/dashboard'
-					element={
-						<ProtectedRoute>
-							<DashboardPage />
-						</ProtectedRoute>
-					}
-				/>
                 
 				<Route
 					path='/signup'
@@ -109,16 +155,6 @@ function App() {
 						<RedirectAuthenticatedUser>
 							<ResetPasswordPage />
 						</RedirectAuthenticatedUser>
-					}
-				/>
-                
-				{/* Profile Setup Page - accessible only for authenticated users */}
-				<Route
-					path='/profile-setup'
-					element={
-						<ProtectedRoute>
-							<ProfileSetupPage />
-						</ProtectedRoute>
 					}
 				/>
                 

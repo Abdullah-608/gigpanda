@@ -44,6 +44,19 @@ const userSchema = new mongoose.Schema({
         companyLink: String,
         pastProjects: [String]
     },
+    // Freelancer-specific stats
+    totalEarnings: {
+        type: Number,
+        default: 0
+    },
+    activeProjects: {
+        type: Number,
+        default: 0
+    },
+    totalOrders: {
+        type: Number,
+        default: 0
+    }
 },{timestamps:true});
 
-export const User =mongoose.model('User',userSchema);
+export default mongoose.model('User',userSchema);
