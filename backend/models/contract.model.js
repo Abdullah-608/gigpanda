@@ -21,14 +21,14 @@ const milestoneSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ["pending", "funded", "in_progress", "submitted", "completed"],
+        enum: ["pending", "funded", "in_progress", "submitted", "changes_requested", "completed", "paid"],
         default: "pending"
     },
     escrowFunded: {
         type: Boolean,
         default: false
     },
-    submission: {
+    submissionHistory: [{
         files: [{
             filename: String,
             url: String,
@@ -42,7 +42,25 @@ const milestoneSchema = new mongoose.Schema({
             enum: ["pending", "approved", "changes_requested"],
             default: "pending"
         },
-        clientFeedback: String
+        clientFeedback: String,
+        feedbackAt: Date
+    }],
+    currentSubmission: {
+        files: [{
+            filename: String,
+            url: String,
+            mimetype: String,
+            size: Number
+        }],
+        comments: String,
+        submittedAt: Date,
+        status: {
+            type: String,
+            enum: ["pending", "approved", "changes_requested"],
+            default: "pending"
+        },
+        clientFeedback: String,
+        feedbackAt: Date
     }
 }, {
     timestamps: true

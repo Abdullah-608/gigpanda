@@ -115,6 +115,9 @@ const ClientDashboardPage = () => {
 			case 'NEW_MESSAGE':
 				setActiveTab('messages');
 				break;
+			case 'MILESTONE_SUBMITTED':
+				setActiveTab('myjobs');
+				break;
 		}
 		setIsNotificationOpen(false);
 	};
@@ -254,8 +257,15 @@ const ClientDashboardPage = () => {
 																							New message from <span className="font-semibold">{senderName}</span>
 																						</>
 																					);
+																				case 'MILESTONE_SUBMITTED':
+																					return (
+																						<>
+																							<span className="font-semibold">{senderName}</span> submitted work for a milestone in "
+																							<span className="font-semibold">{notification.job.title}</span>"
+																						</>
+																					);
 																				default:
-																					return 'New notification';
+																					return notification.message || 'New notification';
 																			}
 																		})()}
 																	</p>

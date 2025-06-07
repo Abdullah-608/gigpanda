@@ -10,7 +10,8 @@ import {
     submitWork,
     reviewSubmission,
     releasePayment,
-    completeContract
+    completeContract,
+    downloadSubmissionFile
 } from "../controllers/contract.controller.js";
 
 const router = express.Router();
@@ -26,6 +27,9 @@ router.get("/my/contracts", getMyContracts);
 
 // Get contract by ID
 router.get("/:contractId", getContractById);
+
+// Download submission file
+router.get("/:contractId/milestones/:milestoneId/files/:fileId/download", downloadSubmissionFile);
 
 // Fund contract escrow
 router.post("/:contractId/fund", fundEscrow);

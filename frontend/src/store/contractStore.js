@@ -99,10 +99,36 @@ export const useContractStore = create((set) => ({
     submitWork: async (contractId, milestoneId, submissionData) => {
         set({ isLoading: true, error: null });
         try {
+            // Create FormData object
+            let formData;
+            
+            // If submissionData is already FormData, use it directly
+            if (submissionData instanceof FormData) {
+                formData = submissionData;
+            } else {
+                formData = new FormData();
+                // Add files if they exist
+                if (submissionData.files) {
+                    submissionData.files.forEach(file => {
+                        formData.append('files', file);
+                    });
+                }
+                // Add comments if they exist
+                if (submissionData.comments) {
+                    formData.append('comments', submissionData.comments);
+                }
+            }
+
             const response = await axios.post(
                 `${API_URL}/${contractId}/milestones/${milestoneId}/submit`,
-                submissionData
+                formData,
+                {
+                    headers: {
+                        'Content-Type': 'multipart/form-data'
+                    }
+                }
             );
+
             set(state => ({
                 contracts: state.contracts.map(contract =>
                     contract._id === contractId ? response.data.contract : contract
@@ -110,6 +136,7 @@ export const useContractStore = create((set) => ({
                 currentContract: response.data.contract,
                 isLoading: false
             }));
+            
             toast.success("Work submitted successfully!");
             return response.data.contract;
         } catch (error) {

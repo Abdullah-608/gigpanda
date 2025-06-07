@@ -1,21 +1,27 @@
 import { useState, useEffect } from 'react';
 import { useJobStore } from '../store/jobStore';
 import { useContractStore } from '../store/contractStore';
-import { DollarSign, User, Clock, Eye, CheckCircle, XCircle, Trash2, FileText, ChevronDown, ChevronUp } from 'lucide-react';
+import { DollarSign, User, Clock, Eye, Trash2, FileText, ChevronDown, ChevronUp, XCircle, FileIcon, ExternalLink } from 'lucide-react';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 import ContractDetailsModal from './ContractDetailsModal';
+import MilestoneReview from './MilestoneReview';
 import { useNavigate } from 'react-router-dom';
+import { useAuthStore } from '../store/authStore';
 
 const ClientJobsTab = () => {
     const { myJobs, fetchMyJobs, deleteJob } = useJobStore();
-    const { contracts, getMyContracts, fundEscrow, releasePayment, reviewSubmission } = useContractStore();
+    const { contracts, getMyContracts, fundEscrow, reviewSubmission } = useContractStore();
+    const { user } = useAuthStore();
     const [activeTab, setActiveTab] = useState('open');
     const [selectedContract, setSelectedContract] = useState(null);
     const [isContractModalOpen, setIsContractModalOpen] = useState(false);
     const [escrowAmount, setEscrowAmount] = useState('');
     const [expandedJobs, setExpandedJobs] = useState(new Set());
+    const [selectedFile, setSelectedFile] = useState(null);
     const navigate = useNavigate();
+
+    const isClient = user?.role === 'client';
 
     useEffect(() => {
         const loadData = async () => {
@@ -64,19 +70,11 @@ const ClientJobsTab = () => {
 
     const handleReviewSubmission = async (contractId, milestoneId, status, feedback = '') => {
         try {
-            await reviewSubmission(contractId, milestoneId, { status, feedback });
+            await reviewSubmission(contractId, milestoneId, status, feedback);
             toast.success(status === 'approved' ? 'Work approved successfully' : 'Changes requested successfully');
+            await getMyContracts(); // Refresh contracts after review
         } catch (error) {
             toast.error(error.message || 'Failed to review submission');
-        }
-    };
-
-    const handleReleasePayment = async (contractId, milestoneId) => {
-        try {
-            await releasePayment(contractId, milestoneId);
-            toast.success('Payment released successfully');
-        } catch (error) {
-            toast.error(error.message || 'Failed to release payment');
         }
     };
 
@@ -114,6 +112,32 @@ const ClientJobsTab = () => {
             return `$${budget.min} - $${budget.max}/hr`;
         } else {
             return `$${budget.min} - $${budget.max}`;
+        }
+    };
+
+    const handlePreviewFile = (file) => {
+        setSelectedFile(file);
+    };
+
+    const handleDownloadFile = async (contractId, milestoneId, file) => {
+        try {
+            const response = await fetch(`/api/contracts/${contractId}/milestones/${milestoneId}/files/${file._id}/download`);
+            if (!response.ok) throw new Error('Download failed');
+            
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = file.filename;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            
+            toast.success('File download started');
+        } catch (error) {
+            console.error('Error downloading file:', error);
+            toast.error('Failed to download file');
         }
     };
 
@@ -341,40 +365,67 @@ const ClientJobsTab = () => {
                                                                     </span>
                                                                 </div>
 
-                                                                {milestone.submission && (
-                                                                    <div className="mt-2 space-y-2">
-                                                                        <p className="text-sm text-gray-600">
-                                                                            {milestone.submission.comments}
-                                                                        </p>
-                                                                        
-                                                                        {milestone.status === 'submitted' && (
-                                                                            <div className="flex space-x-2">
-                                                                                <button
-                                                                                    onClick={() => handleReviewSubmission(contract._id, milestone._id, 'approved')}
-                                                                                    className="flex items-center px-3 py-1 text-sm text-green-700 bg-green-100 rounded-lg hover:bg-green-200"
-                                                                                >
-                                                                                    <CheckCircle className="w-4 h-4 mr-1" />
-                                                                                    Approve
-                                                                                </button>
-                                                                                <button
-                                                                                    onClick={() => handleReviewSubmission(contract._id, milestone._id, 'changes_requested')}
-                                                                                    className="flex items-center px-3 py-1 text-sm text-red-700 bg-red-100 rounded-lg hover:bg-red-200"
-                                                                                >
-                                                                                    <XCircle className="w-4 h-4 mr-1" />
-                                                                                    Request Changes
-                                                                                </button>
-                                                                            </div>
-                                                                        )}
+                                                                {/* Work Review (Client Only) */}
+                                                                {isClient && milestone.status === "submitted" && (
+                                                                    <MilestoneReview
+                                                                        milestone={milestone}
+                                                                        contractId={contract._id}
+                                                                        milestoneId={milestone._id}
+                                                                        onReviewSubmission={handleReviewSubmission}
+                                                                        onPreviewFile={handlePreviewFile}
+                                                                        onDownloadFile={handleDownloadFile}
+                                                                    />
+                                                                )}
 
-                                                                        {milestone.status === 'approved' && (
-                                                                            <button
-                                                                                onClick={() => handleReleasePayment(contract._id, milestone._id)}
-                                                                                className="flex items-center px-3 py-1 text-sm text-purple-700 bg-purple-100 rounded-lg hover:bg-purple-200"
-                                                                            >
-                                                                                <DollarSign className="w-4 h-4 mr-1" />
-                                                                                Release Payment
-                                                                            </button>
-                                                                        )}
+                                                                {/* Submission History */}
+                                                                {milestone.submissionHistory && milestone.submissionHistory.length > 0 && (
+                                                                    <div className="mt-6">
+                                                                        <h4 className="font-medium text-gray-900 mb-3">Previous Submissions</h4>
+                                                                        <div className="space-y-4">
+                                                                            {milestone.submissionHistory.map((submission, index) => (
+                                                                                <div key={index} className="p-4 bg-white rounded-lg border">
+                                                                                    <div className="flex justify-between items-start mb-3">
+                                                                                        <div>
+                                                                                            <p className="text-sm text-gray-500">
+                                                                                                Submitted on {format(new Date(submission.submittedAt), 'MMM dd, yyyy HH:mm')}
+                                                                                            </p>
+                                                                                            <p className="text-gray-700 mt-2">{submission.comments}</p>
+                                                                                        </div>
+                                                                                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                                                                                            submission.status === 'approved' ? 'bg-green-100 text-green-800' :
+                                                                                            submission.status === 'changes_requested' ? 'bg-yellow-100 text-yellow-800' :
+                                                                                            'bg-blue-100 text-blue-800'
+                                                                                        }`}>
+                                                                                            {submission.status}
+                                                                                        </span>
+                                                                                    </div>
+
+                                                                                    {/* Submission Files */}
+                                                                                    <div className="flex flex-wrap gap-2 mb-3">
+                                                                                        {submission.files.map((file, fileIndex) => (
+                                                                                            <div 
+                                                                                                key={fileIndex}
+                                                                                                className="flex items-center space-x-2 px-3 py-1 bg-gray-50 rounded-lg"
+                                                                                            >
+                                                                                                <FileText className="w-4 h-4 text-gray-500" />
+                                                                                                <span className="text-sm text-gray-700">{file.filename}</span>
+                                                                                            </div>
+                                                                                        ))}
+                                                                                    </div>
+
+                                                                                    {/* Client Feedback */}
+                                                                                    {submission.clientFeedback && (
+                                                                                        <div className="mt-3 pt-3 border-t">
+                                                                                            <p className="text-sm font-medium text-gray-900">Client Feedback:</p>
+                                                                                            <p className="text-sm text-gray-700 mt-1">{submission.clientFeedback}</p>
+                                                                                            <p className="text-xs text-gray-500 mt-1">
+                                                                                                Feedback provided on {format(new Date(submission.feedbackAt), 'MMM dd, yyyy HH:mm')}
+                                                                                            </p>
+                                                                                        </div>
+                                                                                    )}
+                                                                                </div>
+                                                                            ))}
+                                                                        </div>
                                                                     </div>
                                                                 )}
                                                             </div>
@@ -388,6 +439,41 @@ const ClientJobsTab = () => {
                             </div>
                         );
                     })}
+                </div>
+            )}
+
+            {/* File Preview Modal */}
+            {selectedFile && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+                        <div className="flex justify-between items-center p-4 border-b">
+                            <h3 className="text-lg font-semibold">{selectedFile.filename}</h3>
+                            <button onClick={() => setSelectedFile(null)} className="text-gray-500 hover:text-gray-700">
+                                <XCircle className="w-6 h-6" />
+                            </button>
+                        </div>
+                        <div className="p-4">
+                            {selectedFile.mimetype?.startsWith('image/') ? (
+                                <img src={selectedFile.url} alt={selectedFile.filename} className="max-w-full h-auto" />
+                            ) : selectedFile.mimetype === 'application/pdf' ? (
+                                <iframe src={selectedFile.url} className="w-full h-[70vh]" title={selectedFile.filename} />
+                            ) : (
+                                <div className="text-center py-8">
+                                    <FileIcon className="w-16 h-16 mx-auto text-gray-400" />
+                                    <p className="mt-4 text-gray-600">This file type cannot be previewed.</p>
+                                    <a 
+                                        href={selectedFile.url} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        className="mt-4 inline-flex items-center text-blue-600 hover:text-blue-800"
+                                    >
+                                        Download File
+                                        <ExternalLink className="w-4 h-4 ml-2" />
+                                    </a>
+                                </div>
+                            )}
+                        </div>
+                    </div>
                 </div>
             )}
 

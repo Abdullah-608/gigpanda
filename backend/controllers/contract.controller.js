@@ -1,6 +1,12 @@
 import Contract from "../models/contract.model.js";
 import Proposal from "../models/proposal.model.js";
 import Job from "../models/job.model.js";
+import Notification from "../models/notification.model.js";
+import { getFileFromStorage, saveFileToStorage } from "../utils/fileStorage.js";
+import multer from 'multer';
+
+// Configure multer for memory storage
+const upload = multer({ storage: multer.memoryStorage() });
 
 // Create a new contract from a proposal
 export const createContract = async (req, res) => {
@@ -269,47 +275,100 @@ export const addMilestone = async (req, res) => {
 // Submit work for milestone
 export const submitWork = async (req, res) => {
     try {
-        const { files, comments } = req.body;
-        const contract = await Contract.findById(req.params.contractId);
+        // Handle file uploads
+        upload.array('files')(req, res, async (err) => {
+            if (err) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Error uploading files",
+                    error: err.message
+                });
+            }
 
-        if (!contract) {
-            return res.status(404).json({
-                success: false,
-                message: "Contract not found"
+            const { comments } = req.body;
+            const contract = await Contract.findById(req.params.contractId)
+                .populate('job', 'title');
+
+            if (!contract) {
+                return res.status(404).json({
+                    success: false,
+                    message: "Contract not found"
+                });
+            }
+
+            if (contract.freelancer.toString() !== req.user._id.toString()) {
+                return res.status(403).json({
+                    success: false,
+                    message: "Only the freelancer can submit work"
+                });
+            }
+
+            const milestone = contract.milestones.id(req.params.milestoneId);
+            if (!milestone) {
+                return res.status(404).json({
+                    success: false,
+                    message: "Milestone not found"
+                });
+            }
+
+            // Process and save files
+            const savedFiles = [];
+            if (req.files && req.files.length > 0) {
+                for (const file of req.files) {
+                    try {
+                        const fileUrl = await saveFileToStorage(file);
+                        savedFiles.push({
+                            filename: file.originalname,
+                            url: fileUrl,
+                            mimetype: file.mimetype,
+                            size: file.size
+                        });
+                    } catch (error) {
+                        console.error('Error saving file:', error);
+                        // Continue with other files if one fails
+                    }
+                }
+            }
+
+            // Create new submission
+            const newSubmission = {
+                files: savedFiles,
+                comments,
+                submittedAt: new Date(),
+                status: "pending"
+            };
+
+            // Add current submission to history if it exists
+            if (milestone.currentSubmission) {
+                if (!milestone.submissionHistory) {
+                    milestone.submissionHistory = [];
+                }
+                milestone.submissionHistory.push(milestone.currentSubmission);
+            }
+
+            // Set new submission as current
+            milestone.currentSubmission = newSubmission;
+            milestone.status = "submitted";
+
+            await contract.save();
+
+            // Create notification for the client
+            const notification = new Notification({
+                recipient: contract.client,
+                sender: req.user._id,
+                type: 'MILESTONE_SUBMITTED',
+                job: contract.job._id,
+                message: `New submission received for milestone "${milestone.title}" in project "${contract.job.title}"`
             });
-        }
 
-        if (contract.freelancer.toString() !== req.user._id.toString()) {
-            return res.status(403).json({
-                success: false,
-                message: "Only the freelancer can submit work"
+            await notification.save();
+
+            res.status(200).json({
+                success: true,
+                message: "Work submitted successfully",
+                contract
             });
-        }
-
-        const milestone = contract.milestones.id(req.params.milestoneId);
-        if (!milestone) {
-            return res.status(404).json({
-                success: false,
-                message: "Milestone not found"
-            });
-        }
-
-        milestone.submission = {
-            files,
-            comments,
-            submittedAt: new Date(),
-            status: "pending"
-        };
-        milestone.status = "submitted";
-
-        await contract.save();
-
-        res.status(200).json({
-            success: true,
-            message: "Work submitted successfully",
-            contract
         });
-
     } catch (error) {
         console.error("Error in submitWork:", error);
         res.status(500).json({
@@ -324,7 +383,8 @@ export const submitWork = async (req, res) => {
 export const reviewSubmission = async (req, res) => {
     try {
         const { status, feedback } = req.body;
-        const contract = await Contract.findById(req.params.contractId);
+        const contract = await Contract.findById(req.params.contractId)
+            .populate('job', 'title');
 
         if (!contract) {
             return res.status(404).json({
@@ -348,14 +408,44 @@ export const reviewSubmission = async (req, res) => {
             });
         }
 
-        milestone.submission.status = status;
-        milestone.submission.clientFeedback = feedback;
+        if (!milestone.currentSubmission) {
+            return res.status(404).json({
+                success: false,
+                message: "No submission found to review"
+            });
+        }
 
+        // Update current submission with feedback
+        milestone.currentSubmission.status = status;
+        if (feedback) {
+            milestone.currentSubmission.clientFeedback = feedback;
+            milestone.currentSubmission.feedbackAt = new Date();
+        }
+
+        // Update milestone status based on review
         if (status === "approved") {
             milestone.status = "completed";
+        } else if (status === "changes_requested") {
+            milestone.status = "changes_requested";
         }
 
         await contract.save();
+
+        // Create notification for the freelancer
+        const notificationType = status === "approved" ? "MILESTONE_APPROVED" : "MILESTONE_CHANGES_REQUESTED";
+        const notificationMessage = status === "approved" 
+            ? `Your submission for milestone "${milestone.title}" in project "${contract.job.title}" has been approved`
+            : `Changes requested for milestone "${milestone.title}" in project "${contract.job.title}"`;
+
+        const notification = new Notification({
+            recipient: contract.freelancer,
+            sender: req.user._id,
+            type: notificationType,
+            job: contract.job._id,
+            message: notificationMessage
+        });
+
+        await notification.save();
 
         res.status(200).json({
             success: true,
@@ -480,5 +570,87 @@ export const completeContract = async (req, res) => {
             message: "Error completing contract",
             error: error.message
         });
+    }
+};
+
+// Download submission file
+export const downloadSubmissionFile = async (req, res) => {
+    try {
+        const { contractId, milestoneId, fileId } = req.params;
+
+        // Find the contract
+        const contract = await Contract.findById(contractId);
+        if (!contract) {
+            return res.status(404).json({
+                success: false,
+                message: "Contract not found"
+            });
+        }
+
+        // Verify user has access to this contract
+        if (contract.client.toString() !== req.user._id.toString() &&
+            contract.freelancer.toString() !== req.user._id.toString()) {
+            return res.status(403).json({
+                success: false,
+                message: "Access denied"
+            });
+        }
+
+        // Find the milestone
+        const milestone = contract.milestones.id(milestoneId);
+        if (!milestone) {
+            return res.status(404).json({
+                success: false,
+                message: "Milestone not found"
+            });
+        }
+
+        // Find the file
+        const file = milestone.submission?.files?.find(f => f._id.toString() === fileId);
+        if (!file) {
+            return res.status(404).json({
+                success: false,
+                message: "File not found"
+            });
+        }
+
+        try {
+            // Get the file stream
+            const fileStream = await getFileFromStorage(file.url);
+            
+            // Set response headers
+            res.setHeader('Content-Type', file.mimetype);
+            res.setHeader('Content-Disposition', `attachment; filename="${file.filename}"`);
+            
+            // Pipe the file stream to response
+            fileStream.pipe(res);
+            
+            // Handle errors during streaming
+            fileStream.on('error', (error) => {
+                console.error('Error streaming file:', error);
+                if (!res.headersSent) {
+                    res.status(500).json({
+                        success: false,
+                        message: "Error streaming file"
+                    });
+                }
+            });
+        } catch (error) {
+            console.error('Error getting file stream:', error);
+            return res.status(404).json({
+                success: false,
+                message: "File not found in storage"
+            });
+        }
+
+    } catch (error) {
+        console.error("Error in downloadSubmissionFile:", error);
+        if (!res.headersSent) {
+            res.status(500).json({
+                success: false,
+                message: "Error downloading file",
+                error: error.message
+            });
+        }
     }
 }; 

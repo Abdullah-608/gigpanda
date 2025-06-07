@@ -35,19 +35,19 @@ const AcceptedWorkTab = () => {
         }
 
         try {
-            // Here you would typically upload files first and get their URLs
-            const fileUrls = selectedFiles.map(file => ({
-                filename: file.name,
-                url: URL.createObjectURL(file), // This is temporary, you'll need proper file upload
-                mimetype: file.type,
-                size: file.size
-            }));
-
-            await submitWork(contractId, milestoneId, {
-                files: fileUrls,
-                comments: submissionComment
+            const formData = new FormData();
+            
+            // Add files to form data
+            selectedFiles.forEach(file => {
+                formData.append('files', file);
             });
+            
+            // Add comment to form data
+            formData.append('comments', submissionComment);
 
+            await submitWork(contractId, milestoneId, formData);
+            
+            // Reset form
             setSelectedFiles([]);
             setSubmissionComment('');
             setActiveMilestone(null);

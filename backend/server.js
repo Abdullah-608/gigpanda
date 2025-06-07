@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import path from "path";
+import { fileURLToPath } from 'url';
 
 import { connectDB } from "./db/connectDB.js";
 
@@ -19,7 +20,8 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const __dirname = path.resolve();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 app.use(cors({
 	origin: process.env.NODE_ENV === "development" ? "http://localhost:5173" : "https://gigpanda.com",
@@ -38,6 +40,9 @@ app.use("/api/proposals", proposalRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/contracts", contractRoutes);
+
+// Serve static files from uploads directory
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 if (process.env.NODE_ENV === "production") {
 	app.use(express.static(path.join(__dirname, "/frontend/dist")));

@@ -152,6 +152,12 @@ const FreelancerDashboardPage = () => {
 			case 'NEW_MESSAGE':
 				setActiveTab('messages');
 				break;
+			case 'MILESTONE_APPROVED':
+				navigate(`/jobs/${notification.job._id}`);
+				break;
+			case 'MILESTONE_CHANGES_REQUESTED':
+				navigate(`/jobs/${notification.job._id}`);
+				break;
 		}
 		setIsNotificationOpen(false);
 	};
@@ -319,8 +325,22 @@ const FreelancerDashboardPage = () => {
 																							New message from <span className="font-semibold">{senderName}</span>
 																						</>
 																					);
+																				case 'MILESTONE_APPROVED':
+																					return (
+																						<>
+																							<span className="font-semibold">{senderName}</span> approved your milestone submission for "
+																							<span className="font-semibold">{notification.job.title}</span>"
+																						</>
+																					);
+																				case 'MILESTONE_CHANGES_REQUESTED':
+																					return (
+																						<>
+																							<span className="font-semibold">{senderName}</span> requested changes for your milestone submission in "
+																							<span className="font-semibold">{notification.job.title}</span>"
+																						</>
+																					);
 																				default:
-																					return 'New notification';
+																					return notification.message || 'New notification';
 																			}
 																		})()}
 																	</p>
