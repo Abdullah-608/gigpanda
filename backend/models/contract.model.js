@@ -68,10 +68,19 @@ const milestoneSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
-    submissionHistory: [submissionSchema],
+    submissionHistory: {
+        type: [submissionSchema],
+        default: [],
+        get: function(submissions) {
+            // Sort by submittedAt in descending order
+            return submissions.sort((a, b) => b.submittedAt - a.submittedAt);
+        }
+    },
     currentSubmission: submissionSchema
 }, {
-    timestamps: true
+    timestamps: true,
+    toJSON: { getters: true }, // Enable getters when converting to JSON
+    toObject: { getters: true } // Enable getters when converting to Object
 });
 
 const contractSchema = new mongoose.Schema({

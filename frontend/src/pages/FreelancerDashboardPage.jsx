@@ -153,10 +153,12 @@ const FreelancerDashboardPage = () => {
 				setActiveTab('messages');
 				break;
 			case 'MILESTONE_APPROVED':
-				navigate(`/jobs/${notification.job._id}`);
-				break;
 			case 'MILESTONE_CHANGES_REQUESTED':
 				navigate(`/jobs/${notification.job._id}`);
+				break;
+			case 'CONTRACT_COMPLETED':
+				setActiveTab('accepted-work');
+				navigate(`/contracts/${notification.job._id}`);
 				break;
 		}
 		setIsNotificationOpen(false);
@@ -325,6 +327,16 @@ const FreelancerDashboardPage = () => {
 																							New message from <span className="font-semibold">{senderName}</span>
 																						</>
 																					);
+																				case 'CONTRACT_COMPLETED':
+																					return (
+																						<>
+																							<span className="font-semibold">{senderName}</span> has completed the contract for "
+																							<span className="font-semibold">{notification.job.title}</span>"
+																							<span className="inline-flex items-center ml-2 px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+																								Contract Completed
+																							</span>
+																						</>
+																					);
 																				case 'MILESTONE_APPROVED':
 																					return (
 																						<>
@@ -344,9 +356,16 @@ const FreelancerDashboardPage = () => {
 																			}
 																		})()}
 																	</p>
-																	<p className="text-xs text-gray-500 mt-1">
-																		{format(new Date(notification.createdAt), 'MMM d, yyyy h:mm a')}
-																	</p>
+																	<div className="flex items-center mt-1 space-x-2">
+																		<p className="text-xs text-gray-500">
+																			{format(new Date(notification.createdAt), 'MMM d, yyyy h:mm a')}
+																		</p>
+																		{notification.type === 'CONTRACT_COMPLETED' && (
+																			<span className="text-xs text-gray-500">
+																				• Final milestone completed
+																			</span>
+																		)}
+																	</div>
 																</div>
 																{!notification.read && (
 																	<div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>

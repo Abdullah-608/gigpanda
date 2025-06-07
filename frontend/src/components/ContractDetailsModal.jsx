@@ -1,7 +1,23 @@
-import { X } from 'lucide-react';
+import { X, DollarSign } from "lucide-react";
 import { format } from 'date-fns';
+import { useAuthStore } from "../store/authStore";
+import { useContractStore } from "../store/contractStore";
+import toast from "react-hot-toast";
 
 const ContractDetailsModal = ({ isOpen, onClose, contract }) => {
+    const { user } = useAuthStore();
+    const { releasePayment } = useContractStore();
+    const isClient = user._id === contract?.client._id;
+
+    const handleReleasePayment = async (milestoneId) => {
+        try {
+            await releasePayment(contract._id, milestoneId);
+            toast.success("Payment released successfully!");
+        } catch (error) {
+            toast.error("Error releasing payment");
+        }
+    };
+
     if (!isOpen || !contract) return null;
 
     return (
@@ -33,6 +49,10 @@ const ContractDetailsModal = ({ isOpen, onClose, contract }) => {
                                 <p className="text-base font-medium text-green-600">${contract.totalAmount}</p>
                             </div>
                             <div>
+                                <p className="text-sm text-gray-500">Escrow Balance</p>
+                                <p className="text-base font-medium text-blue-600">${contract.escrowBalance}</p>
+                            </div>
+                            <div>
                                 <p className="text-sm text-gray-500">Created On</p>
                                 <p className="text-base font-medium text-gray-900">
                                     {format(new Date(contract.createdAt), 'MMM dd, yyyy')}
@@ -56,51 +76,37 @@ const ContractDetailsModal = ({ isOpen, onClose, contract }) => {
                         <h3 className="text-lg font-semibold text-gray-900 mb-4">Milestones</h3>
                         <div className="space-y-4">
                             {contract.milestones.map((milestone, index) => (
-                                <div key={milestone._id} className="border rounded-lg p-4">
+                                <div key={index} className="border border-gray-200 rounded-lg p-4">
                                     <div className="flex justify-between items-start mb-2">
                                         <div>
                                             <h4 className="font-medium text-gray-900">
                                                 Milestone {index + 1}: {milestone.title}
                                             </h4>
                                             <p className="text-sm text-gray-600 mt-1">{milestone.description}</p>
+                                            <p className="text-sm text-gray-600 mt-1">Due: {new Date(milestone.dueDate).toLocaleDateString()}</p>
+                                            <p className="text-sm font-medium text-green-600 mt-1">${milestone.amount}</p>
                                         </div>
-                                        <div className="text-right">
+                                        <div>
                                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                                milestone.status === 'completed' ? 'bg-green-100 text-green-800' :
-                                                milestone.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
-                                                'bg-gray-100 text-gray-800'
+                                                milestone.status === "completed" ? "bg-green-100 text-green-800" :
+                                                milestone.status === "in_progress" ? "bg-yellow-100 text-yellow-800" :
+                                                milestone.status === "paid" ? "bg-purple-100 text-purple-800" :
+                                                "bg-gray-100 text-gray-800"
                                             }`}>
-                                                {milestone.status}
+                                                {milestone.status.replace("_", " ").charAt(0).toUpperCase() + milestone.status.slice(1)}
                                             </span>
                                         </div>
                                     </div>
-                                    <div className="flex justify-between items-center mt-2 text-sm text-gray-500">
-                                        <span>Amount: ${milestone.amount}</span>
-                                        <span>Due: {format(new Date(milestone.dueDate), 'MMM dd, yyyy')}</span>
-                                    </div>
-                                    {milestone.submission && (
-                                        <div className="mt-3 pt-3 border-t border-gray-100">
-                                            <p className="text-sm font-medium text-gray-900">Latest Submission</p>
-                                            <p className="text-sm text-gray-600 mt-1">{milestone.submission.comments}</p>
-                                            {milestone.submission.files && milestone.submission.files.length > 0 && (
-                                                <div className="mt-2">
-                                                    <p className="text-sm font-medium text-gray-900">Attachments:</p>
-                                                    <div className="flex flex-wrap gap-2 mt-1">
-                                                        {milestone.submission.files.map((file, fileIndex) => (
-                                                            <a
-                                                                key={fileIndex}
-                                                                href={file.url}
-                                                                target="_blank"
-                                                                rel="noopener noreferrer"
-                                                                className="text-sm text-blue-600 hover:text-blue-800"
-                                                            >
-                                                                {file.filename}
-                                                            </a>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
+
+                                    {/* Release Payment Button */}
+                                    {isClient && milestone.status === "completed" && (
+                                        <button
+                                            onClick={() => handleReleasePayment(milestone._id)}
+                                            className="mt-4 w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center"
+                                        >
+                                            <DollarSign className="w-4 h-4 mr-2" />
+                                            Release Payment
+                                        </button>
                                     )}
                                 </div>
                             ))}
