@@ -12,6 +12,7 @@ import postRoutes from "./routes/post.route.js";
 import jobRoutes from "./routes/job.route.js";
 import proposalRoutes from "./routes/proposal.route.js";
 import messageRoutes from "./routes/message.routes.js";
+import contractRoutes from "./routes/contract.route.js";
 import { router as notificationRoutes } from "./routes/notifications.js";
 
 dotenv.config();
@@ -36,6 +37,7 @@ app.use("/api/jobs", jobRoutes);
 app.use("/api/proposals", proposalRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/contracts", contractRoutes);
 
 if (process.env.NODE_ENV === "production") {
 	app.use(express.static(path.join(__dirname, "/frontend/dist")));

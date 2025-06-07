@@ -239,5 +239,25 @@ export const useContractStore = create((set) => ({
     // Clear current contract
     clearCurrentContract: () => {
         set({ currentContract: null });
+    },
+
+    // Get user's contracts
+    getMyContracts: async () => {
+        set({ isLoading: true, error: null });
+        try {
+            const response = await axios.get(`${API_URL}/my/contracts`);
+            set({ 
+                contracts: response.data.contracts,
+                isLoading: false 
+            });
+            return response.data.contracts;
+        } catch (error) {
+            set({ 
+                error: error.response?.data?.message || "Error fetching contracts",
+                isLoading: false 
+            });
+            toast.error(error.response?.data?.message || "Error fetching contracts");
+            throw error;
+        }
     }
 })); 

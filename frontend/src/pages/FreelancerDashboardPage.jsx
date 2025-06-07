@@ -4,12 +4,13 @@ import { useJobStore } from "../store/jobStore";
 import { BookmarkIcon, BellIcon, User, Menu, LogOut, ChevronDown, DollarSign, Briefcase, Clock, MessageSquare, Award, Loader, Filter } from "lucide-react";
 import SearchBar from "../components/SearchBar";
 import CreateProposalModal from "../components/CreateProposalModal";
-import { Navigate, useNavigate, Link } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import MyProposalsPage from "./MyProposalsPage";
 import MessagesPage from "./MessagesPage";
 import { useNotificationStore } from "../store/notificationStore";
 import { format } from 'date-fns';
+import AcceptedWorkTab from "../components/AcceptedWorkTab";
 
 const FreelancerDashboardPage = () => {
 	const { user, logout, activeTab, setActiveTab } = useAuthStore();
@@ -198,40 +199,44 @@ const FreelancerDashboardPage = () => {
 							</div>
 							<div className="hidden md:ml-6 md:flex md:space-x-8">
 								<button
-									onClick={() => setActiveTab("dashboard")}
-									className={`border-b-2 px-1 pt-5 pb-4 text-sm font-medium ${
-										activeTab === "dashboard"
-											? "border-gray-800 text-gray-900"
-											: "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+									onClick={() => setActiveTab('dashboard')}
+									className={`inline-flex items-center px-1 pt-1 text-sm font-medium border-b-2 ${
+										activeTab === 'dashboard'
+											? 'border-green-500 text-gray-900'
+											: 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
 									}`}
 								>
 									Dashboard
 								</button>
-								<Link
-									to="/jobs"
-									className="border-b-2 border-transparent hover:border-gray-300 text-gray-500 hover:text-gray-700 px-1 pt-5 pb-4 text-sm font-medium"
-								>
-									Find Jobs
-								</Link>
 								<button
-									onClick={() => setActiveTab("proposals")}
-									className={`border-b-2 px-1 pt-5 pb-4 text-sm font-medium ${
-										activeTab === "proposals"
-											? "border-gray-800 text-gray-900"
-											: "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+									onClick={() => setActiveTab('proposals')}
+									className={`inline-flex items-center px-1 pt-1 text-sm font-medium border-b-2 ${
+										activeTab === 'proposals'
+											? 'border-green-500 text-gray-900'
+											: 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
 									}`}
 								>
 									My Proposals
 								</button>
 								<button
-									onClick={() => setActiveTab("messages")}
-									className={`border-b-2 px-1 pt-5 pb-4 text-sm font-medium ${
-										activeTab === "messages"
-											? "border-gray-800 text-gray-900"
-											: "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+									onClick={() => setActiveTab('messages')}
+									className={`inline-flex items-center px-1 pt-1 text-sm font-medium border-b-2 ${
+										activeTab === 'messages'
+											? 'border-green-500 text-gray-900'
+											: 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
 									}`}
 								>
 									Messages
+								</button>
+								<button
+									onClick={() => setActiveTab('accepted-work')}
+									className={`inline-flex items-center px-1 pt-1 text-sm font-medium border-b-2 ${
+										activeTab === 'accepted-work'
+											? 'border-green-500 text-gray-900'
+											: 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+									}`}
+								>
+									Accepted Work
 								</button>
 							</div>
 						</div>
@@ -723,6 +728,15 @@ const FreelancerDashboardPage = () => {
 						className="bg-white rounded-xl shadow-sm"
 					>
 						<MessagesPage />
+					</motion.div>
+				) : activeTab === "accepted-work" ? (
+					<motion.div
+						initial={{ opacity: 0, y: 20 }}
+						animate={{ opacity: 1, y: 0 }}
+						transition={{ delay: 0.2 }}
+						className="bg-white rounded-xl shadow-sm"
+					>
+						<AcceptedWorkTab />
 					</motion.div>
 				) : null}
 			</main>
