@@ -3,6 +3,13 @@ import { format } from 'date-fns';
 import { CheckCircle, AlertCircle, Eye, Download, FileIcon } from 'lucide-react';
 import toast from 'react-hot-toast';
 
+const formatSafeDate = (dateString, formatString) => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return 'Invalid Date';
+    return format(date, formatString);
+};
+
 const MilestoneReview = ({ 
     milestone, 
     contractId, 
@@ -11,6 +18,9 @@ const MilestoneReview = ({
     onPreviewFile,
     onDownloadFile
 }) => {
+    console.log('MilestoneReview - milestone data:', milestone);
+    console.log('MilestoneReview - submission history:', milestone.submissionHistory);
+    
     const [feedbackComment, setFeedbackComment] = useState('');
     const [showFeedbackForm, setShowFeedbackForm] = useState(false);
 
@@ -133,7 +143,7 @@ const MilestoneReview = ({
                                 <div className="flex justify-between items-start mb-3">
                                     <div>
                                         <p className="text-sm text-gray-500">
-                                            Submitted on {format(new Date(submission.submittedAt), 'MMM dd, yyyy HH:mm')}
+                                            Submitted on {formatSafeDate(submission.submittedAt, 'MMM dd, yyyy HH:mm')}
                                         </p>
                                         <p className="text-gray-700 mt-2">{submission.comments}</p>
                                     </div>
@@ -183,7 +193,7 @@ const MilestoneReview = ({
                                         <p className="text-sm font-medium text-gray-900">Client Feedback:</p>
                                         <p className="text-sm text-gray-700 mt-1">{submission.clientFeedback}</p>
                                         <p className="text-xs text-gray-500 mt-1">
-                                            Feedback provided on {format(new Date(submission.feedbackAt), 'MMM dd, yyyy HH:mm')}
+                                            Feedback provided on {formatSafeDate(submission.feedbackAt, 'MMM dd, yyyy HH:mm')}
                                         </p>
                                     </div>
                                 )}

@@ -9,6 +9,13 @@ import MilestoneReview from './MilestoneReview';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 
+const formatSafeDate = (dateString, formatString) => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return 'Invalid Date';
+    return format(date, formatString);
+};
+
 const ClientJobsTab = () => {
     const { myJobs, fetchMyJobs, deleteJob } = useJobStore();
     const { contracts, getMyContracts, fundEscrow, reviewSubmission } = useContractStore();
@@ -205,7 +212,7 @@ const ClientJobsTab = () => {
                             <div className="bg-gray-50 px-6 py-4">
                                 <div className="flex justify-between items-center">
                                     <div className="text-sm text-gray-500">
-                                        Posted {format(new Date(job.createdAt), 'MMM dd, yyyy')}
+                                        Posted {formatSafeDate(job.createdAt, 'MMM dd, yyyy')}
                                     </div>
                                     <div className="flex items-center space-x-3">
                                         <span className="text-sm text-gray-600">
@@ -353,7 +360,7 @@ const ClientJobsTab = () => {
                                                                             {milestone.title}
                                                                         </h6>
                                                                         <p className="text-sm text-gray-600">
-                                                                            Due: {format(new Date(milestone.dueDate), 'MMM dd, yyyy')}
+                                                                            Due: {formatSafeDate(milestone.dueDate, 'MMM dd, yyyy')}
                                                                         </p>
                                                                     </div>
                                                                     <span className={`px-2 py-1 text-xs font-medium rounded-full ${
@@ -375,58 +382,6 @@ const ClientJobsTab = () => {
                                                                         onPreviewFile={handlePreviewFile}
                                                                         onDownloadFile={handleDownloadFile}
                                                                     />
-                                                                )}
-
-                                                                {/* Submission History */}
-                                                                {milestone.submissionHistory && milestone.submissionHistory.length > 0 && (
-                                                                    <div className="mt-6">
-                                                                        <h4 className="font-medium text-gray-900 mb-3">Previous Submissions</h4>
-                                                                        <div className="space-y-4">
-                                                                            {milestone.submissionHistory.map((submission, index) => (
-                                                                                <div key={index} className="p-4 bg-white rounded-lg border">
-                                                                                    <div className="flex justify-between items-start mb-3">
-                                                                                        <div>
-                                                                                            <p className="text-sm text-gray-500">
-                                                                                                Submitted on {format(new Date(submission.submittedAt), 'MMM dd, yyyy HH:mm')}
-                                                                                            </p>
-                                                                                            <p className="text-gray-700 mt-2">{submission.comments}</p>
-                                                                                        </div>
-                                                                                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                                                                                            submission.status === 'approved' ? 'bg-green-100 text-green-800' :
-                                                                                            submission.status === 'changes_requested' ? 'bg-yellow-100 text-yellow-800' :
-                                                                                            'bg-blue-100 text-blue-800'
-                                                                                        }`}>
-                                                                                            {submission.status}
-                                                                                        </span>
-                                                                                    </div>
-
-                                                                                    {/* Submission Files */}
-                                                                                    <div className="flex flex-wrap gap-2 mb-3">
-                                                                                        {submission.files.map((file, fileIndex) => (
-                                                                                            <div 
-                                                                                                key={fileIndex}
-                                                                                                className="flex items-center space-x-2 px-3 py-1 bg-gray-50 rounded-lg"
-                                                                                            >
-                                                                                                <FileText className="w-4 h-4 text-gray-500" />
-                                                                                                <span className="text-sm text-gray-700">{file.filename}</span>
-                                                                                            </div>
-                                                                                        ))}
-                                                                                    </div>
-
-                                                                                    {/* Client Feedback */}
-                                                                                    {submission.clientFeedback && (
-                                                                                        <div className="mt-3 pt-3 border-t">
-                                                                                            <p className="text-sm font-medium text-gray-900">Client Feedback:</p>
-                                                                                            <p className="text-sm text-gray-700 mt-1">{submission.clientFeedback}</p>
-                                                                                            <p className="text-xs text-gray-500 mt-1">
-                                                                                                Feedback provided on {format(new Date(submission.feedbackAt), 'MMM dd, yyyy HH:mm')}
-                                                                                            </p>
-                                                                                        </div>
-                                                                                    )}
-                                                                                </div>
-                                                                            ))}
-                                                                        </div>
-                                                                    </div>
                                                                 )}
                                                             </div>
                                                         ))}

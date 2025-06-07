@@ -23,6 +23,7 @@ const notificationSchema = new mongoose.Schema({
             'CONTRACT_ACTIVATED',
             'MILESTONE_SUBMITTED',
             'MILESTONE_APPROVED',
+            'MILESTONE_CHANGES_REQUESTED',
             'PAYMENT_RELEASED',
             'CONTRACT_COMPLETED'
         ],

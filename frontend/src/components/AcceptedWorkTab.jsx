@@ -62,9 +62,17 @@ const AcceptedWorkTab = () => {
             pending: 'bg-yellow-100 text-yellow-800',
             submitted: 'bg-blue-100 text-blue-800',
             completed: 'bg-green-100 text-green-800',
-            paid: 'bg-purple-100 text-purple-800'
+            paid: 'bg-purple-100 text-purple-800',
+            changes_requested: 'bg-red-100 text-red-800'
         };
         return colors[status] || 'bg-gray-100 text-gray-800';
+    };
+
+    const formatSafeDate = (dateString, formatString) => {
+        if (!dateString) return 'N/A';
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return 'Invalid Date';
+        return format(date, formatString);
     };
 
     const handleViewDetails = (contract) => {
@@ -129,85 +137,127 @@ const AcceptedWorkTab = () => {
                                                 </div>
                                             </div>
 
-                                            {/* Show submission form only for pending milestones */}
-                                            {milestone.status === 'pending' && (
+                                            {/* Show submission form for pending or changes_requested milestones */}
+                                            {(milestone.status === 'pending' || milestone.status === 'changes_requested' || milestone.status === 'submitted') && (
                                                 <div className="mt-4">
-                                                    {activeMilestone === milestone._id ? (
-                                                        <div className="space-y-4">
-                                                            <div>
-                                                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                                    Work Description
-                                                                </label>
-                                                                <textarea
-                                                                    value={submissionComment}
-                                                                    onChange={(e) => setSubmissionComment(e.target.value)}
-                                                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                                                                    rows="4"
-                                                                    placeholder="Describe the work you're submitting..."
-                                                                />
-                                                            </div>
-                                                            
-                                                            <div>
-                                                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                                    Attachments
-                                                                </label>
-                                                                <input
-                                                                    type="file"
-                                                                    multiple
-                                                                    onChange={handleFileChange}
-                                                                    className="block w-full text-sm text-gray-500
-                                                                        file:mr-4 file:py-2 file:px-4
-                                                                        file:rounded-full file:border-0
-                                                                        file:text-sm file:font-semibold
-                                                                        file:bg-green-50 file:text-green-700
-                                                                        hover:file:bg-green-100"
-                                                                />
-                                                            </div>
+                                                    {/* Show client feedback if changes were requested */}
+                                                    {milestone.status === 'changes_requested' && milestone.submissionHistory && milestone.submissionHistory.length > 0 && (
+                                                        <div className="mb-4 p-4 bg-red-50 rounded-lg border border-red-100">
+                                                            <h6 className="font-medium text-red-800 mb-2">Changes Requested</h6>
+                                                            <p className="text-red-700">{milestone.submissionHistory[milestone.submissionHistory.length - 1].clientFeedback}</p>
+                                                            <p className="text-sm text-red-600 mt-1">
+                                                                Feedback provided on {formatSafeDate(milestone.submissionHistory[milestone.submissionHistory.length - 1].feedbackAt, 'MMM dd, yyyy HH:mm')}
+                                                            </p>
+                                                        </div>
+                                                    )}
 
-                                                            <div className="flex justify-end gap-3">
+                                                    {/* Only show the submission form if the status is pending or changes_requested */}
+                                                    {(milestone.status === 'pending' || milestone.status === 'changes_requested') && (
+                                                        <>
+                                                            {activeMilestone === milestone._id ? (
+                                                                <div className="space-y-4">
+                                                                    <div>
+                                                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                                            Work Description
+                                                                        </label>
+                                                                        <textarea
+                                                                            value={submissionComment}
+                                                                            onChange={(e) => setSubmissionComment(e.target.value)}
+                                                                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                                                            rows="4"
+                                                                            placeholder="Describe the work you're submitting..."
+                                                                        />
+                                                                    </div>
+                                                                    
+                                                                    <div>
+                                                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                                            Attachments
+                                                                        </label>
+                                                                        <input
+                                                                            type="file"
+                                                                            multiple
+                                                                            onChange={handleFileChange}
+                                                                            className="block w-full text-sm text-gray-500
+                                                                                file:mr-4 file:py-2 file:px-4
+                                                                                file:rounded-full file:border-0
+                                                                                file:text-sm file:font-semibold
+                                                                                file:bg-green-50 file:text-green-700
+                                                                                hover:file:bg-green-100"
+                                                                        />
+                                                                    </div>
+
+                                                                    <div className="flex justify-end gap-3">
+                                                                        <button
+                                                                            onClick={() => setActiveMilestone(null)}
+                                                                            className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                                                                        >
+                                                                            Cancel
+                                                                        </button>
+                                                                        <button
+                                                                            onClick={() => handleSubmit(contract._id, milestone._id)}
+                                                                            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                                                                        >
+                                                                            Submit Work
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                            ) : (
                                                                 <button
-                                                                    onClick={() => setActiveMilestone(null)}
-                                                                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                                                                    onClick={() => setActiveMilestone(milestone._id)}
+                                                                    className="flex items-center text-green-600 hover:text-green-700"
                                                                 >
-                                                                    Cancel
-                                                                </button>
-                                                                <button
-                                                                    onClick={() => handleSubmit(contract._id, milestone._id)}
-                                                                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                                                                >
+                                                                    <Upload className="w-4 h-4 mr-2" />
                                                                     Submit Work
                                                                 </button>
-                                                            </div>
-                                                        </div>
-                                                    ) : (
-                                                        <button
-                                                            onClick={() => setActiveMilestone(milestone._id)}
-                                                            className="flex items-center text-green-600 hover:text-green-700"
-                                                        >
-                                                            <Upload className="w-4 h-4 mr-2" />
-                                                            Submit Work
-                                                        </button>
+                                                            )}
+                                                        </>
                                                     )}
                                                 </div>
                                             )}
 
-                                            {/* Show submission details for submitted/completed milestones */}
-                                            {milestone.submission && (
+                                            {/* Show submission history */}
+                                            {milestone.submissionHistory && milestone.submissionHistory.length > 0 && (
                                                 <div className="mt-4 bg-gray-50 p-4 rounded-lg">
-                                                    <h5 className="font-medium text-gray-900 mb-2">Submission Details</h5>
-                                                    <p className="text-gray-600 mb-2">{milestone.submission.comments}</p>
-                                                    <div className="flex flex-wrap gap-2">
-                                                        {milestone.submission.files.map((file, index) => (
-                                                            <a
-                                                                key={index}
-                                                                href={file.url}
-                                                                target="_blank"
-                                                                rel="noopener noreferrer"
-                                                                className="flex items-center px-3 py-1 bg-white border rounded-lg hover:bg-gray-50"
-                                                            >
-                                                                <FileText className="w-4 h-4 mr-2" />
-                                                                {file.filename}
-                                                            </a>
+                                                    <h5 className="font-medium text-gray-900 mb-2">Submission History</h5>
+                                                    <div className="space-y-4">
+                                                        {milestone.submissionHistory.map((submission, index) => (
+                                                            <div key={index} className="border-t pt-4 first:border-t-0 first:pt-0">
+                                                                <div className="flex justify-between items-start">
+                                                                    <div>
+                                                                        <p className="text-sm text-gray-500">
+                                                                            Submitted on {formatSafeDate(submission.submittedAt, 'MMM dd, yyyy HH:mm')}
+                                                                        </p>
+                                                                        <p className="text-gray-700 mt-2">{submission.comments}</p>
+                                                                    </div>
+                                                                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(submission.status)}`}>
+                                                                        {submission.status === 'changes_requested' ? 'Changes Requested' : 
+                                                                         submission.status === 'approved' ? 'Approved' :
+                                                                         submission.status === 'pending' ? 'Pending Review' :
+                                                                         submission.status.replace('_', ' ')}
+                                                                    </span>
+                                                                </div>
+
+                                                                {/* Show files */}
+                                                                <div className="flex flex-wrap gap-2 mt-3">
+                                                                    {submission.files.map((file, fileIndex) => (
+                                                                        <div key={fileIndex} className="flex items-center space-x-2 px-3 py-2 bg-white rounded-lg border">
+                                                                            <FileText className="w-4 h-4 text-gray-500" />
+                                                                            <span className="text-sm text-gray-700">{file.filename}</span>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+
+                                                                {/* Show client feedback if any */}
+                                                                {submission.clientFeedback && (
+                                                                    <div className="mt-3 pt-3 border-t">
+                                                                        <p className="text-sm font-medium text-gray-900">Client Feedback:</p>
+                                                                        <p className="text-sm text-gray-700 mt-1">{submission.clientFeedback}</p>
+                                                                        <p className="text-xs text-gray-500 mt-1">
+                                                                            Feedback provided on {formatSafeDate(submission.feedbackAt, 'MMM dd, yyyy HH:mm')}
+                                                                        </p>
+                                                                    </div>
+                                                                )}
+                                                            </div>
                                                         ))}
                                                     </div>
                                                 </div>

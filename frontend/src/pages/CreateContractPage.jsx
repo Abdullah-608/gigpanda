@@ -108,18 +108,59 @@ const CreateContractPage = () => {
             return;
         }
 
+        // Validate all milestones
+        for (const milestone of formData.milestones) {
+            if (!milestone.title.trim()) {
+                toast.error("All milestones must have a title");
+                return;
+            }
+            if (!milestone.description.trim()) {
+                toast.error("All milestones must have a description");
+                return;
+            }
+            if (!milestone.amount || milestone.amount <= 0) {
+                toast.error("All milestones must have a valid amount");
+                return;
+            }
+            if (!milestone.dueDate) {
+                toast.error("All milestones must have a due date");
+                return;
+            }
+        }
+
         const totalMilestoneAmount = formData.milestones.reduce((sum, m) => sum + Number(m.amount), 0);
-        if (totalMilestoneAmount !== Number(formData.totalAmount)) {
+        if (Math.abs(totalMilestoneAmount - Number(formData.totalAmount)) > 0.01) {
             toast.error("Total milestone amounts must equal the contract total");
             return;
         }
 
+        // Format the data
+        const contractData = {
+            ...formData,
+            totalAmount: Number(formData.totalAmount),
+            milestones: formData.milestones.map(milestone => ({
+                ...milestone,
+                amount: Number(milestone.amount),
+                dueDate: new Date(milestone.dueDate).toISOString()
+            }))
+        };
+
         try {
-            const contract = await createContract(proposalId, formData);
+            // Show loading toast
+            const loadingToast = toast.loading("Creating contract...");
+            
+            const contract = await createContract(proposalId, contractData);
+            
+            // Dismiss loading toast and show success
+            toast.dismiss(loadingToast);
             toast.success("Contract created successfully!");
+            
+            // Navigate to the new contract
             navigate(`/contracts/${contract._id}`);
         } catch (error) {
-            toast.error(error.message || "Error creating contract");
+            // Clear loading state and show error
+            toast.error(error.response?.data?.message || "Error creating contract. Please try again.");
+            console.error("Contract creation error:", error);
         }
     };
 

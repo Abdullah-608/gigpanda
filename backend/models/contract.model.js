@@ -1,5 +1,45 @@
 import mongoose from "mongoose";
 
+const submissionSchema = new mongoose.Schema({
+    files: [{
+        filename: {
+            type: String,
+            required: true
+        },
+        url: {
+            type: String,
+            required: true
+        },
+        mimetype: {
+            type: String,
+            required: true
+        },
+        size: {
+            type: Number,
+            required: true
+        }
+    }],
+    comments: {
+        type: String,
+        default: ''
+    },
+    submittedAt: {
+        type: Date,
+        required: true,
+        default: Date.now
+    },
+    status: {
+        type: String,
+        enum: ["pending", "approved", "changes_requested"],
+        default: "pending"
+    },
+    clientFeedback: {
+        type: String,
+        default: ''
+    },
+    feedbackAt: Date
+}, { _id: false });
+
 const milestoneSchema = new mongoose.Schema({
     title: {
         type: String,
@@ -28,40 +68,8 @@ const milestoneSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
-    submissionHistory: [{
-        files: [{
-            filename: String,
-            url: String,
-            mimetype: String,
-            size: Number
-        }],
-        comments: String,
-        submittedAt: Date,
-        status: {
-            type: String,
-            enum: ["pending", "approved", "changes_requested"],
-            default: "pending"
-        },
-        clientFeedback: String,
-        feedbackAt: Date
-    }],
-    currentSubmission: {
-        files: [{
-            filename: String,
-            url: String,
-            mimetype: String,
-            size: Number
-        }],
-        comments: String,
-        submittedAt: Date,
-        status: {
-            type: String,
-            enum: ["pending", "approved", "changes_requested"],
-            default: "pending"
-        },
-        clientFeedback: String,
-        feedbackAt: Date
-    }
+    submissionHistory: [submissionSchema],
+    currentSubmission: submissionSchema
 }, {
     timestamps: true
 });
