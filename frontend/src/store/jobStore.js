@@ -116,20 +116,17 @@ export const useJobStore = create((set, get) => ({
     applyToJob: async (jobId, applicationData) => {
         set({ isApplying: true, error: null });
         try {
-            const response = await axios.post(`${API_URL}/${jobId}/apply`, applicationData);
+            const response = await axios.post(`/api/proposals/${jobId}`, {
+                coverLetter: applicationData.proposalText,
+                bidAmount: {
+                    amount: applicationData.proposedBudget,
+                    currency: "USD"
+                },
+                estimatedDuration: applicationData.estimatedDuration
+            });
             
             if (response.data.success) {
-                // Update the current job if it's loaded
-                set((state) => ({
-                    currentJob: state.currentJob && state.currentJob._id === jobId 
-                        ? {
-                            ...state.currentJob,
-                            applications: [...state.currentJob.applications, response.data.application]
-                          }
-                        : state.currentJob,
-                    isApplying: false,
-                    error: null
-                }));
+                set({ isApplying: false, error: null });
                 return response.data;
             }
         } catch (error) {
@@ -339,6 +336,26 @@ export const useJobStore = create((set, get) => ({
             console.error('Error fetching hot jobs:', error);
             const errorMessage = error.response?.data?.message || "Failed to fetch hot jobs";
             set({ error: errorMessage, isLoadingHotJobs: false });
+            throw new Error(errorMessage);
+        }
+    },
+
+    // Delete a job (for clients)
+    deleteJob: async (jobId) => {
+        try {
+            const response = await axios.delete(`${API_URL}/${jobId}`);
+            
+            if (response.data.success) {
+                // Remove the job from myJobs array
+                set((state) => ({
+                    myJobs: state.myJobs.filter(job => job._id !== jobId)
+                }));
+                return response.data;
+            }
+        } catch (error) {
+            console.error('Error deleting job:', error);
+            const errorMessage = error.response?.data?.message || "Failed to delete job";
+            set({ error: errorMessage });
             throw new Error(errorMessage);
         }
     }

@@ -11,6 +11,10 @@ import FreelancerDashboardPage from "./pages/FreelancerDashboardPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import ProfileSetupPage from "./pages/ProfileSetupPage"; // Import the new ProfileSetupPage
+import IncomingProposalsPage from "./pages/IncomingProposalsPage";
+import MyProposalsPage from "./pages/MyProposalsPage";
+import MessagesPage from "./pages/MessagesPage";
+import CreateContractPage from "./pages/CreateContractPage";
 
 import LoadingSpinner from "./components/LoadingSpinner";
 
@@ -106,11 +110,11 @@ function App() {
 		);
 	}
 
-	// For auth pages, render with green background and floating shapes
+	// For auth pages and other routes, render with green background
 	return (
 		<div
 			className='min-h-screen bg-gradient-to-br
-    from-gray-900 via-green-900 to-emerald-900 flex items-center justify-center relative overflow-hidden'
+from-gray-900 via-green-900 to-emerald-900 flex items-center justify-center relative overflow-hidden'
 		>
 			<FloatingShape color='bg-green-500' size='w-64 h-64' top='-5%' left='10%' delay={0} />
 			<FloatingShape color='bg-emerald-500' size='w-48 h-48' top='70%' left='80%' delay={5} />
@@ -155,6 +159,47 @@ function App() {
 						<RedirectAuthenticatedUser>
 							<ResetPasswordPage />
 						</RedirectAuthenticatedUser>
+					}
+				/>
+
+				{/* Protected Routes */}
+				<Route
+					path='/proposals/job/:jobId'
+					element={
+						<ProtectedRoute>
+							<div className="min-h-screen bg-gray-50">
+								<IncomingProposalsPage />
+							</div>
+						</ProtectedRoute>
+					}
+				/>
+
+				<Route
+					path='/my-proposals'
+					element={
+						<ProtectedRoute>
+							<div className="min-h-screen bg-gray-50">
+								<MyProposalsPage />
+							</div>
+						</ProtectedRoute>
+					}
+				/>
+
+				<Route
+					path='/messages'
+					element={
+						<ProtectedRoute>
+							<MessagesPage />
+						</ProtectedRoute>
+					}
+				/>
+
+				<Route
+					path='/contracts/create/:proposalId'
+					element={
+						<ProtectedRoute>
+							<CreateContractPage />
+						</ProtectedRoute>
 					}
 				/>
                 

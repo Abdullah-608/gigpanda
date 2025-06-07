@@ -1,30 +1,48 @@
 import { motion } from "framer-motion";
 import { useAuthStore } from "../store/authStore";
 import { useJobStore } from "../store/jobStore";
-import { BookmarkIcon, BellIcon, User, Menu, LogOut, ChevronDown, DollarSign, Briefcase, Clock, TrendingUp, Eye, Heart, MessageSquare, Star, Award, Calendar, Filter, Search, Edit3, Loader } from "lucide-react";
+import { BookmarkIcon, BellIcon, User, Menu, LogOut, ChevronDown, DollarSign, Briefcase, Clock, MessageSquare, Award, Loader, Filter } from "lucide-react";
 import SearchBar from "../components/SearchBar";
-import CreatePostModal from "../components/CreatePostModal";
-import { Navigate, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
-import toast from "react-hot-toast";
+import CreateProposalModal from "../components/CreateProposalModal";
+import { Navigate, useNavigate, Link } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import MyProposalsPage from "./MyProposalsPage";
+import MessagesPage from "./MessagesPage";
+import { useNotificationStore } from "../store/notificationStore";
+import { format } from 'date-fns';
 
 const FreelancerDashboardPage = () => {
-	const { user, logout } = useAuthStore();
-	const { jobs, isLoading, error, pagination, fetchJobs, loadMoreJobs, applyToJob, isApplying } = useJobStore();
+	const { user, logout, activeTab, setActiveTab } = useAuthStore();
+	const { jobs, isLoading, error, pagination, fetchJobs, loadMoreJobs } = useJobStore();
 	const navigate = useNavigate();
 	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-	const [isCreatePostModalOpen, setIsCreatePostModalOpen] = useState(false);
+	const [isProposalModalOpen, setIsProposalModalOpen] = useState(false);
+	const [selectedJob, setSelectedJob] = useState(null);
+	const { notifications, unreadCount, fetchNotifications, markAsRead } = useNotificationStore();
+	const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+	const notificationRef = useRef(null);
+	
+	useEffect(() => {
+		fetchJobs();
+		fetchNotifications();
+		
+		const handleClickOutside = (event) => {
+			if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+				setIsNotificationOpen(false);
+			}
+		};
+
+		document.addEventListener('mousedown', handleClickOutside);
+		return () => {
+			document.removeEventListener('mousedown', handleClickOutside);
+		};
+	}, [fetchJobs, fetchNotifications]);
 	
 	// Check if user has the correct role
 	if (user?.role !== "freelancer") {
 		return <Navigate to="/client-dashboard" replace />;
 	}
-	
-	// Fetch jobs when component mounts
-	useEffect(() => {
-		fetchJobs();
-	}, [fetchJobs]);
-	
+
 	const handleLogout = async () => {
 		try {
 			await logout();
@@ -43,24 +61,9 @@ const FreelancerDashboardPage = () => {
 		setIsDropdownOpen(false);
 	};
 
-	const handleApplyToJob = async (jobId) => {
-		// For now, show a simple prompt. Later you can create a proper application modal
-		const proposalText = prompt("Enter your proposal:");
-		const proposedBudget = prompt("Enter your proposed budget:");
-		const estimatedDuration = prompt("Enter estimated duration:");
-
-		if (proposalText && proposedBudget && estimatedDuration) {
-			try {
-				await applyToJob(jobId, {
-					proposalText,
-					proposedBudget: parseFloat(proposedBudget),
-					estimatedDuration
-				});
-				toast.success("Application submitted successfully!");
-			} catch (error) {
-				toast.error(error.message || "Failed to submit application");
-			}
-		}
+	const handleApplyToJob = (job) => {
+		setSelectedJob(job);
+		setIsProposalModalOpen(true);
 	};
 
 	const handleLoadMore = async () => {
@@ -133,10 +136,29 @@ const FreelancerDashboardPage = () => {
 		{ id: 4, type: "payment", message: "Payment received: $1,200", time: "2 days ago" }
 	];
 
+	const handleNotificationClick = (notification) => {
+		if (!notification.read) {
+			markAsRead([notification._id]);
+		}
+
+		// Handle navigation based on notification type
+		switch (notification.type) {
+			case 'NEW_PROPOSAL':
+			case 'PROPOSAL_ACCEPTED':
+			case 'PROPOSAL_REJECTED':
+				navigate(`/jobs/${notification.job._id}`);
+				break;
+			case 'NEW_MESSAGE':
+				setActiveTab('messages');
+				break;
+		}
+		setIsNotificationOpen(false);
+	};
+
 	return (
 		<div className="min-h-screen bg-white w-full" onClick={closeDropdown}>
 			{/* Custom scrollbar styles */}
-			<style jsx>{`
+			<style>{`
 				.custom-scrollbar::-webkit-scrollbar {
 					width: 6px;
 				}
@@ -175,18 +197,42 @@ const FreelancerDashboardPage = () => {
 								<span className="ml-2 text-2xl">🐼</span>
 							</div>
 							<div className="hidden md:ml-6 md:flex md:space-x-8">
-								<a href="#" className="border-b-2 border-gray-800 text-gray-900 px-1 pt-5 pb-4 text-sm font-medium">
+								<button
+									onClick={() => setActiveTab("dashboard")}
+									className={`border-b-2 px-1 pt-5 pb-4 text-sm font-medium ${
+										activeTab === "dashboard"
+											? "border-gray-800 text-gray-900"
+											: "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+									}`}
+								>
 									Dashboard
-								</a>
-								<a href="#" className="border-b-2 border-transparent hover:border-gray-300 text-gray-500 hover:text-gray-700 px-1 pt-5 pb-4 text-sm font-medium">
+								</button>
+								<Link
+									to="/jobs"
+									className="border-b-2 border-transparent hover:border-gray-300 text-gray-500 hover:text-gray-700 px-1 pt-5 pb-4 text-sm font-medium"
+								>
 									Find Jobs
-								</a>
-								<a href="#" className="border-b-2 border-transparent hover:border-gray-300 text-gray-500 hover:text-gray-700 px-1 pt-5 pb-4 text-sm font-medium">
+								</Link>
+								<button
+									onClick={() => setActiveTab("proposals")}
+									className={`border-b-2 px-1 pt-5 pb-4 text-sm font-medium ${
+										activeTab === "proposals"
+											? "border-gray-800 text-gray-900"
+											: "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+									}`}
+								>
 									My Proposals
-								</a>
-								<a href="#" className="border-b-2 border-transparent hover:border-gray-300 text-gray-500 hover:text-gray-700 px-1 pt-5 pb-4 text-sm font-medium">
+								</button>
+								<button
+									onClick={() => setActiveTab("messages")}
+									className={`border-b-2 px-1 pt-5 pb-4 text-sm font-medium ${
+										activeTab === "messages"
+											? "border-gray-800 text-gray-900"
+											: "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+									}`}
+								>
 									Messages
-								</a>
+								</button>
 							</div>
 						</div>
 						<div className="flex items-center">
@@ -196,10 +242,98 @@ const FreelancerDashboardPage = () => {
 								<button type="button" className="p-2 text-gray-500 hover:text-gray-700 focus:outline-none">
 									<BookmarkIcon className="h-5 w-5" />
 								</button>
-								<button type="button" className="p-2 text-gray-500 hover:text-gray-700 focus:outline-none relative">
+								<div className="relative" ref={notificationRef}>
+									<button 
+										type="button" 
+										className="p-2 text-gray-500 hover:text-gray-700 focus:outline-none relative"
+										onClick={() => setIsNotificationOpen(!isNotificationOpen)}
+									>
 									<BellIcon className="h-5 w-5" />
-									<span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-white"></span>
+										{unreadCount > 0 && (
+											<span className="absolute top-0 right-0 block h-5 w-5 rounded-full bg-red-500 ring-2 ring-white text-white text-xs flex items-center justify-center">
+												{unreadCount}
+											</span>
+										)}
 								</button>
+
+									{isNotificationOpen && (
+										<div className="absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-lg border border-gray-200 max-h-[80vh] overflow-y-auto z-50">
+											<div className="p-4 border-b border-gray-200">
+												<h3 className="text-lg font-semibold">Notifications</h3>
+											</div>
+											
+											<div className="divide-y divide-gray-200">
+												{notifications.length === 0 ? (
+													<div className="p-4 text-center text-gray-500">
+														No notifications
+													</div>
+												) : (
+													notifications.map((notification) => (
+														<div
+															key={notification._id}
+															onClick={() => handleNotificationClick(notification)}
+															className={`block p-4 hover:bg-gray-50 transition-colors cursor-pointer ${
+																!notification.read ? 'bg-blue-50' : ''
+															}`}
+														>
+															<div className="flex items-start gap-3">
+																<img
+																	src={notification.sender.profile?.pictureUrl || '/default-avatar.png'}
+																	alt={notification.sender.name}
+																	className="w-10 h-10 rounded-full object-cover"
+																/>
+																<div className="flex-1">
+																	<p className="text-sm text-gray-800">
+																		{(() => {
+																			const senderName = notification.sender.name;
+																			switch (notification.type) {
+																				case 'NEW_PROPOSAL':
+																					return (
+																						<>
+																							<span className="font-semibold">{senderName}</span> submitted a proposal for "
+																							<span className="font-semibold">{notification.job.title}</span>"
+																						</>
+																					);
+																				case 'PROPOSAL_ACCEPTED':
+																					return (
+																						<>
+																							<span className="font-semibold">{senderName}</span> accepted your proposal for "
+																							<span className="font-semibold">{notification.job.title}</span>"
+																						</>
+																					);
+																				case 'PROPOSAL_REJECTED':
+																					return (
+																						<>
+																							<span className="font-semibold">{senderName}</span> declined your proposal for "
+																							<span className="font-semibold">{notification.job.title}</span>"
+																						</>
+																					);
+																				case 'NEW_MESSAGE':
+																					return (
+																						<>
+																							New message from <span className="font-semibold">{senderName}</span>
+																						</>
+																					);
+																				default:
+																					return 'New notification';
+																			}
+																		})()}
+																	</p>
+																	<p className="text-xs text-gray-500 mt-1">
+																		{format(new Date(notification.createdAt), 'MMM d, yyyy h:mm a')}
+																	</p>
+																</div>
+																{!notification.read && (
+																	<div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+																)}
+															</div>
+														</div>
+													))
+												)}
+											</div>
+										</div>
+									)}
+								</div>
 								<div className="ml-3 relative">
 									<div className="flex items-center">
 										<button 
@@ -268,6 +402,8 @@ const FreelancerDashboardPage = () => {
 			</header>
 			
 			<main className="w-full px-4 sm:px-6 lg:px-8 py-6">
+				{activeTab === "dashboard" ? (
+					<>
 				{/* Stats Cards */}
 				<div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
 					<motion.div
@@ -440,25 +576,17 @@ const FreelancerDashboardPage = () => {
 													<div className="flex items-center justify-between">
 														<div className="flex items-center space-x-4 text-sm text-gray-500">
 															<span>{getTimeAgo(job.createdAt)}</span>
-															<span>{job.applicationCount || 0} applications</span>
+															<span>{job.proposalCount || 0} proposals</span>
 														</div>
 														<div className="flex items-center space-x-2">
 															<button className="p-2 rounded-lg transition-colors text-gray-400 hover:text-gray-600 hover:bg-gray-50">
 																<BookmarkIcon className="h-4 w-4" />
 															</button>
 															<button 
-																onClick={() => handleApplyToJob(job._id)}
-																disabled={isApplying}
-																className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-1"
+																onClick={() => handleApplyToJob(job)}
+																className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors"
 															>
-																{isApplying ? (
-																	<>
-																		<Loader className="h-3 w-3 animate-spin" />
-																		<span>Applying...</span>
-																	</>
-																) : (
-																	<span>Send Proposal</span>
-																)}
+																Send Proposal
 															</button>
 														</div>
 													</div>
@@ -577,24 +705,36 @@ const FreelancerDashboardPage = () => {
 						</motion.div>
 					</div>
 				</div>
+					</>
+				) : activeTab === "proposals" ? (
+					<motion.div
+						initial={{ opacity: 0, y: 20 }}
+						animate={{ opacity: 1, y: 0 }}
+						transition={{ delay: 0.2 }}
+						className="bg-white rounded-xl shadow-sm"
+					>
+						<MyProposalsPage />
+					</motion.div>
+				) : activeTab === "messages" ? (
+					<motion.div
+						initial={{ opacity: 0, y: 20 }}
+						animate={{ opacity: 1, y: 0 }}
+						transition={{ delay: 0.2 }}
+						className="bg-white rounded-xl shadow-sm"
+					>
+						<MessagesPage />
+					</motion.div>
+				) : null}
 			</main>
 
-			{/* Floating Write Button */}
-			<motion.button
-				initial={{ scale: 0 }}
-				animate={{ scale: 1 }}
-				whileHover={{ scale: 1.1 }}
-				whileTap={{ scale: 0.9 }}
-				onClick={() => setIsCreatePostModalOpen(true)}
-				className="fixed bottom-6 right-6 w-14 h-14 bg-green-600 hover:bg-green-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center z-40"
-			>
-				<Edit3 className="h-6 w-6" />
-			</motion.button>
-
-			{/* Create Post Modal */}
-			<CreatePostModal 
-				isOpen={isCreatePostModalOpen}
-				onClose={() => setIsCreatePostModalOpen(false)}
+			{/* Proposal Modal */}
+			<CreateProposalModal
+				isOpen={isProposalModalOpen}
+				onClose={() => {
+					setIsProposalModalOpen(false);
+					setSelectedJob(null);
+				}}
+				job={selectedJob}
 			/>
 		</div>
 	);

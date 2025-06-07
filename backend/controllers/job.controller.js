@@ -1,5 +1,6 @@
 import Job from "../models/job.model.js";
 import User from "../models/user.model.js";
+import Proposal from "../models/proposal.model.js";
 
 // Create a new job posting
 export const createJob = async (req, res) => {
@@ -74,77 +75,70 @@ export const createJob = async (req, res) => {
     }
 };
 
-// Get all jobs with filtering and pagination
+// Get all jobs (with filters)
 export const getJobs = async (req, res) => {
     try {
-        const {
-            page = 1,
-            limit = 10,
-            category,
-            budgetMin,
-            budgetMax,
-            budgetType,
-            timeline,
-            experienceLevel,
-            location,
-            search,
-            status = 'open'
-        } = req.query;
+        const { page = 1, limit = 10, search, category, experienceLevel, budgetMin, budgetMax, location } = req.query;
 
-        // Build filter object
-        const filter = { status };
-
-        if (category && category !== 'all') {
-            filter.category = category;
-        }
-
-        if (budgetMin || budgetMax) {
-            filter.budget = {};
-            if (budgetMin) filter.budget.min = { $gte: parseInt(budgetMin) };
-            if (budgetMax) filter.budget.max = { $lte: parseInt(budgetMax) };
-        }
-
-        if (budgetType && budgetType !== 'all') {
-            filter.budgetType = budgetType;
-        }
-
-        if (timeline && timeline !== 'all') {
-            filter.timeline = timeline;
-        }
-
-        if (experienceLevel && experienceLevel !== 'all') {
-            filter.experienceLevel = experienceLevel;
-        }
-
-        if (location && location !== 'all') {
-            filter.location = location;
-        }
-
+        // Build filter
+        const filter = {};
         if (search) {
             filter.$or = [
                 { title: { $regex: search, $options: 'i' } },
-                { description: { $regex: search, $options: 'i' } },
-                { skillsRequired: { $in: [new RegExp(search, 'i')] } }
+                { description: { $regex: search, $options: 'i' } }
             ];
+        }
+        if (category && category !== 'all') {
+            filter.category = category;
+        }
+        if (experienceLevel && experienceLevel !== 'all') {
+            filter.experienceLevel = experienceLevel;
+        }
+        if (location && location !== 'all') {
+            filter.location = location;
+        }
+        if (budgetMin || budgetMax) {
+            filter.budget = {};
+            if (budgetMin) filter.budget.$gte = parseInt(budgetMin);
+            if (budgetMax) filter.budget.$lte = parseInt(budgetMax);
         }
 
         // Calculate pagination
         const skip = (parseInt(page) - 1) * parseInt(limit);
         
-        // Get jobs with pagination
+        // Get jobs
         const jobs = await Job.find(filter)
             .populate('client', 'name email profilePicture')
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(parseInt(limit));
 
-        // Get total count for pagination
+        // Get proposal counts for each job
+        const jobIds = jobs.map(job => job._id);
+        const proposalCounts = await Proposal.aggregate([
+            { $match: { job: { $in: jobIds } } },
+            { $group: { _id: "$job", count: { $sum: 1 } } }
+        ]);
+
+        // Create a map of job ID to proposal count
+        const proposalCountMap = proposalCounts.reduce((map, item) => {
+            map[item._id.toString()] = item.count;
+            return map;
+        }, {});
+
+        // Add proposal count to each job
+        const jobsWithProposalCount = jobs.map(job => {
+            const jobObj = job.toObject();
+            jobObj.proposalCount = proposalCountMap[job._id.toString()] || 0;
+            return jobObj;
+        });
+
         const totalJobs = await Job.countDocuments(filter);
         const totalPages = Math.ceil(totalJobs / parseInt(limit));
 
         res.status(200).json({
             success: true,
-            jobs,
+            jobs: jobsWithProposalCount,
             pagination: {
                 currentPage: parseInt(page),
                 totalPages,
@@ -169,8 +163,7 @@ export const getJobById = async (req, res) => {
         const { id } = req.params;
 
         const job = await Job.findById(id)
-            .populate('client', 'name email profilePicture')
-            .populate('applications.freelancer', 'name email profilePicture skills');
+            .populate('client', 'name email profilePicture');
 
         if (!job) {
             return res.status(404).json({
@@ -179,9 +172,16 @@ export const getJobById = async (req, res) => {
             });
         }
 
+        // Get proposal count for this job
+        const proposalCount = await Proposal.countDocuments({ job: id });
+
+        // Add proposal count to job object
+        const jobWithProposalCount = job.toObject();
+        jobWithProposalCount.proposalCount = proposalCount;
+
         res.status(200).json({
             success: true,
-            job
+            job: jobWithProposalCount
         });
 
     } catch (error) {
@@ -302,12 +302,32 @@ export const getMyJobs = async (req, res) => {
             .skip(skip)
             .limit(parseInt(limit));
 
+        // Get proposal counts for each job
+        const jobIds = jobs.map(job => job._id);
+        const proposalCounts = await Proposal.aggregate([
+            { $match: { job: { $in: jobIds } } },
+            { $group: { _id: "$job", count: { $sum: 1 } } }
+        ]);
+
+        // Create a map of job ID to proposal count
+        const proposalCountMap = proposalCounts.reduce((map, item) => {
+            map[item._id.toString()] = item.count;
+            return map;
+        }, {});
+
+        // Add proposal count to each job
+        const jobsWithProposalCount = jobs.map(job => {
+            const jobObj = job.toObject();
+            jobObj.proposalCount = proposalCountMap[job._id.toString()] || 0;
+            return jobObj;
+        });
+
         const totalJobs = await Job.countDocuments(filter);
         const totalPages = Math.ceil(totalJobs / parseInt(limit));
 
         res.status(200).json({
             success: true,
-            jobs,
+            jobs: jobsWithProposalCount,
             pagination: {
                 currentPage: parseInt(page),
                 totalPages,
@@ -500,6 +520,49 @@ export const getHotJobs = async (req, res) => {
 
     } catch (error) {
         console.error("Error fetching hot jobs:", error);
+        res.status(500).json({
+            success: false,
+            message: "Internal server error"
+        });
+    }
+};
+
+// Delete a job and all related data
+export const deleteJob = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // Find the job
+        const job = await Job.findById(id);
+
+        if (!job) {
+            return res.status(404).json({
+                success: false,
+                message: "Job not found"
+            });
+        }
+
+        // Check if user is the job owner
+        if (job.client.toString() !== req.user._id.toString()) {
+            return res.status(403).json({
+                success: false,
+                message: "You can only delete your own jobs"
+            });
+        }
+
+        // Delete all related proposals
+        await Proposal.deleteMany({ job: id });
+
+        // Delete the job
+        await Job.findByIdAndDelete(id);
+
+        res.status(200).json({
+            success: true,
+            message: "Job and related data deleted successfully"
+        });
+
+    } catch (error) {
+        console.error("Error deleting job:", error);
         res.status(500).json({
             success: false,
             message: "Internal server error"

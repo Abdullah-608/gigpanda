@@ -102,39 +102,7 @@ const jobSchema = new mongoose.Schema({
     country: {
         type: String,
         trim: true
-    },
-    
-    // Applications
-    applications: [{
-        freelancer: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "User",
-            required: true
-        },
-        proposalText: {
-            type: String,
-            required: true,
-            maxlength: 1000
-        },
-        proposedBudget: {
-            type: Number,
-            required: true,
-            min: 0
-        },
-        estimatedDuration: {
-            type: String,
-            required: true
-        },
-        appliedAt: {
-            type: Date,
-            default: Date.now
-        },
-        status: {
-            type: String,
-            default: "pending",
-            enum: ["pending", "accepted", "rejected"]
-        }
-    }]
+    }
     
 }, {
     timestamps: true
@@ -145,13 +113,5 @@ jobSchema.index({ client: 1 });
 jobSchema.index({ category: 1 });
 jobSchema.index({ status: 1 });
 jobSchema.index({ createdAt: -1 });
-
-// Virtual for application count
-jobSchema.virtual('applicationCount').get(function() {
-    return this.applications.length;
-});
-
-// Ensure virtual fields are serialized
-jobSchema.set('toJSON', { virtuals: true });
 
 export default mongoose.model("Job", jobSchema); 

@@ -1,9 +1,22 @@
 import { create } from "zustand";
 import axios from "axios";
+import toast from "react-hot-toast";
 
 const API_URL = import.meta.env.MODE === "development" ? "http://localhost:5000/api/auth" : "/api/auth";
 
 axios.defaults.withCredentials = true;
+
+// Add axios interceptors for better error handling
+axios.interceptors.response.use(
+	(response) => response,
+	async (error) => {
+		if (error.response?.status === 401) {
+			// Clear auth state on 401 errors
+			useAuthStore.getState().clearAuthState();
+		}
+		return Promise.reject(error);
+	}
+);
 
 export const useAuthStore = create((set, get) => ({
 	user: null,
@@ -14,30 +27,69 @@ export const useAuthStore = create((set, get) => ({
 	message: null,
 	topFreelancers: [],
 	isLoadingFreelancers: false,
+	activeTab: "dashboard",
 
-	signup: async (email, password, name,role) => {
+	clearAuthState: () => {
+		set({
+			user: null,
+			isAuthenticated: false,
+			error: null,
+			isCheckingAuth: false
+		});
+	},
+
+	checkAuth: async () => {
+		try {
+			const response = await axios.get(`${API_URL}/check-auth`);
+			if (response.data.success && response.data.user) {
+				const user = response.data.user;
+				set({ user, isAuthenticated: true, isCheckingAuth: false, error: null });
+			} else {
+				set({ user: null, isAuthenticated: false, isCheckingAuth: false, error: null });
+			}
+		} catch (error) {
+			console.error('Error checking auth:', error.response?.data || error.message);
+			// Only reset auth state if it's an authentication error
+			if (error.response?.status === 401) {
+				set({ user: null, isAuthenticated: false, isCheckingAuth: false, error: null });
+				toast.error("Session expired. Please login again.");
+			} else {
+				// For other errors, maintain the current auth state but update the checking status
+				set(state => ({ ...state, isCheckingAuth: false, error: error.response?.data?.message || 'Error checking authentication' }));
+			}
+		}
+	},
+
+	signup: async (email, password, name, role) => {
 		set({ isLoading: true, error: null });
 		try {
-			const response = await axios.post(`${API_URL}/signup`, { email, password, name ,role});
+			const response = await axios.post(`${API_URL}/signup`, { email, password, name, role });
 			set({ user: response.data.user, isAuthenticated: true, isLoading: false });
+			toast.success("Signup successful!");
+			return response.data;
 		} catch (error) {
-			set({ error: error.response.data.message || "Error signing up", isLoading: false });
+			const errorMsg = error.response?.data?.message || "Error signing up";
+			set({ error: errorMsg, isLoading: false });
+			toast.error(errorMsg);
 			throw error;
 		}
 	},
+
 	login: async (email, password) => {
 		set({ isLoading: true, error: null });
 		try {
 			const response = await axios.post(`${API_URL}/login`, { email, password });
-			set({
-				isAuthenticated: true,
-				user: response.data.user,
-				error: null,
-				isLoading: false,
-			});
+			const user = response.data.user;
+			set({ user, isAuthenticated: true, isLoading: false });
+			toast.success("Login successful!");
+			return user;
 		} catch (error) {
-			set({ error: error.response?.data?.message || "Error logging in", isLoading: false });
-			console.log(error)
+			const errorMsg = error.response?.data?.message || "Login failed";
+			set({ 
+				error: errorMsg,
+				isLoading: false 
+			});
+			toast.error(errorMsg);
 			throw error;
 		}
 	},
@@ -52,11 +104,15 @@ export const useAuthStore = create((set, get) => ({
 			// We do this by importing the store dynamically to avoid circular dependencies
 			const { useUserStore } = await import('./userStore');
 			useUserStore.getState().clearProfile();
+			
+			toast.success("Logged out successfully");
 		} catch (error) {
+			console.error("Logout error:", error);
 			set({ error: "Error logging out", isLoading: false });
-			throw error;
+			toast.error("Error logging out");
 		}
 	},
+
 	verifyEmail: async (code) => {
 		set({ isLoading: true, error: null });
 		try {
@@ -79,6 +135,7 @@ export const useAuthStore = create((set, get) => ({
 			throw new Error(errorMessage);
 		}
 	},
+
 	resendVerificationCode: async () => {
 		set({ isLoading: true, error: null });
 		try {
@@ -90,15 +147,7 @@ export const useAuthStore = create((set, get) => ({
 			throw error;
 		}
 	},
-	checkAuth: async () => {
-		set({ isCheckingAuth: true, error: null });
-		try {
-			const response = await axios.get(`${API_URL}/auth/check-auth`);
-			set({ user: response.data.user, isAuthenticated: true, isCheckingAuth: false });
-		} catch (error) {
-			set({ error: null, isCheckingAuth: false, isAuthenticated: false });
-		}
-	},
+
 	forgotPassword: async (email) => {
 		set({ isLoading: true, error: null });
 		try {
@@ -112,6 +161,7 @@ export const useAuthStore = create((set, get) => ({
 			throw error;
 		}
 	},
+
 	resetPassword: async (token, password) => {
 		set({ isLoading: true, error: null });
 		try {
@@ -125,6 +175,7 @@ export const useAuthStore = create((set, get) => ({
 			throw error;
 		}
 	},
+
 	// Fetch top freelancers
 	fetchTopFreelancers: async (limit = 2) => {
 		set({ isLoadingFreelancers: true, error: null });
@@ -143,4 +194,9 @@ export const useAuthStore = create((set, get) => ({
 			});
 		}
 	},
+
+	// Helper method to get current user
+	getCurrentUser: () => get().user,
+
+	setActiveTab: (tab) => set({ activeTab: tab })
 }));

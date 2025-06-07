@@ -1,41 +1,62 @@
 import { motion } from "framer-motion";
-import { Star, MessageSquare, Briefcase, BookmarkIcon, BellIcon, User, Menu, LogOut, ChevronDown, RefreshCw, Plus, DollarSign, Clock, Users, Award } from "lucide-react";
+import { MessageSquare, Briefcase, BookmarkIcon, BellIcon, User, Menu, LogOut, ChevronDown, RefreshCw, Plus, DollarSign, Clock, FileText, Award, Trash2 } from "lucide-react";
 import { useAuthStore } from "../store/authStore";
 import { usePostStore } from "../store/postStore";
 import { useJobStore } from "../store/jobStore";
 import SearchBar from "../components/SearchBar";
 import Post from "../components/Post";
 import { Navigate, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import CreateJobModal from "../components/CreateJobModal";
+import MessagesPage from "../pages/MessagesPage";
+import { useNotificationStore } from "../store/notificationStore";
+import { format } from 'date-fns';
+import { toast } from "react-hot-toast";
 
 const ClientDashboardPage = () => {
-	const { user, logout } = useAuthStore();
+	const { user, logout, activeTab, setActiveTab } = useAuthStore();
 	const { posts, isLoading, error, pagination, fetchPosts, loadMorePosts } = usePostStore();
 	const { 
 		hotJobs,
 		isLoadingHotJobs,
 		fetchHotJobs,
-		createJob,
-		isCreatingJob 
+		myJobs,
+		fetchMyJobs,
+		isLoadingMyJobs,
+		deleteJob 
 	} = useJobStore();
 	const { topFreelancers, isLoadingFreelancers, fetchTopFreelancers } = useAuthStore();
 	const navigate = useNavigate();
 	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 	const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+	const { notifications, unreadCount, fetchNotifications, markAsRead } = useNotificationStore();
+	const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+	const notificationRef = useRef(null);
+
+	useEffect(() => {
+		fetchPosts();
+		fetchTopFreelancers(2);
+		fetchHotJobs(4);
+		fetchMyJobs();
+		fetchNotifications();
+		
+		const handleClickOutside = (event) => {
+			if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+				setIsNotificationOpen(false);
+			}
+		};
+
+		document.addEventListener('mousedown', handleClickOutside);
+		return () => {
+			document.removeEventListener('mousedown', handleClickOutside);
+		};
+	}, [fetchPosts, fetchTopFreelancers, fetchHotJobs, fetchMyJobs, fetchNotifications]);
 	
 	// Check if user has the correct role
 	if (user?.role === "freelancer") {
 		return <Navigate to="/freelancer-dashboard" replace />;
 	}
-	
-	// Fetch data when component mounts
-	useEffect(() => {
-		fetchPosts();
-		fetchTopFreelancers(2); // Fetch top 2 freelancers
-		fetchHotJobs(4); // Fetch 4 hot jobs
-	}, [fetchPosts, fetchTopFreelancers, fetchHotJobs]);
-	
+
 	const handleLogout = async () => {
 		try {
 			await logout();
@@ -47,11 +68,6 @@ const ClientDashboardPage = () => {
 
 	const toggleDropdown = () => {
 		setIsDropdownOpen(!isDropdownOpen);
-	};
-
-	// Close dropdown when clicking outside
-	const closeDropdown = () => {
-		setIsDropdownOpen(false);
 	};
 
 	const handleRefreshPosts = async () => {
@@ -94,10 +110,39 @@ const ClientDashboardPage = () => {
 		return `${diffInDays} days ago`;
 	};
 
+	const handleNotificationClick = (notification) => {
+		if (!notification.read) {
+			markAsRead([notification._id]);
+		}
+
+		// Handle navigation based on notification type
+		switch (notification.type) {
+			case 'NEW_PROPOSAL':
+				setActiveTab('myjobs');
+				break;
+			case 'NEW_MESSAGE':
+				setActiveTab('messages');
+				break;
+		}
+		setIsNotificationOpen(false);
+	};
+
+	const handleDeleteJob = async (jobId) => {
+		if (window.confirm('Are you sure you want to delete this job? This action cannot be undone.')) {
+			try {
+				await deleteJob(jobId);
+				toast.success('Job deleted successfully');
+			} catch (error) {
+				toast.error(error.message || 'Failed to delete job');
+			}
+		}
+	};
+
 	return (
 		<div className="min-h-screen bg-gray-50">
 			{/* Custom scrollbar styles */}
-			<style jsx>{`
+			<style>
+				{`
 				.custom-scrollbar::-webkit-scrollbar {
 					width: 6px;
 				}
@@ -118,7 +163,8 @@ const ClientDashboardPage = () => {
 					scrollbar-color: #c1c1c1 #f1f1f1;
 					scroll-behavior: smooth;
 				}
-			`}</style>
+				`}
+			</style>
 			
 			{/* Top navigation bar */}
 			<header className="bg-white border-b border-gray-200 sticky top-0 z-10">
@@ -130,12 +176,36 @@ const ClientDashboardPage = () => {
 								<span className="ml-2 text-2xl">🐼</span>
 							</div>
 							<div className="hidden md:ml-6 md:flex md:space-x-8">
-								<a href="#" className="border-b-2 border-gray-800 text-gray-900 px-1 pt-5 pb-4 text-sm font-medium">
+								<button
+									onClick={() => setActiveTab("dashboard")}
+									className={`border-b-2 px-1 pt-5 pb-4 text-sm font-medium ${
+										activeTab === "dashboard"
+											? "border-gray-800 text-gray-900"
+											: "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+									}`}
+								>
 									Dashboard
-								</a>
-								<a href="#" className="border-b-2 border-transparent hover:border-gray-300 text-gray-500 hover:text-gray-700 px-1 pt-5 pb-4 text-sm font-medium">
+								</button>
+								<button
+									onClick={() => setActiveTab("myjobs")}
+									className={`border-b-2 px-1 pt-5 pb-4 text-sm font-medium ${
+										activeTab === "myjobs"
+											? "border-gray-800 text-gray-900"
+											: "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+									}`}
+								>
+									My Jobs
+								</button>
+								<button
+									onClick={() => setActiveTab("messages")}
+									className={`border-b-2 px-1 pt-5 pb-4 text-sm font-medium ${
+										activeTab === "messages"
+											? "border-gray-800 text-gray-900"
+											: "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+									}`}
+								>
 									Messages
-								</a>
+								</button>
 							</div>
 						</div>
 						<div className="flex items-center">
@@ -145,10 +215,84 @@ const ClientDashboardPage = () => {
 								<button type="button" className="p-2 text-gray-500 hover:text-gray-700 focus:outline-none">
 									<BookmarkIcon className="h-5 w-5" />
 								</button>
-								<button type="button" className="p-2 text-gray-500 hover:text-gray-700 focus:outline-none relative">
-									<BellIcon className="h-5 w-5" />
-									<span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-gray-500 ring-2 ring-white"></span>
-								</button>
+								<div className="relative" ref={notificationRef}>
+									<button 
+										type="button" 
+										className="p-2 text-gray-500 hover:text-gray-700 focus:outline-none relative"
+										onClick={() => setIsNotificationOpen(!isNotificationOpen)}
+									>
+										<BellIcon className="h-5 w-5" />
+										{unreadCount > 0 && (
+											<span className="absolute top-0 right-0 block h-5 w-5 rounded-full bg-red-500 ring-2 ring-white text-white text-xs flex items-center justify-center">
+												{unreadCount}
+											</span>
+										)}
+									</button>
+
+									{isNotificationOpen && (
+										<div className="absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-lg border border-gray-200 max-h-[80vh] overflow-y-auto z-50">
+											<div className="p-4 border-b border-gray-200">
+												<h3 className="text-lg font-semibold">Notifications</h3>
+											</div>
+											
+											<div className="divide-y divide-gray-200">
+												{notifications.length === 0 ? (
+													<div className="p-4 text-center text-gray-500">
+														No notifications
+													</div>
+												) : (
+													notifications.map((notification) => (
+														<div
+															key={notification._id}
+															onClick={() => handleNotificationClick(notification)}
+															className={`block p-4 hover:bg-gray-50 transition-colors cursor-pointer ${
+																!notification.read ? 'bg-blue-50' : ''
+															}`}
+														>
+															<div className="flex items-start gap-3">
+																<img
+																	src={notification.sender.profile?.pictureUrl || '/default-avatar.png'}
+																	alt={notification.sender.name}
+																	className="w-10 h-10 rounded-full object-cover"
+																/>
+																<div className="flex-1">
+																	<p className="text-sm text-gray-800">
+																		{(() => {
+																			const senderName = notification.sender.name;
+																			switch (notification.type) {
+																				case 'NEW_PROPOSAL':
+																					return (
+																						<>
+																							<span className="font-semibold">{senderName}</span> submitted a proposal for "
+																							<span className="font-semibold">{notification.job.title}</span>"
+																						</>
+																					);
+																				case 'NEW_MESSAGE':
+																					return (
+																						<>
+																							New message from <span className="font-semibold">{senderName}</span>
+																						</>
+																					);
+																				default:
+																					return 'New notification';
+																			}
+																		})()}
+																	</p>
+																	<p className="text-xs text-gray-500 mt-1">
+																		{format(new Date(notification.createdAt), 'MMM d, yyyy h:mm a')}
+																	</p>
+																</div>
+																{!notification.read && (
+																	<div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+																)}
+															</div>
+														</div>
+													))
+												)}
+											</div>
+										</div>
+									)}
+								</div>
 								<div className="ml-3 relative">
 									<div className="flex items-center">
 										<button 
@@ -217,6 +361,7 @@ const ClientDashboardPage = () => {
 			</header>
 			
 			<main className="w-full px-4 sm:px-6 lg:px-8 py-6">
+				{activeTab === "dashboard" ? (
 				<div className="flex flex-col md:flex-row gap-6">
 					{/* Left section (40%) - Real posts from freelancers */}
 					<div className="w-full md:w-5/12">
@@ -463,7 +608,7 @@ const ClientDashboardPage = () => {
 								)}
 
 								{/* Real hot jobs */}
-								{!isLoadingHotJobs && !error && hotJobs.map((job, index) => (
+									{!isLoadingHotJobs && !error && hotJobs.map((job) => (
 									<div key={job._id} className="p-4 border border-gray-100 rounded-lg hover:shadow-md transition-shadow">
 										<div className="flex justify-between">
 											<h3 className="text-sm font-semibold text-gray-900 line-clamp-2">{job.title}</h3>
@@ -489,6 +634,99 @@ const ClientDashboardPage = () => {
 						</motion.div>
 					</div>
 				</div>
+				) : activeTab === "myjobs" ? (
+					<motion.div
+						initial={{ opacity: 0, y: 20 }}
+						animate={{ opacity: 1, y: 0 }}
+						transition={{ delay: 0.2 }}
+						className="bg-white rounded-xl shadow-sm"
+					>
+						<div className="p-6 border-b border-gray-100">
+							<div className="flex items-center justify-between">
+								<h2 className="text-xl font-bold text-gray-800">My Jobs</h2>
+								<button
+									onClick={() => setIsCreateModalOpen(true)}
+									className="text-sm text-green-600 hover:text-green-800 font-medium flex items-center"
+								>
+									<Plus className="h-4 w-4 mr-1" />
+									Post New Job
+								</button>
+							</div>
+						</div>
+
+						<div className="p-6">
+							{isLoadingMyJobs ? (
+								<div className="flex items-center justify-center py-8">
+									<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+								</div>
+							) : myJobs.length === 0 ? (
+								<div className="text-center py-8">
+									<Briefcase className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+									<p className="text-gray-500">You haven't posted any jobs yet</p>
+									<button
+										onClick={() => setIsCreateModalOpen(true)}
+										className="mt-4 text-green-600 hover:text-green-700 font-medium"
+									>
+										Post your first job
+									</button>
+								</div>
+							) : (
+								<div className="space-y-4">
+									{myJobs.map((job) => (
+										<div
+											key={job._id}
+											className="border border-gray-100 rounded-lg p-4 hover:shadow-md transition-shadow"
+										>
+											<div className="flex items-start justify-between">
+												<div>
+													<h3 className="font-semibold text-gray-900">{job.title}</h3>
+													<div className="flex items-center space-x-4 mt-2 text-sm text-gray-600">
+														<span className="flex items-center">
+															<DollarSign className="h-4 w-4 mr-1" />
+															${job.budget.min} - ${job.budget.max}
+														</span>
+														<span className="flex items-center">
+															<Clock className="h-4 w-4 mr-1" />
+															{job.timeline}
+														</span>
+														<span className="flex items-center">
+															<FileText className="h-4 w-4 mr-1" />
+															{job.proposalCount || 0} proposals
+														</span>
+													</div>
+												</div>
+												<div className="flex items-center space-x-2">
+													<button
+														onClick={() => handleDeleteJob(job._id)}
+														className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+														title="Delete job"
+													>
+														<Trash2 className="h-5 w-5" />
+													</button>
+													<button
+														onClick={() => navigate(`/proposals/job/${job._id}`)}
+														className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors"
+													>
+														View Proposals
+													</button>
+												</div>
+											</div>
+										</div>
+									))}
+								</div>
+							)}
+						</div>
+					</motion.div>
+				) : activeTab === "messages" ? (
+					<motion.div
+						initial={{ opacity: 0, y: 20 }}
+						animate={{ opacity: 1, y: 0 }}
+						transition={{ delay: 0.2 }}
+						className="bg-white rounded-xl shadow-sm"
+					>
+						<MessagesPage />
+					</motion.div>
+				) : null}
 			</main>
 
 			{/* Floating Action Button */}

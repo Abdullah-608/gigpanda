@@ -104,19 +104,18 @@ export const Signin =async (req,res)=>{
 
       res.status(200).json({
         success:true,
-        message:"Logged in SuccessFully",
+        message:"Logged in Successfully",
         user:{
           ...user._doc,
           password:undefined
         },
       });
 
-
     } catch (error) {
       console.log("Error in log in Function",error)
-      res.status(200).json({
-        success:true,
-        message:"Logged In Successfully"
+      res.status(500).json({
+        success:false,
+        message:"An error occurred during login"
       });
     }
 }
