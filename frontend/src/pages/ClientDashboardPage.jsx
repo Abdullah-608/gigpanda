@@ -221,13 +221,13 @@ const ClientDashboardPage = () => {
 										className="p-2 text-gray-500 hover:text-gray-700 focus:outline-none relative"
 										onClick={() => setIsNotificationOpen(!isNotificationOpen)}
 									>
-										<BellIcon className="h-5 w-5" />
+									<BellIcon className="h-5 w-5" />
 										{unreadCount > 0 && (
 											<span className="absolute top-0 right-0 block h-5 w-5 rounded-full bg-red-500 ring-2 ring-white text-white text-xs flex items-center justify-center">
 												{unreadCount}
 											</span>
 										)}
-									</button>
+								</button>
 
 									{isNotificationOpen && (
 										<div className="absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-lg border border-gray-200 max-h-[80vh] overflow-y-auto z-50">
@@ -703,12 +703,12 @@ const ClientDashboardPage = () => {
 													>
 														<Trash2 className="h-5 w-5" />
 													</button>
-													<button
-														onClick={() => navigate(`/proposals/job/${job._id}`)}
-														className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors"
-													>
-														View Proposals
-													</button>
+												<button
+													onClick={() => navigate(`/proposals/job/${job._id}`)}
+													className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors"
+												>
+													View Proposals
+												</button>
 												</div>
 											</div>
 										</div>

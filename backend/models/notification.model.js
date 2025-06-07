@@ -13,7 +13,19 @@ const notificationSchema = new mongoose.Schema({
     },
     type: {
         type: String,
-        enum: ['NEW_PROPOSAL', 'PROPOSAL_ACCEPTED', 'PROPOSAL_REJECTED', 'NEW_MESSAGE'],
+        enum: [
+            'NEW_PROPOSAL',
+            'PROPOSAL_ACCEPTED',
+            'PROPOSAL_REJECTED',
+            'NEW_MESSAGE',
+            'CONTRACT_CREATED',
+            'CONTRACT_FUNDED',
+            'CONTRACT_ACTIVATED',
+            'MILESTONE_SUBMITTED',
+            'MILESTONE_APPROVED',
+            'PAYMENT_RELEASED',
+            'CONTRACT_COMPLETED'
+        ],
         required: true
     },
     job: {

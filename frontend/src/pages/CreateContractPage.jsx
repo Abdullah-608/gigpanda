@@ -19,32 +19,38 @@ const CreateContractPage = () => {
         terms: "",
         milestones: [
             {
-                title: "",
-                description: "",
+                title: "Initial Payment",
+                description: "Project kickoff and initial requirements",
                 amount: 0,
-                dueDate: ""
+                dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
             }
         ]
     });
 
     useEffect(() => {
         const loadProposal = async () => {
-            await getProposalById(proposalId);
+            try {
+                await getProposalById(proposalId);
+            } catch (error) {
+                console.error("Error loading proposal:", error);
+                toast.error("Failed to load proposal details");
+                navigate("/dashboard");
+            }
         };
         loadProposal();
-    }, [proposalId, getProposalById]);
+    }, [proposalId, getProposalById, navigate]);
 
     useEffect(() => {
-        if (currentProposal) {
+        if (currentProposal?.job?.title && currentProposal?.bidAmount?.amount) {
             setFormData(prev => ({
                 ...prev,
-                title: currentProposal.job.title,
-                totalAmount: currentProposal.bidAmount.amount,
+                title: currentProposal.job.title || "",
+                totalAmount: currentProposal.bidAmount.amount || 0,
                 milestones: [
                     {
                         title: "Initial Payment",
                         description: "Project kickoff and initial requirements",
-                        amount: currentProposal.bidAmount.amount * 0.25,
+                        amount: (currentProposal.bidAmount.amount * 0.25) || 0,
                         dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
                     }
                 ]

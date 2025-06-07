@@ -178,7 +178,14 @@ export const getProposalById = async (req, res) => {
 
         const proposal = await Proposal.findById(id)
             .populate('freelancer', 'name email profile')
-            .populate('job', 'title budget timeline status');
+            .populate({
+                path: 'job',
+                select: 'title budget timeline status client',
+                populate: {
+                    path: 'client',
+                    select: 'name email profile'
+                }
+            });
 
         if (!proposal) {
             return res.status(404).json({
@@ -189,7 +196,7 @@ export const getProposalById = async (req, res) => {
 
         // Check if user has access to view this proposal
         if (proposal.freelancer._id.toString() !== req.user._id.toString() && 
-            proposal.job.client.toString() !== req.user._id.toString()) {
+            proposal.job.client._id.toString() !== req.user._id.toString()) {
             return res.status(403).json({
                 success: false,
                 message: "You don't have permission to view this proposal"

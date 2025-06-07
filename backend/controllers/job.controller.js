@@ -525,7 +525,7 @@ export const getHotJobs = async (req, res) => {
             message: "Internal server error"
         });
     }
-};
+}; 
 
 // Delete a job and all related data
 export const deleteJob = async (req, res) => {

@@ -249,7 +249,7 @@ export const useMessageStore = create((set, get) => ({
             
             // Get the other user's info
             const otherUser = response.data.data[0]?.sender._id === userId 
-                ? response.data.data[0]?.sender 
+                        ? response.data.data[0]?.sender 
                 : response.data.data[0]?.receiver;
 
             // Update messages with read status
@@ -287,10 +287,10 @@ export const useMessageStore = create((set, get) => ({
                         currentConversation: {
                             user: otherUser,
                             messages,
-                            pagination: response.data.pagination
-                        },
+                    pagination: response.data.pagination
+                },
                         conversations: updatedConversations,
-                        isLoading: false
+                isLoading: false
                     };
                 }
 

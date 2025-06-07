@@ -5,7 +5,6 @@ import { useAuthStore } from "../store/authStore";
 import { DollarSign, CheckCircle, FileUp, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
 import LoadingSpinner from "../components/LoadingSpinner";
 import ContractMessaging from "../components/ContractMessaging";
-import { websocketService } from "../services/websocket";
 import toast from "react-hot-toast";
 
 const ContractDetailsPage = () => {
@@ -32,13 +31,6 @@ const ContractDetailsPage = () => {
             await getContractById(contractId);
         };
         loadContract();
-
-        // Set up polling for contract updates
-        const pollInterval = setInterval(loadContract, 5000); // Poll every 5 seconds
-
-        return () => {
-            clearInterval(pollInterval);
-        };
     }, [contractId, getContractById]);
 
     const handleFileChange = (e) => {
@@ -71,15 +63,8 @@ const ContractDetailsPage = () => {
     const handleReviewSubmission = async (milestoneId, status, feedback = "") => {
         try {
             await reviewSubmission(contractId, milestoneId, { status, feedback });
-            
-            // Notify through WebSocket
-            websocketService.send(
-                status === "approved" ? "milestone_approved" : "milestone_changes_requested",
-                {
-                    contractId,
-                    milestoneId
-                }
-            );
+            await getContractById(contractId); // Refresh contract data
+            toast.success(status === "approved" ? "Work approved successfully!" : "Changes requested successfully!");
         } catch (error) {
             toast.error("Error reviewing submission");
         }
@@ -88,12 +73,8 @@ const ContractDetailsPage = () => {
     const handleReleasePayment = async (milestoneId) => {
         try {
             await releasePayment(contractId, milestoneId);
-            
-            // Notify through WebSocket
-            websocketService.send("payment_released", {
-                contractId,
-                milestoneId
-            });
+            await getContractById(contractId); // Refresh contract data
+            toast.success("Payment released successfully!");
         } catch (error) {
             toast.error("Error releasing payment");
         }
@@ -102,15 +83,10 @@ const ContractDetailsPage = () => {
     const handleFundEscrow = async () => {
         try {
             await fundEscrow(contractId, fundAmount);
-            
-            // Notify through WebSocket
-            websocketService.send("escrow_funded", {
-                contractId,
-                amount: fundAmount
-            });
-
+            await getContractById(contractId); // Refresh contract data
             setShowFundModal(false);
             setFundAmount(0);
+            toast.success("Escrow funded successfully!");
         } catch (error) {
             toast.error("Error funding escrow");
         }

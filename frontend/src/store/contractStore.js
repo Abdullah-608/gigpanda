@@ -37,6 +37,21 @@ export const useContractStore = create((set) => ({
         set({ isLoading: true, error: null });
         try {
             const response = await axios.post(`${API_URL}/${contractId}/fund`, { amount });
+            
+            // After funding, automatically activate the contract and first milestone
+            if (response.data.contract.status === 'funded') {
+                const activateResponse = await axios.post(`${API_URL}/${contractId}/activate`);
+                set(state => ({
+                    contracts: state.contracts.map(contract =>
+                        contract._id === contractId ? activateResponse.data.contract : contract
+                    ),
+                    currentContract: activateResponse.data.contract,
+                    isLoading: false
+                }));
+                toast.success("Contract activated successfully!");
+                return activateResponse.data.contract;
+            }
+
             set(state => ({
                 contracts: state.contracts.map(contract =>
                     contract._id === contractId ? response.data.contract : contract
@@ -144,6 +159,26 @@ export const useContractStore = create((set) => ({
             const response = await axios.post(
                 `${API_URL}/${contractId}/milestones/${milestoneId}/release`
             );
+
+            // Check if all milestones are completed
+            const allMilestonesCompleted = response.data.contract.milestones.every(
+                milestone => milestone.status === "completed"
+            );
+
+            // If all milestones are completed, update contract status
+            if (allMilestonesCompleted) {
+                const completeResponse = await axios.post(`${API_URL}/${contractId}/complete`);
+                set(state => ({
+                    contracts: state.contracts.map(contract =>
+                        contract._id === contractId ? completeResponse.data.contract : contract
+                    ),
+                    currentContract: completeResponse.data.contract,
+                    isLoading: false
+                }));
+                toast.success("Contract completed successfully!");
+                return completeResponse.data.contract;
+            }
+
             set(state => ({
                 contracts: state.contracts.map(contract =>
                     contract._id === contractId ? response.data.contract : contract
