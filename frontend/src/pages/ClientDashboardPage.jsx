@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { MessageSquare, Briefcase, BookmarkIcon, BellIcon, User, Menu, LogOut, ChevronDown, RefreshCw, Plus, DollarSign, Clock, FileText, Award, Trash2 } from "lucide-react";
+import { MessageSquare, Briefcase, BookmarkIcon, BellIcon, User, Menu, LogOut, ChevronDown, RefreshCw, Plus, Award } from "lucide-react";
 import { useAuthStore } from "../store/authStore";
 import { usePostStore } from "../store/postStore";
 import { useJobStore } from "../store/jobStore";
@@ -9,22 +9,14 @@ import { Navigate, useNavigate } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
 import CreateJobModal from "../components/CreateJobModal";
 import MessagesPage from "../pages/MessagesPage";
+import ClientJobsTab from "../components/ClientJobsTab";
 import { useNotificationStore } from "../store/notificationStore";
 import { format } from 'date-fns';
-import { toast } from "react-hot-toast";
 
 const ClientDashboardPage = () => {
 	const { user, logout, activeTab, setActiveTab } = useAuthStore();
 	const { posts, isLoading, error, pagination, fetchPosts, loadMorePosts } = usePostStore();
-	const { 
-		hotJobs,
-		isLoadingHotJobs,
-		fetchHotJobs,
-		myJobs,
-		fetchMyJobs,
-		isLoadingMyJobs,
-		deleteJob 
-	} = useJobStore();
+	const { hotJobs, isLoadingHotJobs, fetchHotJobs, fetchMyJobs } = useJobStore();
 	const { topFreelancers, isLoadingFreelancers, fetchTopFreelancers } = useAuthStore();
 	const navigate = useNavigate();
 	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -125,17 +117,6 @@ const ClientDashboardPage = () => {
 				break;
 		}
 		setIsNotificationOpen(false);
-	};
-
-	const handleDeleteJob = async (jobId) => {
-		if (window.confirm('Are you sure you want to delete this job? This action cannot be undone.')) {
-			try {
-				await deleteJob(jobId);
-				toast.success('Job deleted successfully');
-			} catch (error) {
-				toast.error(error.message || 'Failed to delete job');
-			}
-		}
 	};
 
 	return (
@@ -360,7 +341,7 @@ const ClientDashboardPage = () => {
 				</div>
 			</header>
 			
-			<main className="w-full px-4 sm:px-6 lg:px-8 py-6">
+			<main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
 				{activeTab === "dashboard" ? (
 				<div className="flex flex-col md:flex-row gap-6">
 					{/* Left section (40%) - Real posts from freelancers */}
@@ -639,83 +620,18 @@ const ClientDashboardPage = () => {
 						initial={{ opacity: 0, y: 20 }}
 						animate={{ opacity: 1, y: 0 }}
 						transition={{ delay: 0.2 }}
-						className="bg-white rounded-xl shadow-sm"
 					>
-						<div className="p-6 border-b border-gray-100">
-							<div className="flex items-center justify-between">
-								<h2 className="text-xl font-bold text-gray-800">My Jobs</h2>
-								<button
-									onClick={() => setIsCreateModalOpen(true)}
-									className="text-sm text-green-600 hover:text-green-800 font-medium flex items-center"
-								>
-									<Plus className="h-4 w-4 mr-1" />
-									Post New Job
-								</button>
-							</div>
+						<div className="flex justify-between items-center mb-6">
+							<h2 className="text-2xl font-bold text-gray-900">My Jobs</h2>
+							<button
+								onClick={() => setIsCreateModalOpen(true)}
+								className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+							>
+								<Plus className="w-5 h-5 mr-2" />
+								Post New Job
+							</button>
 						</div>
-
-						<div className="p-6">
-							{isLoadingMyJobs ? (
-								<div className="flex items-center justify-center py-8">
-									<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
-								</div>
-							) : myJobs.length === 0 ? (
-								<div className="text-center py-8">
-									<Briefcase className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-									<p className="text-gray-500">You haven't posted any jobs yet</p>
-									<button
-										onClick={() => setIsCreateModalOpen(true)}
-										className="mt-4 text-green-600 hover:text-green-700 font-medium"
-									>
-										Post your first job
-									</button>
-								</div>
-							) : (
-								<div className="space-y-4">
-									{myJobs.map((job) => (
-										<div
-											key={job._id}
-											className="border border-gray-100 rounded-lg p-4 hover:shadow-md transition-shadow"
-										>
-											<div className="flex items-start justify-between">
-												<div>
-													<h3 className="font-semibold text-gray-900">{job.title}</h3>
-													<div className="flex items-center space-x-4 mt-2 text-sm text-gray-600">
-														<span className="flex items-center">
-															<DollarSign className="h-4 w-4 mr-1" />
-															${job.budget.min} - ${job.budget.max}
-														</span>
-														<span className="flex items-center">
-															<Clock className="h-4 w-4 mr-1" />
-															{job.timeline}
-														</span>
-														<span className="flex items-center">
-															<FileText className="h-4 w-4 mr-1" />
-															{job.proposalCount || 0} proposals
-														</span>
-													</div>
-												</div>
-												<div className="flex items-center space-x-2">
-													<button
-														onClick={() => handleDeleteJob(job._id)}
-														className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
-														title="Delete job"
-													>
-														<Trash2 className="h-5 w-5" />
-													</button>
-												<button
-													onClick={() => navigate(`/proposals/job/${job._id}`)}
-													className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors"
-												>
-													View Proposals
-												</button>
-												</div>
-											</div>
-										</div>
-									))}
-								</div>
-							)}
-						</div>
+						<ClientJobsTab />
 					</motion.div>
 				) : activeTab === "messages" ? (
 					<motion.div

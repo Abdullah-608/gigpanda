@@ -21,11 +21,11 @@ router.use(protectRoute);
 // Create contract from proposal
 router.post("/proposal/:proposalId", createContract);
 
-// Get contract by ID
-router.get("/:contractId", getContractById);
-
 // Get user's contracts
 router.get("/my/contracts", getMyContracts);
+
+// Get contract by ID
+router.get("/:contractId", getContractById);
 
 // Fund contract escrow
 router.post("/:contractId/fund", fundEscrow);

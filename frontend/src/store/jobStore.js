@@ -342,20 +342,23 @@ export const useJobStore = create((set, get) => ({
 
     // Delete a job (for clients)
     deleteJob: async (jobId) => {
+        set({ isLoading: true, error: null });
         try {
             const response = await axios.delete(`${API_URL}/${jobId}`);
             
             if (response.data.success) {
-                // Remove the job from myJobs array
+                // Remove the deleted job from myJobs array
                 set((state) => ({
-                    myJobs: state.myJobs.filter(job => job._id !== jobId)
+                    myJobs: state.myJobs.filter(job => job._id !== jobId),
+                    isLoading: false,
+                    error: null
                 }));
                 return response.data;
             }
         } catch (error) {
             console.error('Error deleting job:', error);
             const errorMessage = error.response?.data?.message || "Failed to delete job";
-            set({ error: errorMessage });
+            set({ error: errorMessage, isLoading: false });
             throw new Error(errorMessage);
         }
     }

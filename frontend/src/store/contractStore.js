@@ -241,7 +241,7 @@ export const useContractStore = create((set) => ({
         set({ currentContract: null });
     },
 
-    // Get user's contracts
+    // Get my contracts
     getMyContracts: async () => {
         set({ isLoading: true, error: null });
         try {
@@ -256,7 +256,6 @@ export const useContractStore = create((set) => ({
                 error: error.response?.data?.message || "Error fetching contracts",
                 isLoading: false 
             });
-            toast.error(error.response?.data?.message || "Error fetching contracts");
             throw error;
         }
     }

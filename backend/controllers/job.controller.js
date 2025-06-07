@@ -302,23 +302,29 @@ export const getMyJobs = async (req, res) => {
             .skip(skip)
             .limit(parseInt(limit));
 
-        // Get proposal counts for each job
+        // Get job IDs
         const jobIds = jobs.map(job => job._id);
-        const proposalCounts = await Proposal.aggregate([
-            { $match: { job: { $in: jobIds } } },
-            { $group: { _id: "$job", count: { $sum: 1 } } }
-        ]);
 
-        // Create a map of job ID to proposal count
-        const proposalCountMap = proposalCounts.reduce((map, item) => {
-            map[item._id.toString()] = item.count;
+        // Get proposals for all jobs
+        const proposals = await Proposal.find({ job: { $in: jobIds } })
+            .select('job status freelancer')
+            .populate('freelancer', 'name email profile');
+
+        // Create a map of job ID to proposals
+        const proposalMap = proposals.reduce((map, proposal) => {
+            if (!map[proposal.job.toString()]) {
+                map[proposal.job.toString()] = [];
+            }
+            map[proposal.job.toString()].push(proposal);
             return map;
         }, {});
 
-        // Add proposal count to each job
-        const jobsWithProposalCount = jobs.map(job => {
+        // Add proposals and counts to each job
+        const jobsWithProposals = jobs.map(job => {
             const jobObj = job.toObject();
-            jobObj.proposalCount = proposalCountMap[job._id.toString()] || 0;
+            jobObj.proposals = proposalMap[job._id.toString()] || [];
+            jobObj.proposalCount = jobObj.proposals.length;
+            jobObj.hasAcceptedProposal = jobObj.proposals.some(p => p.status === 'accepted');
             return jobObj;
         });
 
@@ -327,7 +333,7 @@ export const getMyJobs = async (req, res) => {
 
         res.status(200).json({
             success: true,
-            jobs: jobsWithProposalCount,
+            jobs: jobsWithProposals,
             pagination: {
                 currentPage: parseInt(page),
                 totalPages,
