@@ -365,7 +365,8 @@ export const submitWork = async (req, res) => {
                     status: milestone.currentSubmission.status || 'pending'
                 };
 
-                milestone.submissionHistory.push(submissionToMove);
+                // Add new submissions at the beginning of the array
+                milestone.submissionHistory.unshift(submissionToMove);
             }
 
             // Create new submission
@@ -469,7 +470,11 @@ export const reviewSubmission = async (req, res) => {
             if (!milestone.submissionHistory) {
                 milestone.submissionHistory = [];
             }
-            milestone.submissionHistory.push(milestone.currentSubmission);
+            milestone.submissionHistory.unshift({
+                ...milestone.currentSubmission.toObject(),
+                status: status,
+                feedbackAt: new Date()
+            });
             milestone.currentSubmission = null;
         } else if (status === "changes_requested") {
             milestone.status = "changes_requested";
@@ -477,7 +482,11 @@ export const reviewSubmission = async (req, res) => {
             if (!milestone.submissionHistory) {
                 milestone.submissionHistory = [];
             }
-            milestone.submissionHistory.push(milestone.currentSubmission);
+            milestone.submissionHistory.unshift({
+                ...milestone.currentSubmission.toObject(),
+                status: status,
+                feedbackAt: new Date()
+            });
             milestone.currentSubmission = null;
         }
 
@@ -518,7 +527,9 @@ export const reviewSubmission = async (req, res) => {
 // Release payment for milestone
 export const releasePayment = async (req, res) => {
     try {
-        const contract = await Contract.findById(req.params.contractId);
+        const contract = await Contract.findById(req.params.contractId)
+            .populate('job', 'title')
+            .populate('freelancer', '_id');
 
         if (!contract) {
             return res.status(404).json({
@@ -555,6 +566,17 @@ export const releasePayment = async (req, res) => {
 
         await contract.save();
 
+        // Create notification for the freelancer
+        const notification = new Notification({
+            recipient: contract.freelancer._id,
+            sender: req.user._id,
+            type: "PAYMENT_RELEASED",
+            job: contract.job._id,
+            message: `Payment of $${milestone.amount} has been released for milestone "${milestone.title}" in project "${contract.job.title}"`
+        });
+
+        await notification.save();
+
         res.status(200).json({
             success: true,
             message: "Payment released successfully",
@@ -574,7 +596,9 @@ export const releasePayment = async (req, res) => {
 // Complete contract
 export const completeContract = async (req, res) => {
     try {
-        const contract = await Contract.findById(req.params.contractId);
+        const contract = await Contract.findById(req.params.contractId)
+            .populate('job', 'title')
+            .populate('freelancer', '_id');
 
         if (!contract) {
             return res.status(404).json({
@@ -608,6 +632,17 @@ export const completeContract = async (req, res) => {
 
         // Update job status
         await Job.findByIdAndUpdate(contract.job, { status: "completed" });
+
+        // Create notification for the freelancer
+        const notification = new Notification({
+            recipient: contract.freelancer._id,
+            sender: req.user._id,
+            type: "CONTRACT_COMPLETED",
+            job: contract.job._id,
+            message: `Contract "${contract.job.title}" has been marked as completed by the client`
+        });
+
+        await notification.save();
 
         res.status(200).json({
             success: true,

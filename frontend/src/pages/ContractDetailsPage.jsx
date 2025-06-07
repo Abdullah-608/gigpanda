@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useContractStore } from "../store/contractStore";
 import { useAuthStore } from "../store/authStore";
-import { DollarSign, CheckCircle, FileUp, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
+import { DollarSign, CheckCircle, FileUp, AlertCircle, ChevronDown, ChevronUp, Check } from "lucide-react";
 import LoadingSpinner from "../components/LoadingSpinner";
 import ContractMessaging from "../components/ContractMessaging";
 import toast from "react-hot-toast";
@@ -17,6 +17,7 @@ const ContractDetailsPage = () => {
         submitWork,
         reviewSubmission,
         releasePayment,
+        completeContract,
         isLoading 
     } = useContractStore();
 
@@ -92,6 +93,16 @@ const ContractDetailsPage = () => {
         }
     };
 
+    const handleCompleteContract = async () => {
+        try {
+            await completeContract(contractId);
+            await getContractById(contractId); // Refresh contract data
+            toast.success("Contract completed successfully!");
+        } catch (error) {
+            toast.error(error.response?.data?.message || "Error completing contract");
+        }
+    };
+
     const getStatusColor = (status) => {
         const colors = {
             draft: "bg-gray-100 text-gray-800",
@@ -118,6 +129,11 @@ const ContractDetailsPage = () => {
     if (isLoading || !currentContract) return <LoadingSpinner />;
 
     const isClient = user._id === currentContract.client._id;
+
+    // Helper function to check if all milestones are paid
+    const areAllMilestonesPaid = () => {
+        return currentContract?.milestones?.every(milestone => milestone.status === "paid") || false;
+    };
 
     return (
         <div className="container mx-auto px-4 py-8">
@@ -147,6 +163,19 @@ const ContractDetailsPage = () => {
                         <h3 className="text-lg font-semibold mb-2">Project Scope</h3>
                         <p className="text-gray-700 whitespace-pre-wrap">{currentContract.scope}</p>
                     </div>
+
+                    {/* Complete Contract Button */}
+                    {isClient && areAllMilestonesPaid() && currentContract.status !== "completed" && (
+                        <div className="mt-6">
+                            <button
+                                onClick={handleCompleteContract}
+                                className="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center"
+                            >
+                                <Check className="w-4 h-4 mr-2" />
+                                Complete Contract
+                            </button>
+                        </div>
+                    )}
 
                     {/* Fund Escrow Button (Client Only) */}
                     {isClient && currentContract.status === "draft" && (
@@ -261,10 +290,10 @@ const ContractDetailsPage = () => {
                                         )}
 
                                         {/* Release Payment (Client Only) */}
-                                        {isClient && milestone.status === "completed" && !milestone.paymentReleased && (
+                                        {isClient && milestone.status === "completed" && (
                                             <button
                                                 onClick={() => handleReleasePayment(milestone._id)}
-                                                className="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center"
+                                                className="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center mt-4"
                                             >
                                                 <DollarSign className="w-4 h-4 mr-2" />
                                                 Release Payment

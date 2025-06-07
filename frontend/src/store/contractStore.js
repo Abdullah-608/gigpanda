@@ -249,25 +249,6 @@ export const useContractStore = create((set) => ({
                 `${API_URL}/${contractId}/milestones/${milestoneId}/release`
             );
 
-            // Check if all milestones are completed
-            const allMilestonesCompleted = response.data.contract.milestones.every(
-                milestone => milestone.status === "completed"
-            );
-
-            // If all milestones are completed, update contract status
-            if (allMilestonesCompleted) {
-                const completeResponse = await axios.post(`${API_URL}/${contractId}/complete`);
-                set(state => ({
-                    contracts: state.contracts.map(contract =>
-                        contract._id === contractId ? completeResponse.data.contract : contract
-                    ),
-                    currentContract: completeResponse.data.contract,
-                    isLoading: false
-                }));
-                toast.success("Contract completed successfully!");
-                return completeResponse.data.contract;
-            }
-
             set(state => ({
                 contracts: state.contracts.map(contract =>
                     contract._id === contractId ? response.data.contract : contract
@@ -275,14 +256,13 @@ export const useContractStore = create((set) => ({
                 currentContract: response.data.contract,
                 isLoading: false
             }));
-            toast.success("Payment released successfully!");
+
             return response.data.contract;
         } catch (error) {
             set({ 
                 error: error.response?.data?.message || "Error releasing payment",
                 isLoading: false 
             });
-            toast.error(error.response?.data?.message || "Error releasing payment");
             throw error;
         }
     },
@@ -343,6 +323,30 @@ export const useContractStore = create((set) => ({
         } catch (error) {
             set({ 
                 error: error.response?.data?.message || "Error fetching contracts",
+                isLoading: false 
+            });
+            throw error;
+        }
+    },
+
+    // Complete contract
+    completeContract: async (contractId) => {
+        set({ isLoading: true, error: null });
+        try {
+            const response = await axios.post(`${API_URL}/${contractId}/complete`);
+            
+            set(state => ({
+                contracts: state.contracts.map(contract =>
+                    contract._id === contractId ? response.data.contract : contract
+                ),
+                currentContract: response.data.contract,
+                isLoading: false
+            }));
+
+            return response.data.contract;
+        } catch (error) {
+            set({ 
+                error: error.response?.data?.message || "Error completing contract",
                 isLoading: false 
             });
             throw error;
