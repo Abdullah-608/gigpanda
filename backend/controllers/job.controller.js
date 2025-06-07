@@ -279,11 +279,19 @@ export const getMyJobs = async (req, res) => {
     try {
         const { page = 1, limit = 10, status } = req.query;
 
+        // Validate user exists and has a role
+        if (!req.user || !req.user.role) {
+            return res.status(401).json({
+                success: false,
+                message: "User authentication required"
+            });
+        }
+
         // Validate user is a client
         if (req.user.role !== 'client') {
             return res.status(403).json({
                 success: false,
-                message: "Access denied"
+                message: "Access denied - only clients can view their posted jobs"
             });
         }
 
@@ -296,19 +304,37 @@ export const getMyJobs = async (req, res) => {
         // Calculate pagination
         const skip = (parseInt(page) - 1) * parseInt(limit);
         
-        // Get jobs
-        const jobs = await Job.find(filter)
-            .sort({ createdAt: -1 })
-            .skip(skip)
-            .limit(parseInt(limit));
+        // Get jobs with proper error handling
+        let jobs;
+        try {
+            jobs = await Job.find(filter)
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(parseInt(limit));
+        } catch (error) {
+            console.error("Error fetching jobs:", error);
+            return res.status(500).json({
+                success: false,
+                message: "Error fetching jobs"
+            });
+        }
 
         // Get job IDs
         const jobIds = jobs.map(job => job._id);
 
-        // Get proposals for all jobs
-        const proposals = await Proposal.find({ job: { $in: jobIds } })
-            .select('job status freelancer')
-            .populate('freelancer', 'name email profile');
+        // Get proposals for all jobs with error handling
+        let proposals;
+        try {
+            proposals = await Proposal.find({ job: { $in: jobIds } })
+                .select('job status freelancer')
+                .populate('freelancer', 'name email profile');
+        } catch (error) {
+            console.error("Error fetching proposals:", error);
+            return res.status(500).json({
+                success: false,
+                message: "Error fetching job proposals"
+            });
+        }
 
         // Create a map of job ID to proposals
         const proposalMap = proposals.reduce((map, proposal) => {
@@ -334,20 +360,17 @@ export const getMyJobs = async (req, res) => {
         res.status(200).json({
             success: true,
             jobs: jobsWithProposals,
-            pagination: {
-                currentPage: parseInt(page),
-                totalPages,
-                totalJobs,
-                hasNextPage: parseInt(page) < totalPages,
-                hasPrevPage: parseInt(page) > 1
-            }
+            currentPage: parseInt(page),
+            totalPages,
+            totalJobs
         });
 
     } catch (error) {
-        console.error("Error fetching my jobs:", error);
+        console.error("Error in getMyJobs:", error);
         res.status(500).json({
             success: false,
-            message: "Internal server error"
+            message: "Internal server error",
+            error: error.message
         });
     }
 };

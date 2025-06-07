@@ -65,10 +65,17 @@ export const protectRoute = async (req, res, next) => {
   } catch (error) {
     if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
       // Clear the invalid token cookie
-      res.clearCookie('token');
+      res.clearCookie('token', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+        path: "/",
+        domain: process.env.NODE_ENV === "production" ? process.env.DOMAIN : undefined
+      });
+      
       return res.status(401).json({ 
         success: false, 
-        message: 'Token is invalid or expired' 
+        message: 'Token is invalid or expired, please login again' 
       });
     }
     

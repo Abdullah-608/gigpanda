@@ -14,6 +14,24 @@ export const createContract = async (req, res) => {
         const { proposalId } = req.params;
         const { title, scope, totalAmount, terms, milestones } = req.body;
 
+        // Validate required fields
+        if (!title || !scope || !terms || !milestones || !Array.isArray(milestones)) {
+            return res.status(400).json({
+                success: false,
+                message: "Missing required fields"
+            });
+        }
+
+        // Validate each milestone
+        for (const milestone of milestones) {
+            if (!milestone.title || !milestone.description || !milestone.amount || !milestone.dueDate) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Each milestone must have a title, description, amount, and due date"
+                });
+            }
+        }
+
         // Find the proposal
         const proposal = await Proposal.findById(proposalId).populate('job');
         if (!proposal) {
@@ -31,7 +49,7 @@ export const createContract = async (req, res) => {
             });
         }
 
-        // Create the contract
+        // Create the contract with validated milestone data
         const contract = new Contract({
             job: proposal.job._id,
             proposal: proposalId,
@@ -42,7 +60,10 @@ export const createContract = async (req, res) => {
             totalAmount,
             terms,
             milestones: milestones.map(milestone => ({
-                ...milestone,
+                title: milestone.title,
+                description: milestone.description,
+                amount: Number(milestone.amount),
+                dueDate: new Date(milestone.dueDate),
                 status: "pending"
             }))
         });
@@ -330,27 +351,46 @@ export const submitWork = async (req, res) => {
                 }
             }
 
-            // Create new submission
-            const newSubmission = {
-                files: savedFiles,
-                comments,
-                submittedAt: new Date(),
-                status: "pending"
-            };
+            const now = new Date();
 
-            // Add current submission to history if it exists
+            // If there's a current submission, move it to history
             if (milestone.currentSubmission) {
                 if (!milestone.submissionHistory) {
                     milestone.submissionHistory = [];
                 }
-                milestone.submissionHistory.push(milestone.currentSubmission);
+
+                const submissionToMove = {
+                    ...milestone.currentSubmission.toObject(),
+                    submittedAt: milestone.currentSubmission.submittedAt || now,
+                    status: milestone.currentSubmission.status || 'pending'
+                };
+
+                milestone.submissionHistory.push(submissionToMove);
             }
 
-            // Set new submission as current
-            milestone.currentSubmission = newSubmission;
+            // Create new submission
+            milestone.currentSubmission = {
+                files: savedFiles,
+                comments: comments || '',
+                submittedAt: now,
+                status: 'pending',
+                clientFeedback: '',
+                feedbackAt: null
+            };
+
+            // Update milestone status
             milestone.status = "submitted";
 
-            await contract.save();
+            try {
+                await contract.save();
+            } catch (error) {
+                console.error('Error saving contract:', error);
+                return res.status(500).json({
+                    success: false,
+                    message: "Error saving submission",
+                    error: error.message
+                });
+            }
 
             // Create notification for the client
             const notification = new Notification({
@@ -425,8 +465,20 @@ export const reviewSubmission = async (req, res) => {
         // Update milestone status based on review
         if (status === "approved") {
             milestone.status = "completed";
+            // Move to history
+            if (!milestone.submissionHistory) {
+                milestone.submissionHistory = [];
+            }
+            milestone.submissionHistory.push(milestone.currentSubmission);
+            milestone.currentSubmission = null;
         } else if (status === "changes_requested") {
             milestone.status = "changes_requested";
+            // Move to history and clear current submission
+            if (!milestone.submissionHistory) {
+                milestone.submissionHistory = [];
+            }
+            milestone.submissionHistory.push(milestone.currentSubmission);
+            milestone.currentSubmission = null;
         }
 
         await contract.save();
