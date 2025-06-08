@@ -6,7 +6,7 @@ import { useJobStore } from "../store/jobStore";
 import { useContractStore } from "../store/contractStore";
 import SearchBar from "../components/SearchBar";
 import Post from "../components/Post";
-import { Navigate, useNavigate, useLocation } from "react-router-dom";
+import { Navigate, useNavigate, useLocation, Link } from "react-router-dom";
 import { useEffect, useState, useRef, useCallback } from "react";
 import CreateJobModal from "../components/CreateJobModal";
 import MessagesPage from "../pages/MessagesPage";
@@ -287,7 +287,12 @@ const ClientDashboardPage = () => {
 												onScroll={handleNotificationScroll}
 												className="divide-y divide-gray-200 overflow-y-auto max-h-[calc(80vh-4rem)]"
 											>
-												{notifications.length === 0 ? (
+												{notificationLoading && notifications.length === 0 ? (
+													<div className="flex flex-col items-center justify-center py-8">
+														<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+														<p className="mt-2 text-sm text-gray-500">Loading notifications...</p>
+													</div>
+												) : notifications.length === 0 ? (
 													<div className="p-4 text-center text-gray-500">
 														No notifications
 													</div>
@@ -396,7 +401,15 @@ const ClientDashboardPage = () => {
 										>
 											<span className="sr-only">Open user menu</span>
 											<div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center text-white mr-2">
-												{user?.name?.charAt(0)?.toUpperCase() || <User className="h-5 w-5" />}
+												{user?.profile?.pictureUrl ? (
+													<img 
+														src={user.profile.pictureUrl} 
+														alt={user.name} 
+														className="h-full w-full rounded-full object-cover"
+													/>
+												) : (
+													user?.name?.charAt(0)?.toUpperCase() || <User className="h-5 w-5" />
+												)}
 											</div>
 											<span className="text-sm text-gray-700 hidden md:block mr-1">
 												{user?.name || "User"}
@@ -413,20 +426,13 @@ const ClientDashboardPage = () => {
 													<div className="font-medium">{user?.name || "User"}</div>
 													<div className="text-gray-500">{user?.email}</div>
 												</div>
-												<a
-													href="#"
+												<Link
+													to="/settings"
 													className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-150"
 													onClick={(e) => e.stopPropagation()}
 												>
-													Profile Settings
-												</a>
-												<a
-													href="#"
-													className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-150"
-													onClick={(e) => e.stopPropagation()}
-												>
-													Account Settings
-												</a>
+													Settings
+												</Link>
 												<button
 													className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors duration-150 flex items-center"
 													onClick={(e) => {
