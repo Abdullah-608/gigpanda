@@ -18,7 +18,7 @@ const submissionSchema = new mongoose.Schema({
             type: Number,
             required: true
         }
-    }],
+    }, { _id: true }],
     comments: {
         type: String,
         default: ''
