@@ -19,7 +19,7 @@ const formatSafeDate = (dateString, formatString) => {
 
 const ClientJobsTab = () => {
     const { myJobs, fetchMyJobs, deleteJob, isLoading } = useJobStore();
-    const { contracts, getMyContracts, fundEscrow, reviewSubmission, isLoadingContracts } = useContractStore();
+    const { contracts, getMyContracts, fundEscrow, reviewSubmission } = useContractStore();
     const { user } = useAuthStore();
     const [activeTab, setActiveTab] = useState('open');
     const [selectedContract, setSelectedContract] = useState(null);
@@ -29,6 +29,8 @@ const ClientJobsTab = () => {
     const [selectedFile, setSelectedFile] = useState(null);
     const [isDeletingJob, setIsDeletingJob] = useState(null);
     const [isFundingEscrow, setIsFundingEscrow] = useState(null);
+    const [isTogglingDetails, setIsTogglingDetails] = useState(null);
+    const [isViewingContract, setIsViewingContract] = useState(null);
     const navigate = useNavigate();
 
     const isClient = user?.role === 'client';
@@ -58,15 +60,29 @@ const ClientJobsTab = () => {
         return contract?.status === 'completed';
     });
 
-    const handleViewContract = (job) => {
+    const handleViewContract = async (job) => {
         console.log('Viewing contract for job:', job);
-        const matchingContract = contracts.find(c => c.job?._id === job._id);
-        console.log('Found matching contract:', matchingContract);
-        if (matchingContract) {
-            setSelectedContract(matchingContract);
-            setIsContractModalOpen(true);
-        } else {
-            toast.error('Contract not found');
+        setIsViewingContract(job._id);
+        try {
+            // Fetch latest contracts
+            const freshContracts = await getMyContracts();
+            
+            // Find the matching contract from the fresh data
+            const matchingContract = freshContracts?.find(c => c.job?._id === job._id);
+            
+            console.log('Found matching contract:', matchingContract);
+            
+            if (matchingContract) {
+                setSelectedContract(matchingContract);
+                setIsContractModalOpen(true);
+            } else {
+                toast.error('Contract not found');
+            }
+        } catch (error) {
+            console.error('Error loading contract:', error);
+            toast.error('Error loading contract details');
+        } finally {
+            setIsViewingContract(null);
         }
     };
 
@@ -117,17 +133,25 @@ const ClientJobsTab = () => {
         navigate(`/proposals/job/${jobId}`);
     };
 
-    const toggleJobDetails = (jobId) => {
+    const toggleJobDetails = async (jobId) => {
         console.log('Toggling job details for:', jobId);
-        setExpandedJobs(prev => {
-            const newSet = new Set(prev);
-            if (newSet.has(jobId)) {
-                newSet.delete(jobId);
-            } else {
-                newSet.add(jobId);
-            }
-            return newSet;
-        });
+        setIsTogglingDetails(jobId);
+        try {
+            setExpandedJobs(prev => {
+                const newSet = new Set(prev);
+                if (newSet.has(jobId)) {
+                    newSet.delete(jobId);
+                } else {
+                    newSet.add(jobId);
+                }
+                return newSet;
+            });
+        } finally {
+            // Add a small delay to make the loading state visible
+            setTimeout(() => {
+                setIsTogglingDetails(null);
+            }, 300);
+        }
     };
 
     const formatBudget = (budget, budgetType) => {
@@ -360,10 +384,10 @@ const ClientJobsTab = () => {
                                         <div className="flex space-x-3">
                                             <button
                                                 onClick={() => handleViewContract(job)}
-                                                disabled={isLoadingContracts}
+                                                disabled={isViewingContract === job._id}
                                                 className="flex items-center px-4 py-2 text-sm font-medium text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 disabled:opacity-50"
                                             >
-                                                {isLoadingContracts ? (
+                                                {isViewingContract === job._id ? (
                                                     <InlineLoading text="Loading..." size="small" spinnerColor="text-blue-600" textColor="text-blue-700" className="py-0" />
                                                 ) : (
                                                     <>
@@ -374,9 +398,12 @@ const ClientJobsTab = () => {
                                             </button>
                                             <button
                                                 onClick={() => toggleJobDetails(job._id)}
-                                                className="flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                                                disabled={isTogglingDetails === job._id}
+                                                className="flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 disabled:opacity-50"
                                             >
-                                                {isExpanded ? (
+                                                {isTogglingDetails === job._id ? (
+                                                    <InlineLoading text="Loading..." size="small" spinnerColor="text-gray-600" textColor="text-gray-700" className="py-0" />
+                                                ) : isExpanded ? (
                                                     <>
                                                         <ChevronUp className="w-4 h-4 mr-2" />
                                                         Hide Details
