@@ -162,16 +162,27 @@ const ClientJobsTab = () => {
     };
 
     const handleDownloadFile = async (contractId, milestoneId, file) => {
+        console.log('Download initiated:', { contractId, milestoneId, fileUrl: file.url });
         try {
-            const response = await fetch(`/api/contracts/${contractId}/milestones/${milestoneId}/files/${file._id}/download`, {
+            const apiUrl = `/api/contracts/${contractId}/milestones/${milestoneId}/files/${file.url}/download`;
+            console.log('Making download request to:', apiUrl);
+            
+            const response = await fetch(apiUrl, {
                 method: 'GET',
                 headers: {
-                    'Accept': '*/*'  // Accept any content type
-                }
+                    'Accept': '*/*'
+                },
+                credentials: 'include' // Include cookies if using authentication
+            });
+
+            console.log('Download response received:', {
+                status: response.status,
+                statusText: response.statusText,
+                headers: Object.fromEntries(response.headers.entries())
             });
 
             if (!response.ok) {
-                throw new Error('Download failed');
+                throw new Error(`Download failed: ${response.status} ${response.statusText}`);
             }
 
             // Get the filename from the Content-Disposition header or use the original filename
@@ -180,14 +191,20 @@ const ClientJobsTab = () => {
                 ? decodeURIComponent(contentDisposition.split('filename=')[1].replace(/"/g, ''))
                 : file.filename;
 
-            // Create blob with the correct type from response headers
-            const blob = await response.blob();
-            const blobWithType = new Blob([blob], { 
-                type: response.headers.get('Content-Type') || 'application/octet-stream' 
-            });
+            // Get the content type from headers or use a default
+            const contentType = response.headers.get('Content-Type') || 'application/octet-stream';
 
-            // Create download link and trigger download
-            const downloadUrl = window.URL.createObjectURL(blobWithType);
+            console.log('Processing download:', { filename, contentType });
+
+            // Get the response as array buffer for binary data
+            const arrayBuffer = await response.arrayBuffer();
+            console.log('Received array buffer size:', arrayBuffer.byteLength);
+
+            const blob = new Blob([arrayBuffer], { type: contentType });
+            console.log('Created blob:', { size: blob.size, type: blob.type });
+
+            // Create download link
+            const downloadUrl = window.URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = downloadUrl;
             link.download = filename;
@@ -196,14 +213,13 @@ const ClientJobsTab = () => {
             
             // Cleanup
             document.body.removeChild(link);
-            setTimeout(() => {
-                window.URL.revokeObjectURL(downloadUrl);
-            }, 100);
-
+            window.URL.revokeObjectURL(downloadUrl);
+            
+            console.log('Download completed successfully');
             toast.success('File download started');
         } catch (error) {
             console.error('Error downloading file:', error);
-            toast.error('Failed to download file');
+            toast.error(`Failed to download file: ${error.message}`);
         }
     };
 
@@ -678,11 +694,11 @@ const ClientJobsTab = () => {
 
                                             <div className="bg-gray-50 p-4 rounded-lg">
                                                 <h4 className="font-medium text-gray-900 mb-2">Milestones</h4>
-                                                <div className="space-y-4">
+                                                                        <div className="space-y-4">
                                                     {contract.milestones.map((milestone, index) => (
                                                         <div key={index} className="border-b border-gray-200 pb-4 last:border-0 last:pb-0">
                                                             <div className="flex justify-between items-start mb-2">
-                                                                <div>
+                                                                                        <div>
                                                                     <h5 className="font-medium text-gray-900">{milestone.title}</h5>
                                                                     <p className="text-sm text-gray-600 mt-1">
                                                                         Due: {formatSafeDate(milestone.dueDate, 'MMM dd, yyyy')}
@@ -694,7 +710,7 @@ const ClientJobsTab = () => {
                                                                 <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
                                                                     Completed
                                                                 </span>
-                                                            </div>
+                                                                                        </div>
 
                                                             {/* Submission History */}
                                                             {(milestone.submissionHistory?.length > 0) && (
@@ -707,52 +723,52 @@ const ClientJobsTab = () => {
                                                                                     <p className="text-sm text-gray-600">
                                                                                         Submitted on {formatSafeDate(submission.submittedAt, 'MMM dd, yyyy HH:mm')}
                                                                                     </p>
-                                                                                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                                                                                        submission.status === 'approved' ? 'bg-green-100 text-green-800' :
-                                                                                        submission.status === 'changes_requested' ? 'bg-yellow-100 text-yellow-800' :
+                                                                                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                                                                                            submission.status === 'approved' ? 'bg-green-100 text-green-800' :
+                                                                                            submission.status === 'changes_requested' ? 'bg-yellow-100 text-yellow-800' :
                                                                                         'bg-gray-100 text-gray-800'
-                                                                                    }`}>
+                                                                                        }`}>
                                                                                         {submission.status.replace('_', ' ')}
-                                                                                    </span>
-                                                                                </div>
+                                                                                        </span>
+                                                                                    </div>
                                                                                 <p className="text-sm text-gray-700 mb-2">{submission.comments}</p>
 
-                                                                                {/* Submission Files */}
+                                                                                    {/* Submission Files */}
                                                                                 {submission.files && submission.files.length > 0 && (
                                                                                     <div className="mt-2">
                                                                                         <p className="text-sm font-medium text-gray-700 mb-1">Files:</p>
                                                                                         <div className="flex flex-wrap gap-2">
-                                                                                            {submission.files.map((file, fileIndex) => (
+                                                                                        {submission.files.map((file, fileIndex) => (
                                                                                                 <button
-                                                                                                    key={fileIndex}
-                                                                                                    onClick={() => handleDownloadFile(contract._id, milestone._id, file)}
+                                                                                                key={fileIndex}
+                                                                                                        onClick={() => handleDownloadFile(contract._id, milestone._id, file)}
                                                                                                     className="flex items-center px-3 py-1 text-sm text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                                                                                                >
+                                                                                                    >
                                                                                                     <FileText className="w-4 h-4 mr-2" />
                                                                                                     {file.filename}
-                                                                                                </button>
+                                                                                                    </button>
                                                                                             ))}
-                                                                                        </div>
+                                                                                            </div>
                                                                                     </div>
                                                                                 )}
 
-                                                                                {/* Client Feedback */}
-                                                                                {submission.clientFeedback && (
+                                                                                    {/* Client Feedback */}
+                                                                                    {submission.clientFeedback && (
                                                                                     <div className="mt-3 pt-3 border-t border-gray-200">
                                                                                         <p className="text-sm font-medium text-gray-900">Your Feedback:</p>
-                                                                                        <p className="text-sm text-gray-700 mt-1">{submission.clientFeedback}</p>
-                                                                                        <p className="text-xs text-gray-500 mt-1">
+                                                                                            <p className="text-sm text-gray-700 mt-1">{submission.clientFeedback}</p>
+                                                                                            <p className="text-xs text-gray-500 mt-1">
                                                                                             Provided on {formatSafeDate(submission.feedbackAt, 'MMM dd, yyyy HH:mm')}
-                                                                                        </p>
-                                                                                    </div>
-                                                                                )}
-                                                                            </div>
-                                                                        ))}
+                                                                                            </p>
+                                                                                        </div>
+                                                                                    )}
+                                                                                </div>
+                                                                            ))}
+                                                                        </div>
                                                                     </div>
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    ))}
+                                                                )}
+                                                            </div>
+                                                        ))}
                                                 </div>
                                             </div>
                                         </div>

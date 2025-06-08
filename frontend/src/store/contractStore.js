@@ -1,8 +1,10 @@
 import { create } from "zustand";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { API_URLS } from "../config/api";
 
-const API_URL = import.meta.env.MODE === "development" ? "http://localhost:5000/api/contracts" : "/api/contracts";
+// Configure axios defaults
+axios.defaults.withCredentials = true;
 
 export const useContractStore = create((set) => ({
     contracts: [],
@@ -16,7 +18,7 @@ export const useContractStore = create((set) => ({
     createContract: async (proposalId, contractData) => {
         set({ isLoading: true, error: null });
         try {
-            const response = await axios.post(`${API_URL}/proposal/${proposalId}`, contractData);
+            const response = await axios.post(`${API_URLS.contracts}/proposal/${proposalId}`, contractData);
             
             // Only update state if the request was successful
             if (response.data.success) {
@@ -32,13 +34,10 @@ export const useContractStore = create((set) => ({
                 throw new Error(response.data.message || "Failed to create contract");
             }
         } catch (error) {
-            // Ensure loading state is reset and error is set
             set({ 
                 isLoading: false,
                 error: error.response?.data?.message || error.message || "Error creating contract"
             });
-            
-            // Re-throw the error to be handled by the component
             toast.error(error.response?.data?.message || error.message || "Error creating contract");
             throw error;
         }
@@ -48,11 +47,11 @@ export const useContractStore = create((set) => ({
     fundEscrow: async (contractId, amount) => {
         set({ isLoading: true, error: null });
         try {
-            const response = await axios.post(`${API_URL}/${contractId}/fund`, { amount });
+            const response = await axios.post(`${API_URLS.contracts}/${contractId}/fund`, { amount });
             
             // After funding, automatically activate the contract and first milestone
             if (response.data.contract.status === 'funded') {
-                const activateResponse = await axios.post(`${API_URL}/${contractId}/activate`);
+                const activateResponse = await axios.post(`${API_URLS.contracts}/${contractId}/activate`);
                 set(state => ({
                     contracts: state.contracts.map(contract =>
                         contract._id === contractId ? activateResponse.data.contract : contract
@@ -87,7 +86,7 @@ export const useContractStore = create((set) => ({
     addMilestone: async (contractId, milestoneData) => {
         set({ isLoading: true, error: null });
         try {
-            const response = await axios.post(`${API_URL}/${contractId}/milestones`, milestoneData);
+            const response = await axios.post(`${API_URLS.contracts}/${contractId}/milestones`, milestoneData);
             set(state => ({
                 contracts: state.contracts.map(contract =>
                     contract._id === contractId ? response.data.contract : contract
@@ -130,7 +129,7 @@ export const useContractStore = create((set) => ({
             formData.append('submittedAt', new Date().toISOString());
 
             const response = await axios.post(
-                `${API_URL}/${contractId}/milestones/${milestoneId}/submit`,
+                `${API_URLS.contracts}/${contractId}/milestones/${milestoneId}/submit`,
                 formData,
                 {
                     headers: {
@@ -177,7 +176,7 @@ export const useContractStore = create((set) => ({
         set({ isLoading: true, error: null });
         try {
             const response = await axios.post(
-                `${API_URL}/${contractId}/milestones/${milestoneId}/review`,
+                `${API_URLS.contracts}/${contractId}/milestones/${milestoneId}/review`,
                 { status, feedback }
             );
 
@@ -217,7 +216,7 @@ export const useContractStore = create((set) => ({
         set(state => ({ ...state, isReleasingPayment: milestoneId }));
         try {
             const response = await axios.post(
-                `${API_URL}/${contractId}/milestones/${milestoneId}/release`
+                `${API_URLS.contracts}/${contractId}/milestones/${milestoneId}/release`
             );
 
             // Only update the specific milestone and escrow balance
@@ -262,7 +261,7 @@ export const useContractStore = create((set) => ({
     getContracts: async () => {
         set({ isLoading: true, error: null });
         try {
-            const response = await axios.get(`${API_URL}/my-contracts`);
+            const response = await axios.get(`${API_URLS.contracts}/my-contracts`);
             set({ 
                 contracts: response.data.contracts,
                 isLoading: false 
@@ -281,7 +280,7 @@ export const useContractStore = create((set) => ({
     getContractById: async (contractId) => {
         set({ isLoading: true, error: null });
         try {
-            const response = await axios.get(`${API_URL}/${contractId}`);
+            const response = await axios.get(`${API_URLS.contracts}/${contractId}`);
             set({ 
                 currentContract: response.data.contract,
                 isLoading: false 
@@ -305,7 +304,7 @@ export const useContractStore = create((set) => ({
     getMyContracts: async () => {
         set({ isLoading: true, error: null });
         try {
-            const response = await axios.get(`${API_URL}/my/contracts`);
+            const response = await axios.get(`${API_URLS.contracts}/my/contracts`);
             set({ 
                 contracts: response.data.contracts,
                 isLoading: false 
@@ -324,7 +323,7 @@ export const useContractStore = create((set) => ({
     completeContract: async (contractId) => {
         set(state => ({ ...state, isCompletingContract: contractId }));
         try {
-            const response = await axios.post(`${API_URL}/${contractId}/complete`);
+            const response = await axios.post(`${API_URLS.contracts}/${contractId}/complete`);
             
             set(state => ({
                 contracts: state.contracts.map(contract =>

@@ -337,6 +337,16 @@ export const submitWork = async (req, res) => {
                 });
             }
 
+            // Log received files
+            if (req.files) {
+                console.log('Received files for upload:', req.files.map(file => ({
+                    filename: file.originalname,
+                    size: file.size,
+                    mimetype: file.mimetype,
+                    bufferSize: file.buffer.length
+                })));
+            }
+
             const { comments } = req.body;
             const contract = await Contract.findById(req.params.contractId)
                 .populate('job', 'title');
@@ -370,15 +380,26 @@ export const submitWork = async (req, res) => {
             if (req.files && req.files.length > 0) {
                 for (const file of req.files) {
                     try {
-                        const fileUrl = await saveFileToStorage(file);
+                        console.log(`Processing file for upload: ${file.originalname}`, {
+                            size: file.size,
+                            bufferSize: file.buffer.length,
+                            mimetype: file.mimetype
+                        });
+
+                        const fileId = await saveFileToStorage(file);
                         savedFiles.push({
                             filename: file.originalname,
-                            url: fileUrl,
+                            url: fileId,
                             mimetype: file.mimetype,
                             size: file.size
                         });
+
+                        console.log(`Successfully saved file: ${file.originalname}`, {
+                            fileId,
+                            savedSize: file.size
+                        });
                     } catch (error) {
-                        console.error('Error saving file:', error);
+                        console.error(`Error saving file: ${file.originalname}`, error);
                         failedFiles.push(file.originalname);
                     }
                 }
@@ -714,20 +735,30 @@ export const completeContract = async (req, res) => {
 // Download submission file
 export const downloadSubmissionFile = async (req, res) => {
     const { contractId, milestoneId, fileId } = req.params;
+    const fileUrl = fileId; // The fileId parameter is actually the file URL
+    
+    console.log('Download request received:', { contractId, milestoneId, fileUrl });
 
     try {
         // Find the contract
         const contract = await Contract.findById(contractId);
         if (!contract) {
+            console.log('Contract not found:', contractId);
             return res.status(404).json({
                 success: false,
                 message: "Contract not found"
             });
         }
 
+        console.log('Contract found:', {
+            contractId: contract._id,
+            milestoneCount: contract.milestones.length
+        });
+
         // Verify user has access to this contract
         if (contract.client.toString() !== req.user._id.toString() &&
             contract.freelancer.toString() !== req.user._id.toString()) {
+            console.log('Access denied for user:', req.user._id);
             return res.status(403).json({
                 success: false,
                 message: "Access denied"
@@ -737,75 +768,116 @@ export const downloadSubmissionFile = async (req, res) => {
         // Find the milestone
         const milestone = contract.milestones.id(milestoneId);
         if (!milestone) {
+            console.log('Milestone not found:', milestoneId);
             return res.status(404).json({
                 success: false,
                 message: "Milestone not found"
             });
         }
 
+        console.log('Milestone found:', {
+            milestoneId: milestone._id,
+            hasCurrentSubmission: !!milestone.currentSubmission,
+            submissionHistoryCount: milestone.submissionHistory?.length || 0
+        });
+
         // Look for the file in both current submission and submission history
-        let file = null;
+        let fileMetadata = null;
         
         // Check current submission first
         if (milestone.currentSubmission && milestone.currentSubmission.files) {
-            file = milestone.currentSubmission.files.find(f => f._id.toString() === fileId);
+            console.log('Checking current submission files:', {
+                filesCount: milestone.currentSubmission.files.length,
+                fileUrls: milestone.currentSubmission.files.map(f => f.url)
+            });
+            fileMetadata = milestone.currentSubmission.files.find(f => f.url === fileUrl);
         }
         
         // If not found in current submission, check submission history
-        if (!file && milestone.submissionHistory) {
+        if (!fileMetadata && milestone.submissionHistory) {
+            console.log('Checking submission history');
             for (const submission of milestone.submissionHistory) {
                 if (submission.files) {
-                    file = submission.files.find(f => f._id.toString() === fileId);
-                    if (file) break;
+                    console.log('Checking submission files:', {
+                        filesCount: submission.files.length,
+                        fileUrls: submission.files.map(f => f.url)
+                    });
+                    fileMetadata = submission.files.find(f => f.url === fileUrl);
+                    if (fileMetadata) {
+                        console.log('File found in submission history');
+                        break;
+                    }
                 }
             }
         }
 
-        if (!file) {
+        if (!fileMetadata) {
+            console.log('File metadata not found for URL:', fileUrl);
             return res.status(404).json({
                 success: false,
                 message: "File not found"
             });
         }
 
+        console.log('File metadata found:', {
+            filename: fileMetadata.filename,
+            url: fileMetadata.url,
+            size: fileMetadata.size
+        });
+
         try {
-            // Set response headers before starting the stream
+            // Get file from MongoDB
+            const file = await getFileFromStorage(fileMetadata.url);
+
+            console.log('File retrieved from storage:', {
+                filename: file.filename,
+                size: file.size,
+                dataLength: file.data.length,
+                isBuffer: Buffer.isBuffer(file.data)
+            });
+
+            // Set response headers
             res.setHeader('Content-Type', file.mimetype);
             res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(file.filename)}"`);
             res.setHeader('Content-Length', file.size);
+            res.setHeader('Cache-Control', 'no-cache');
+            res.setHeader('Accept-Ranges', 'bytes');
 
-            // Get the file stream
-            const fileStream = await getFileFromStorage(file.url);
+            // Convert Buffer to proper format if needed
+            let fileData;
+            if (Buffer.isBuffer(file.data)) {
+                fileData = file.data;
+            } else if (file.data instanceof Uint8Array) {
+                fileData = Buffer.from(file.data);
+            } else if (typeof file.data === 'string') {
+                // Handle base64 string
+                fileData = Buffer.from(file.data.replace(/^data:.*?;base64,/, ''), 'base64');
+            } else {
+                throw new Error('Invalid file data format');
+            }
 
-            // Use stream.pipeline for proper error handling and cleanup
-            const { pipeline } = await import('stream/promises');
-            
-            await pipeline(
-                fileStream,
-                res
-            );
+            console.log('Prepared file data for sending:', {
+                filename: file.filename,
+                bufferSize: fileData.length,
+                contentLength: file.size
+            });
 
-            // Log success after pipeline completes
-            console.log('File download completed successfully');
+            // Send file data as buffer
+            res.end(fileData);
+
+            console.log('File sent successfully:', {
+                filename: file.filename,
+                sentSize: fileData.length
+            });
 
         } catch (error) {
-            // If headers haven't been sent yet, send error response
+            console.error('Error sending file:', error);
             if (!res.headersSent) {
-                console.error('Error streaming file:', error);
                 return res.status(500).json({
                     success: false,
-                    message: "Error streaming file",
+                    message: "Error sending file",
                     error: error.message
                 });
-            } else {
-                // If headers were sent but streaming failed, destroy the stream and end the response
-                if (fileStream && !fileStream.destroyed) {
-                    fileStream.destroy();
-                }
-                if (!res.finished) {
-                    res.end();
-                }
-                console.error('Error during file streaming after headers sent:', error);
             }
         }
 
