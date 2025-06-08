@@ -160,6 +160,12 @@ const ClientDashboardPage = () => {
 					setActiveTab('myjobs');
 				}
 				break;
+			case 'POST_LIKED':
+			case 'POST_COMMENTED':
+				if (notification.post?._id) {
+					navigate(`/posts/${notification.post._id}`);
+				}
+				break;
 		}
 		setIsNotificationOpen(false);
 	};
@@ -327,6 +333,18 @@ const ClientDashboardPage = () => {
 																								<>
 																									<span className="font-semibold">{senderName}</span> submitted work for a milestone in "
 																									<span className="font-semibold">{jobTitle}</span>"
+																								</>
+																						);
+																						case 'POST_LIKED':
+																							return (
+																								<>
+																									<span className="font-semibold">{senderName}</span> liked your post
+																								</>
+																						);
+																						case 'POST_COMMENTED':
+																							return (
+																								<>
+																									<span className="font-semibold">{senderName}</span> commented on your post
 																								</>
 																						);
 																						default:

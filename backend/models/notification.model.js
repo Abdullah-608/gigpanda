@@ -25,7 +25,9 @@ const notificationSchema = new mongoose.Schema({
             'MILESTONE_APPROVED',
             'MILESTONE_CHANGES_REQUESTED',
             'PAYMENT_RELEASED',
-            'CONTRACT_COMPLETED'
+            'CONTRACT_COMPLETED',
+            'POST_LIKED',
+            'POST_COMMENTED'
         ],
         required: true
     },
@@ -36,6 +38,10 @@ const notificationSchema = new mongoose.Schema({
     proposal: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Proposal'
+    },
+    post: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Post'
     },
     message: {
         type: String
