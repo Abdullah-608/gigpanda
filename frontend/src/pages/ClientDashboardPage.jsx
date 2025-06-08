@@ -5,7 +5,7 @@ import { usePostStore } from "../store/postStore";
 import { useJobStore } from "../store/jobStore";
 import SearchBar from "../components/SearchBar";
 import Post from "../components/Post";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Navigate, useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
 import CreateJobModal from "../components/CreateJobModal";
 import MessagesPage from "../pages/MessagesPage";
@@ -19,6 +19,7 @@ const ClientDashboardPage = () => {
 	const { hotJobs, isLoadingHotJobs, fetchHotJobs, fetchMyJobs } = useJobStore();
 	const { topFreelancers, isLoadingFreelancers, fetchTopFreelancers } = useAuthStore();
 	const navigate = useNavigate();
+	const location = useLocation();
 	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 	const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 	const { notifications, unreadCount, fetchNotifications, markAsRead } = useNotificationStore();
@@ -32,6 +33,11 @@ const ClientDashboardPage = () => {
 		fetchMyJobs();
 		fetchNotifications();
 		
+		// Set active tab from location state if available
+		if (location.state?.activeTab) {
+			setActiveTab(location.state.activeTab);
+		}
+		
 		const handleClickOutside = (event) => {
 			if (notificationRef.current && !notificationRef.current.contains(event.target)) {
 				setIsNotificationOpen(false);
@@ -42,7 +48,7 @@ const ClientDashboardPage = () => {
 		return () => {
 			document.removeEventListener('mousedown', handleClickOutside);
 		};
-	}, [fetchPosts, fetchTopFreelancers, fetchHotJobs, fetchMyJobs, fetchNotifications]);
+	}, [fetchPosts, fetchTopFreelancers, fetchHotJobs, fetchMyJobs, fetchNotifications, location.state?.activeTab, setActiveTab]);
 	
 	// Check if user has the correct role
 	if (user?.role === "freelancer") {

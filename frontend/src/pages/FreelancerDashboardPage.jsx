@@ -358,8 +358,8 @@ const FreelancerDashboardPage = () => {
 																	</p>
 																	<div className="flex items-center mt-1 space-x-2">
 																		<p className="text-xs text-gray-500">
-																			{format(new Date(notification.createdAt), 'MMM d, yyyy h:mm a')}
-																		</p>
+																		{format(new Date(notification.createdAt), 'MMM d, yyyy h:mm a')}
+																	</p>
 																		{notification.type === 'CONTRACT_COMPLETED' && (
 																			<span className="text-xs text-gray-500">
 																				• Final milestone completed

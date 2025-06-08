@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useJobStore } from '../store/jobStore';
 import { useContractStore } from '../store/contractStore';
-import { DollarSign, User, Clock, Eye, Trash2, FileText, ChevronDown, ChevronUp, XCircle, FileIcon, ExternalLink, Calendar } from 'lucide-react';
+import { DollarSign, User, Clock, Eye, Trash2, FileText, ChevronDown, ChevronUp, XCircle, FileIcon, ExternalLink, Calendar, Briefcase } from 'lucide-react';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 import ContractDetailsModal from './ContractDetailsModal';
 import MilestoneReview from './MilestoneReview';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
+import InlineLoading from './InlineLoading';
 
 const formatSafeDate = (dateString, formatString) => {
     if (!dateString) return 'N/A';
@@ -17,8 +18,8 @@ const formatSafeDate = (dateString, formatString) => {
 };
 
 const ClientJobsTab = () => {
-    const { myJobs, fetchMyJobs, deleteJob } = useJobStore();
-    const { contracts, getMyContracts, fundEscrow, reviewSubmission } = useContractStore();
+    const { myJobs, fetchMyJobs, deleteJob, isLoading } = useJobStore();
+    const { contracts, getMyContracts, fundEscrow, reviewSubmission, isLoadingContracts } = useContractStore();
     const { user } = useAuthStore();
     const [activeTab, setActiveTab] = useState('open');
     const [selectedContract, setSelectedContract] = useState(null);
@@ -26,6 +27,8 @@ const ClientJobsTab = () => {
     const [escrowAmount, setEscrowAmount] = useState('');
     const [expandedJobs, setExpandedJobs] = useState(new Set());
     const [selectedFile, setSelectedFile] = useState(null);
+    const [isDeletingJob, setIsDeletingJob] = useState(null);
+    const [isFundingEscrow, setIsFundingEscrow] = useState(null);
     const navigate = useNavigate();
 
     const isClient = user?.role === 'client';
@@ -74,11 +77,14 @@ const ClientJobsTab = () => {
         }
 
         try {
+            setIsFundingEscrow(contractId);
             await fundEscrow(contractId, parseFloat(escrowAmount));
             setEscrowAmount('');
             toast.success('Escrow funded successfully');
         } catch (error) {
             toast.error(error.message || 'Failed to fund escrow');
+        } finally {
+            setIsFundingEscrow(null);
         }
     };
 
@@ -95,11 +101,14 @@ const ClientJobsTab = () => {
     const handleDeleteJob = async (jobId) => {
         if (window.confirm('Are you sure you want to delete this job? This action cannot be undone.')) {
             try {
+                setIsDeletingJob(jobId);
                 await deleteJob(jobId);
                 toast.success('Job deleted successfully');
-                fetchMyJobs(); // Refresh the jobs list
+                await fetchMyJobs();
             } catch (error) {
                 toast.error(error.message || 'Failed to delete job');
+            } finally {
+                setIsDeletingJob(null);
             }
         }
     };
@@ -184,13 +193,18 @@ const ClientJobsTab = () => {
             <div className="flex space-x-4 mb-6">
                 <button
                     onClick={() => setActiveTab('open')}
+                    disabled={isLoading}
                     className={`px-4 py-2 rounded-lg font-medium ${
                         activeTab === 'open'
                             ? 'bg-green-600 text-white'
                             : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
+                    } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
-                    Open Jobs ({openJobs.length})
+                    {isLoading ? (
+                        <InlineLoading text="Loading..." size="small" className="py-0" />
+                    ) : (
+                        `Open Jobs (${openJobs.length})`
+                    )}
                 </button>
                 <button
                     onClick={() => setActiveTab('assigned')}
@@ -213,6 +227,22 @@ const ClientJobsTab = () => {
                     Completed Jobs ({completedJobs.length})
                 </button>
             </div>
+
+            {/* Loading state for the entire section */}
+            {isLoading && myJobs.length === 0 && (
+                <div className="bg-white rounded-lg shadow-md p-6">
+                    <InlineLoading text="Loading jobs..." size="medium" className="justify-center" />
+                </div>
+            )}
+
+            {/* Empty state */}
+            {!isLoading && myJobs.length === 0 && (
+                <div className="bg-white rounded-lg shadow-md p-8 text-center">
+                    <Briefcase className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No jobs found</h3>
+                    <p className="text-gray-500">You haven't posted any jobs yet.</p>
+                </div>
+            )}
 
             {/* Open Jobs Section */}
             {activeTab === 'open' && (
@@ -265,17 +295,25 @@ const ClientJobsTab = () => {
                                         </span>
                                         <button
                                             onClick={() => handleViewProposals(job._id)}
-                                            className="flex items-center px-3 py-1.5 text-sm font-medium text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100"
+                                            disabled={isLoading}
+                                            className="flex items-center px-3 py-1.5 text-sm font-medium text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 disabled:opacity-50"
                                         >
                                             <FileText className="h-4 w-4 mr-1.5" />
                                             View Proposals
                                         </button>
                                         <button
                                             onClick={() => handleDeleteJob(job._id)}
-                                            className="flex items-center px-3 py-1.5 text-sm font-medium text-red-700 bg-red-50 rounded-lg hover:bg-red-100"
+                                            disabled={isDeletingJob === job._id}
+                                            className="flex items-center px-3 py-1.5 text-sm font-medium text-red-700 bg-red-50 rounded-lg hover:bg-red-100 disabled:opacity-50"
                                         >
-                                            <Trash2 className="h-4 w-4 mr-1.5" />
-                                            Delete Job
+                                            {isDeletingJob === job._id ? (
+                                                <InlineLoading text="Deleting..." size="small" spinnerColor="text-red-600" textColor="text-red-700" className="py-0" />
+                                            ) : (
+                                                <>
+                                                    <Trash2 className="h-4 w-4 mr-1.5" />
+                                                    Delete Job
+                                                </>
+                                            )}
                                         </button>
                                     </div>
                                 </div>
@@ -322,10 +360,17 @@ const ClientJobsTab = () => {
                                         <div className="flex space-x-3">
                                             <button
                                                 onClick={() => handleViewContract(job)}
-                                                className="flex items-center px-4 py-2 text-sm font-medium text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100"
+                                                disabled={isLoadingContracts}
+                                                className="flex items-center px-4 py-2 text-sm font-medium text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 disabled:opacity-50"
                                             >
-                                                <Eye className="w-4 h-4 mr-2" />
-                                                View Contract
+                                                {isLoadingContracts ? (
+                                                    <InlineLoading text="Loading..." size="small" spinnerColor="text-blue-600" textColor="text-blue-700" className="py-0" />
+                                                ) : (
+                                                    <>
+                                                        <Eye className="w-4 h-4 mr-2" />
+                                                        View Contract
+                                                    </>
+                                                )}
                                             </button>
                                             <button
                                                 onClick={() => toggleJobDetails(job._id)}
@@ -340,6 +385,20 @@ const ClientJobsTab = () => {
                                                     <>
                                                         <ChevronDown className="w-4 h-4 mr-2" />
                                                         View Details
+                                                    </>
+                                                )}
+                                            </button>
+                                            <button
+                                                onClick={() => handleDeleteJob(job._id)}
+                                                disabled={isDeletingJob === job._id}
+                                                className="flex items-center px-3 py-1.5 text-sm font-medium text-red-700 bg-red-50 rounded-lg hover:bg-red-100 disabled:opacity-50"
+                                            >
+                                                {isDeletingJob === job._id ? (
+                                                    <InlineLoading text="Deleting..." size="small" spinnerColor="text-red-600" textColor="text-red-700" className="py-0" />
+                                                ) : (
+                                                    <>
+                                                        <Trash2 className="h-4 w-4 mr-1.5" />
+                                                        Delete Job
                                                     </>
                                                 )}
                                             </button>
@@ -364,13 +423,19 @@ const ClientJobsTab = () => {
                                                             value={escrowAmount}
                                                             onChange={(e) => setEscrowAmount(e.target.value)}
                                                             placeholder="Enter amount"
-                                                            className="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
+                                                            disabled={isFundingEscrow === contract._id}
+                                                            className="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 disabled:opacity-50"
                                                         />
                                                         <button
                                                             onClick={() => handleFundEscrow(contract._id)}
-                                                            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                                                            disabled={isFundingEscrow === contract._id}
+                                                            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
                                                         >
-                                                            Fund
+                                                            {isFundingEscrow === contract._id ? (
+                                                                <InlineLoading text="Funding..." size="small" spinnerColor="text-white" textColor="text-white" className="py-0" />
+                                                            ) : (
+                                                                'Fund'
+                                                            )}
                                                         </button>
                                                     </div>
                                                 </div>
@@ -481,29 +546,13 @@ const ClientJobsTab = () => {
                                                 </span>
                                             </div>
                                         </div>
-                                        <div className="flex space-x-3">
+                                        <div className="flex items-center space-x-3">
                                             <button
-                                                onClick={() => handleViewContract(job)}
-                                                className="flex items-center px-4 py-2 text-sm font-medium text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100"
+                                                onClick={() => handleDeleteJob(job._id)}
+                                                className="flex items-center px-3 py-1.5 text-sm font-medium text-red-700 bg-red-50 rounded-lg hover:bg-red-100"
                                             >
-                                                <Eye className="w-4 h-4 mr-2" />
-                                                View Contract
-                                            </button>
-                                            <button
-                                                onClick={() => toggleJobDetails(job._id)}
-                                                className="flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
-                                            >
-                                                {isExpanded ? (
-                                                    <>
-                                                        <ChevronUp className="w-4 h-4 mr-2" />
-                                                        Hide Details
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <ChevronDown className="w-4 h-4 mr-2" />
-                                                        View Details
-                                                    </>
-                                                )}
+                                                <Trash2 className="h-4 w-4 mr-1.5" />
+                                                Delete Job
                                             </button>
                                         </div>
                                     </div>

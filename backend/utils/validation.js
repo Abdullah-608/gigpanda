@@ -27,8 +27,32 @@ export const validateJobInput = (jobData) => {
     }
 
     // Experience level validation
-    if (jobData.experienceLevel && !['entry', 'intermediate', 'expert'].includes(jobData.experienceLevel)) {
+    if (jobData.experienceLevel && !['beginner', 'intermediate', 'expert'].includes(jobData.experienceLevel)) {
         errors.experienceLevel = 'Invalid experience level';
+    }
+
+    // Timeline validation
+    if (jobData.timeline && !['urgent', '1-week', '2-weeks', '1-month', '2-months', '3+ months'].includes(jobData.timeline)) {
+        errors.timeline = 'Invalid timeline';
+    }
+
+    // Category validation
+    const validCategories = [
+        'web-development',
+        'mobile-development',
+        'ui-ux-design',
+        'graphic-design',
+        'content-writing',
+        'digital-marketing',
+        'data-analysis',
+        'video-editing',
+        'translation',
+        'virtual-assistant',
+        'other'
+    ];
+    
+    if (jobData.category && !validCategories.includes(jobData.category)) {
+        errors.category = 'Invalid category';
     }
 
     return {

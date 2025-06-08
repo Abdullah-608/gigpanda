@@ -60,13 +60,13 @@ const ContractDetailsModal = ({ isOpen, onClose, contract }) => {
                     {/* Header */}
                     <div className="flex items-center justify-between mb-6">
                         <h2 className="text-2xl font-bold text-gray-900">Contract Details</h2>
-                        <button
-                            onClick={onClose}
+                    <button
+                        onClick={onClose}
                             className="text-gray-400 hover:text-gray-500"
-                        >
+                    >
                             <X className="w-6 h-6" />
-                        </button>
-                    </div>
+                    </button>
+                </div>
 
                     {/* Contract Overview */}
                     <div className="mb-6">
