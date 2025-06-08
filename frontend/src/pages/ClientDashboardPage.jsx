@@ -24,9 +24,10 @@ const ClientDashboardPage = () => {
 	const location = useLocation();
 	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 	const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-	const { notifications, unreadCount, fetchNotifications, markAsRead } = useNotificationStore();
+	const { notifications, unreadCount, fetchNotifications, markAsRead, markAllAsRead, loadMoreNotifications, pagination: notificationPagination, isLoading: notificationLoading } = useNotificationStore();
 	const [isNotificationOpen, setIsNotificationOpen] = useState(false);
 	const notificationRef = useRef(null);
+	const notificationListRef = useRef(null);
 	const [lastFetchTime, setLastFetchTime] = useState(null);
 	const FETCH_COOLDOWN = 5 * 60 * 1000; // 5 minutes
 
@@ -163,6 +164,16 @@ const ClientDashboardPage = () => {
 		setIsNotificationOpen(false);
 	};
 
+	// Add scroll handler for infinite scroll
+	const handleNotificationScroll = () => {
+		if (!notificationListRef.current) return;
+		
+		const { scrollTop, scrollHeight, clientHeight } = notificationListRef.current;
+		if (scrollHeight - scrollTop <= clientHeight * 1.5) {
+			loadMoreNotifications();
+		}
+	};
+
 	return (
 		<div className="min-h-screen bg-gray-50">
 			{/* Custom scrollbar styles */}
@@ -244,86 +255,113 @@ const ClientDashboardPage = () => {
 									<button 
 										type="button" 
 										className="p-2 text-gray-500 hover:text-gray-700 focus:outline-none relative"
-										onClick={() => setIsNotificationOpen(!isNotificationOpen)}
+										onClick={() => {
+											setIsNotificationOpen(!isNotificationOpen);
+											if (!isNotificationOpen && unreadCount > 0) {
+												markAllAsRead();
+											}
+										}}
 									>
-									<BellIcon className="h-5 w-5" />
+										<BellIcon className="h-5 w-5" />
 										{unreadCount > 0 && (
 											<span className="absolute top-0 right-0 block h-5 w-5 rounded-full bg-red-500 ring-2 ring-white text-white text-xs flex items-center justify-center">
 												{unreadCount}
 											</span>
 										)}
-								</button>
+									</button>
 
 									{isNotificationOpen && (
-										<div className="absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-lg border border-gray-200 max-h-[80vh] overflow-y-auto z-50">
+										<div className="absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-lg border border-gray-200 max-h-[80vh] overflow-hidden z-50">
 											<div className="p-4 border-b border-gray-200">
 												<h3 className="text-lg font-semibold">Notifications</h3>
 											</div>
 											
-											<div className="divide-y divide-gray-200">
+											<div 
+												ref={notificationListRef}
+												onScroll={handleNotificationScroll}
+												className="divide-y divide-gray-200 overflow-y-auto max-h-[calc(80vh-4rem)]"
+											>
 												{notifications.length === 0 ? (
 													<div className="p-4 text-center text-gray-500">
 														No notifications
 													</div>
 												) : (
-													notifications.map((notification) => {
-														const senderName = notification.sender?.name || 'Someone';
-														const jobTitle = notification.job?.title || 'a job';
-														
-														return (
-															<div
-																key={notification._id}
-																onClick={() => handleNotificationClick(notification)}
-																className={`block p-4 hover:bg-gray-50 transition-colors cursor-pointer ${
-																	!notification.read ? 'bg-blue-50' : ''
-																}`}
-															>
-																<div className="flex items-start gap-3">
-																	<img
-																		src={notification.sender?.profile?.pictureUrl || '/default-avatar.png'}
-																		alt={senderName}
-																		className="w-10 h-10 rounded-full object-cover"
-																	/>
-																	<div className="flex-1">
-																		<p className="text-sm text-gray-800">
-																			{(() => {
-																				switch (notification.type) {
-																					case 'NEW_PROPOSAL':
-																						return (
-																							<>
-																								<span className="font-semibold">{senderName}</span> submitted a proposal for "
-																								<span className="font-semibold">{jobTitle}</span>"
-																							</>
+													<>
+														{notifications.map((notification) => {
+															const senderName = notification.sender?.name || 'Someone';
+															const jobTitle = notification.job?.title || 'a job';
+															
+															return (
+																<div
+																	key={notification._id}
+																	onClick={() => handleNotificationClick(notification)}
+																	className={`block p-4 hover:bg-gray-50 transition-colors cursor-pointer ${
+																		!notification.read ? 'bg-blue-50' : ''
+																	}`}
+																>
+																	<div className="flex items-start gap-3">
+																		<img
+																			src={notification.sender?.profile?.pictureUrl || '/default-avatar.png'}
+																			alt={senderName}
+																			className="w-10 h-10 rounded-full object-cover"
+																		/>
+																		<div className="flex-1">
+																			<p className="text-sm text-gray-800">
+																				{(() => {
+																					switch (notification.type) {
+																						case 'NEW_PROPOSAL':
+																							return (
+																								<>
+																									<span className="font-semibold">{senderName}</span> submitted a proposal for "
+																									<span className="font-semibold">{jobTitle}</span>"
+																								</>
 																						);
-																					case 'NEW_MESSAGE':
-																						return (
-																							<>
-																								New message from <span className="font-semibold">{senderName}</span>
-																							</>
+																						case 'NEW_MESSAGE':
+																							return (
+																								<>
+																									New message from <span className="font-semibold">{senderName}</span>
+																								</>
 																						);
-																					case 'MILESTONE_SUBMITTED':
-																						return (
-																							<>
-																								<span className="font-semibold">{senderName}</span> submitted work for a milestone in "
-																								<span className="font-semibold">{jobTitle}</span>"
-																							</>
+																						case 'MILESTONE_SUBMITTED':
+																							return (
+																								<>
+																									<span className="font-semibold">{senderName}</span> submitted work for a milestone in "
+																									<span className="font-semibold">{jobTitle}</span>"
+																								</>
 																						);
-																					default:
-																						return notification.message || 'New notification';
-																				}
-																			})()}
-																		</p>
-																		<p className="text-xs text-gray-500 mt-1">
-																			{format(new Date(notification.createdAt), 'MMM d, yyyy h:mm a')}
-																		</p>
+																						default:
+																							return notification.message || 'New notification';
+																					}
+																				})()}
+																			</p>
+																			<p className="text-xs text-gray-500 mt-1">
+																				{format(new Date(notification.createdAt), 'MMM d, yyyy h:mm a')}
+																			</p>
+																		</div>
+																		{!notification.read && (
+																			<div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+																		)}
 																	</div>
-																	{!notification.read && (
-																		<div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
-																	)}
 																</div>
+															);
+														})}
+														{notificationPagination.hasMore && (
+															<div className="p-4 text-center">
+																{notificationLoading ? (
+																	<div className="flex items-center justify-center">
+																		<div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-900"></div>
+																	</div>
+																) : (
+																	<button
+																		onClick={() => loadMoreNotifications()}
+																		className="text-sm text-gray-600 hover:text-gray-900"
+																	>
+																		Load More
+																	</button>
+																)}
 															</div>
-														);
-													})
+														)}
+													</>
 												)}
 											</div>
 										</div>

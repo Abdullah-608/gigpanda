@@ -19,9 +19,10 @@ const FreelancerDashboardPage = () => {
 	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 	const [isProposalModalOpen, setIsProposalModalOpen] = useState(false);
 	const [selectedJob, setSelectedJob] = useState(null);
-	const { notifications, unreadCount, fetchNotifications, markAsRead } = useNotificationStore();
+	const { notifications, unreadCount, fetchNotifications, markAsRead, markAllAsRead, loadMoreNotifications, isLoading: notificationLoading, pagination: notificationPagination } = useNotificationStore();
 	const [isNotificationOpen, setIsNotificationOpen] = useState(false);
 	const notificationRef = useRef(null);
+	const notificationListRef = useRef(null);
 	
 	useEffect(() => {
 		fetchJobs();
@@ -170,6 +171,16 @@ const FreelancerDashboardPage = () => {
 		setIsNotificationOpen(false);
 	};
 
+	// Add scroll handler for infinite scroll
+	const handleNotificationScroll = () => {
+		if (!notificationListRef.current) return;
+		
+		const { scrollTop, scrollHeight, clientHeight } = notificationListRef.current;
+		if (scrollHeight - scrollTop <= clientHeight * 1.5) {
+			loadMoreNotifications();
+		}
+	};
+
 	return (
 		<div className="min-h-screen bg-white w-full" onClick={closeDropdown}>
 			{/* Custom scrollbar styles */}
@@ -265,7 +276,12 @@ const FreelancerDashboardPage = () => {
 									<button 
 										type="button" 
 										className="p-2 text-gray-500 hover:text-gray-700 focus:outline-none relative"
-										onClick={() => setIsNotificationOpen(!isNotificationOpen)}
+										onClick={() => {
+											setIsNotificationOpen(!isNotificationOpen);
+											if (!isNotificationOpen && unreadCount > 0) {
+												markAllAsRead();
+											}
+										}}
 									>
 									<BellIcon className="h-5 w-5" />
 										{unreadCount > 0 && (
@@ -276,110 +292,132 @@ const FreelancerDashboardPage = () => {
 								</button>
 
 									{isNotificationOpen && (
-										<div className="absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-lg border border-gray-200 max-h-[80vh] overflow-y-auto z-50">
+										<div className="absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-lg border border-gray-200 max-h-[80vh] overflow-hidden z-50">
 											<div className="p-4 border-b border-gray-200">
 												<h3 className="text-lg font-semibold">Notifications</h3>
 											</div>
 											
-											<div className="divide-y divide-gray-200">
+											<div 
+												ref={notificationListRef}
+												onScroll={handleNotificationScroll}
+												className="divide-y divide-gray-200 overflow-y-auto max-h-[calc(80vh-4rem)]"
+											>
 												{notifications.length === 0 ? (
 													<div className="p-4 text-center text-gray-500">
 														No notifications
 													</div>
 												) : (
-													notifications.map((notification) => (
-														<div
-															key={notification._id}
-															onClick={() => handleNotificationClick(notification)}
-															className={`block p-4 hover:bg-gray-50 transition-colors cursor-pointer ${
-																!notification.read ? 'bg-blue-50' : ''
-															}`}
-														>
-															<div className="flex items-start gap-3">
-																<img
-																	src={notification.sender?.profile?.pictureUrl || '/default-avatar.png'}
-																	alt={notification.sender?.name || 'Someone'}
-																	className="w-10 h-10 rounded-full object-cover"
-																/>
-																<div className="flex-1">
-																	<p className="text-sm text-gray-800">
-																		{(() => {
-																			const senderName = notification.sender?.name || 'Someone';
-																			const jobTitle = notification.job?.title || 'Unknown Job';
-																			switch (notification.type) {
-																				case 'NEW_PROPOSAL':
-																					return (
-																						<>
-																							<span className="font-semibold">{senderName}</span> submitted a proposal for "
-																							<span className="font-semibold">{jobTitle}</span>"
-																						</>
-																					);
-																				case 'PROPOSAL_ACCEPTED':
-																					return (
-																						<>
-																							<span className="font-semibold">{senderName}</span> accepted your proposal for "
-																							<span className="font-semibold">{jobTitle}</span>"
-																						</>
-																					);
-																				case 'PROPOSAL_REJECTED':
-																					return (
-																						<>
-																							<span className="font-semibold">{senderName}</span> declined your proposal for "
-																							<span className="font-semibold">{jobTitle}</span>"
-																						</>
-																					);
-																				case 'NEW_MESSAGE':
-																					return (
-																						<>
-																							New message from <span className="font-semibold">{senderName}</span>
-																						</>
-																					);
-																				case 'CONTRACT_COMPLETED':
-																					return (
-																						<>
-																							<span className="font-semibold">{senderName}</span> has completed the contract for "
-																							<span className="font-semibold">{jobTitle}</span>"
-																							<span className="inline-flex items-center ml-2 px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-																								Contract Completed
+													<>
+														{notifications.map((notification) => (
+															<div
+																key={notification._id}
+																onClick={() => handleNotificationClick(notification)}
+																className={`block p-4 hover:bg-gray-50 transition-colors cursor-pointer ${
+																	!notification.read ? 'bg-blue-50' : ''
+																}`}
+															>
+																<div className="flex items-start gap-3">
+																	<img
+																		src={notification.sender?.profile?.pictureUrl || '/default-avatar.png'}
+																		alt={notification.sender?.name || 'Someone'}
+																		className="w-10 h-10 rounded-full object-cover"
+																	/>
+																	<div className="flex-1">
+																		<p className="text-sm text-gray-800">
+																			{(() => {
+																				const senderName = notification.sender?.name || 'Someone';
+																				const jobTitle = notification.job?.title || 'Unknown Job';
+																				switch (notification.type) {
+																					case 'NEW_PROPOSAL':
+																						return (
+																							<>
+																								<span className="font-semibold">{senderName}</span> submitted a proposal for "
+																								<span className="font-semibold">{jobTitle}</span>"
+																							</>
+																						);
+																					case 'PROPOSAL_ACCEPTED':
+																						return (
+																							<>
+																								<span className="font-semibold">{senderName}</span> accepted your proposal for "
+																								<span className="font-semibold">{jobTitle}</span>"
+																							</>
+																						);
+																					case 'PROPOSAL_REJECTED':
+																						return (
+																							<>
+																								<span className="font-semibold">{senderName}</span> declined your proposal for "
+																								<span className="font-semibold">{jobTitle}</span>"
+																							</>
+																						);
+																					case 'NEW_MESSAGE':
+																						return (
+																							<>
+																								New message from <span className="font-semibold">{senderName}</span>
+																							</>
+																						);
+																					case 'CONTRACT_COMPLETED':
+																						return (
+																							<>
+																								<span className="font-semibold">{senderName}</span> has completed the contract for "
+																								<span className="font-semibold">{jobTitle}</span>"
+																								<span className="inline-flex items-center ml-2 px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+																										Contract Completed
 																							</span>
-																						</>
-																					);
-																				case 'MILESTONE_APPROVED':
-																					return (
-																						<>
-																							<span className="font-semibold">{senderName}</span> approved your milestone submission for "
-																							<span className="font-semibold">{jobTitle}</span>"
-																						</>
-																					);
-																				case 'MILESTONE_CHANGES_REQUESTED':
-																					return (
-																						<>
-																							<span className="font-semibold">{senderName}</span> requested changes for your milestone submission in "
-																							<span className="font-semibold">{jobTitle}</span>"
-																						</>
-																					);
-																				default:
-																					return notification.message || 'New notification';
-																			}
-																		})()}
-																	</p>
-																	<div className="flex items-center mt-1 space-x-2">
-																		<p className="text-xs text-gray-500">
-																		{format(new Date(notification.createdAt), 'MMM d, yyyy h:mm a')}
-																	</p>
-																		{notification.type === 'CONTRACT_COMPLETED' && (
-																			<span className="text-xs text-gray-500">
-																				• Final milestone completed
-																			</span>
-																		)}
+																							</>
+																						);
+																					case 'MILESTONE_APPROVED':
+																						return (
+																							<>
+																								<span className="font-semibold">{senderName}</span> approved your milestone submission for "
+																								<span className="font-semibold">{jobTitle}</span>"
+																							</>
+																						);
+																					case 'MILESTONE_CHANGES_REQUESTED':
+																						return (
+																							<>
+																								<span className="font-semibold">{senderName}</span> requested changes for your milestone submission in "
+																								<span className="font-semibold">{jobTitle}</span>"
+																							</>
+																						);
+																					default:
+																						return notification.message || 'New notification';
+																				}
+																			})()}
+																		</p>
+																		<div className="flex items-center mt-1 space-x-2">
+																			<p className="text-xs text-gray-500">
+																			{format(new Date(notification.createdAt), 'MMM d, yyyy h:mm a')}
+																		</p>
+																			{notification.type === 'CONTRACT_COMPLETED' && (
+																				<span className="text-xs text-gray-500">
+																					• Final milestone completed
+																				</span>
+																			)}
+																		</div>
 																	</div>
+																	{!notification.read && (
+																		<div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+																	)}
 																</div>
-																{!notification.read && (
-																	<div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+															</div>
+														))}
+														{notificationPagination.hasMore && (
+															<div className="p-4 text-center">
+																{notificationLoading ? (
+																	<div className="flex items-center justify-center">
+																		<div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-900"></div>
+																	</div>
+																) : (
+																	<button
+																		onClick={() => loadMoreNotifications()}
+																		className="text-sm text-gray-600 hover:text-gray-900"
+																	>
+																		Load More
+																	</button>
 																)}
 															</div>
-														</div>
-													))
+														)}
+													</>
 												)}
 											</div>
 										</div>
