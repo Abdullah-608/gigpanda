@@ -1,12 +1,13 @@
-import { X, DollarSign } from "lucide-react";
-import { format } from 'date-fns';
+import { X, DollarSign, Check, MessageCircle } from "lucide-react";
 import { useAuthStore } from "../store/authStore";
 import { useContractStore } from "../store/contractStore";
+import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
 const ContractDetailsModal = ({ isOpen, onClose, contract }) => {
-    const { user } = useAuthStore();
-    const { releasePayment } = useContractStore();
+    const { user, setActiveTab } = useAuthStore();
+    const { releasePayment, completeContract } = useContractStore();
+    const navigate = useNavigate();
     const isClient = user._id === contract?.client._id;
 
     const handleReleasePayment = async (milestoneId) => {
@@ -18,51 +19,87 @@ const ContractDetailsModal = ({ isOpen, onClose, contract }) => {
         }
     };
 
+    const handleCompleteContract = async () => {
+        try {
+            await completeContract(contract._id);
+            toast.success("Contract marked as completed!");
+            onClose();
+        } catch (error) {
+            toast.error("Error completing contract");
+        }
+    };
+
+    const handleMessage = async () => {
+        try {
+            const receiverId = isClient ? contract.freelancer._id : contract.client._id;
+            setActiveTab("messages");
+            navigate(isClient ? "/client-dashboard" : "/freelancer-dashboard", {
+                state: { 
+                    receiverId,
+                    contractId: contract._id,
+                    shouldInitChat: true
+                }
+            });
+            onClose();
+        } catch (err) {
+            toast.error("Failed to open messages. Please try again.");
+            console.error("Error opening messages:", err);
+        }
+    };
+
     if (!isOpen || !contract) return null;
+
+    const areAllMilestonesPaid = () => {
+        return contract.milestones.every(milestone => milestone.status === "paid");
+    };
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-                {/* Modal Header */}
-                <div className="flex justify-between items-center p-6 border-b border-gray-200">
-                    <h2 className="text-2xl font-bold text-gray-900">{contract.title}</h2>
-                    <button
-                        onClick={onClose}
-                        className="text-gray-400 hover:text-gray-500 transition-colors"
-                    >
-                        <X className="h-6 w-6" />
-                    </button>
-                </div>
-
-                {/* Modal Content */}
+            <div className="bg-white rounded-lg w-full max-w-3xl max-h-[90vh] overflow-y-auto">
                 <div className="p-6">
+                    {/* Header */}
+                    <div className="flex items-center justify-between mb-6">
+                        <h2 className="text-2xl font-bold text-gray-900">Contract Details</h2>
+                        <button
+                            onClick={onClose}
+                            className="text-gray-400 hover:text-gray-500"
+                        >
+                            <X className="w-6 h-6" />
+                        </button>
+                    </div>
+
                     {/* Contract Overview */}
-                    <div className="mb-8">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Contract Overview</h3>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <p className="text-sm text-gray-500">Status</p>
-                                <p className="text-base font-medium text-gray-900">{contract.status}</p>
+                    <div className="mb-6">
+                        <h3 className="text-xl font-semibold text-gray-900 mb-2">{contract.title}</h3>
+                        <div className="flex flex-wrap gap-4 text-sm text-gray-600">
+                            <div className="flex items-center">
+                                <DollarSign className="w-4 h-4 mr-2" />
+                                <span>Total Amount: ${contract.totalAmount}</span>
                             </div>
                             <div>
-                                <p className="text-sm text-gray-500">Total Amount</p>
-                                <p className="text-base font-medium text-green-600">${contract.totalAmount}</p>
-                            </div>
-                            <div>
-                                <p className="text-sm text-gray-500">Escrow Balance</p>
-                                <p className="text-base font-medium text-blue-600">${contract.escrowBalance}</p>
-                            </div>
-                            <div>
-                                <p className="text-sm text-gray-500">Created On</p>
-                                <p className="text-base font-medium text-gray-900">
-                                    {format(new Date(contract.createdAt), 'MMM dd, yyyy')}
-                                </p>
-                            </div>
-                            <div>
-                                <p className="text-sm text-gray-500">Client</p>
-                                <p className="text-base font-medium text-gray-900">{contract.client?.name}</p>
+                                Status: <span className="font-medium">{contract.status}</span>
                             </div>
                         </div>
+                        
+                        {/* Message Button */}
+                        <button
+                            onClick={handleMessage}
+                            className="mt-4 w-full border-2 border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center"
+                        >
+                            <MessageCircle className="w-4 h-4 mr-2" />
+                            Message {!isClient ? "Client" : "Freelancer"}
+                        </button>
+
+                        {/* Complete Contract Button (for client only) */}
+                        {isClient && areAllMilestonesPaid() && contract.status !== "completed" && (
+                            <button
+                                onClick={handleCompleteContract}
+                                className="mt-4 w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center"
+                            >
+                                <Check className="w-4 h-4 mr-2" />
+                                Complete Contract
+                            </button>
+                        )}
                     </div>
 
                     {/* Contract Description */}

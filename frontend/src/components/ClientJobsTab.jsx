@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useJobStore } from '../store/jobStore';
 import { useContractStore } from '../store/contractStore';
-import { DollarSign, User, Clock, Eye, Trash2, FileText, ChevronDown, ChevronUp, XCircle, FileIcon, ExternalLink } from 'lucide-react';
+import { DollarSign, User, Clock, Eye, Trash2, FileText, ChevronDown, ChevronUp, XCircle, FileIcon, ExternalLink, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 import ContractDetailsModal from './ContractDetailsModal';
@@ -44,9 +44,16 @@ const ClientJobsTab = () => {
         console.log('Current jobs:', myJobs);
     }, [contracts, myJobs]);
 
-    // Filter jobs based on whether they have an accepted proposal
+    // Filter jobs based on their status
     const openJobs = myJobs.filter(job => !job.proposals?.some(proposal => proposal.status === 'accepted'));
-    const assignedJobs = myJobs.filter(job => job.proposals?.some(proposal => proposal.status === 'accepted'));
+    const assignedJobs = myJobs.filter(job => {
+        const contract = contracts.find(c => c.job?._id === job._id);
+        return job.proposals?.some(proposal => proposal.status === 'accepted') && contract?.status !== 'completed';
+    });
+    const completedJobs = myJobs.filter(job => {
+        const contract = contracts.find(c => c.job?._id === job._id);
+        return contract?.status === 'completed';
+    });
 
     const handleViewContract = (job) => {
         console.log('Viewing contract for job:', job);
@@ -148,6 +155,29 @@ const ClientJobsTab = () => {
         }
     };
 
+    const getStatusBadgeClass = (status) => {
+        switch (status) {
+            case 'completed':
+                return 'bg-green-100 text-green-800';
+            case 'in_progress':
+                return 'bg-blue-100 text-blue-800';
+            case 'pending':
+                return 'bg-yellow-100 text-yellow-800';
+            default:
+                return 'bg-gray-100 text-gray-800';
+        }
+    };
+
+    const getJobStatus = (job, contract) => {
+        if (contract?.status === 'completed') return 'completed';
+        if (contract) {
+            const hasSubmittedMilestone = contract.milestones.some(m => m.status === 'submitted');
+            if (hasSubmittedMilestone) return 'review needed';
+            return 'in progress';
+        }
+        return 'open';
+    };
+
     return (
         <div className="max-w-7xl mx-auto px-4 py-6">
             {/* Tab Navigation */}
@@ -172,6 +202,16 @@ const ClientJobsTab = () => {
                 >
                     Assigned Jobs ({assignedJobs.length})
                 </button>
+                <button
+                    onClick={() => setActiveTab('completed')}
+                    className={`px-4 py-2 rounded-lg font-medium ${
+                        activeTab === 'completed'
+                            ? 'bg-green-600 text-white'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                >
+                    Completed Jobs ({completedJobs.length})
+                </button>
             </div>
 
             {/* Open Jobs Section */}
@@ -182,7 +222,12 @@ const ClientJobsTab = () => {
                             <div className="p-6">
                                 <div className="flex justify-between items-start">
                                     <div className="flex-1">
-                                        <h3 className="text-xl font-semibold text-gray-900">{job.title}</h3>
+                                        <div className="flex items-center gap-3">
+                                            <h3 className="text-xl font-semibold text-gray-900">{job.title}</h3>
+                                            <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">
+                                                Open
+                                            </span>
+                                        </div>
                                         <div className="flex items-center space-x-4 text-sm text-gray-500 mt-2">
                                             <span className="flex items-center">
                                                 <DollarSign className="h-4 w-4 mr-1" />
@@ -246,6 +291,7 @@ const ClientJobsTab = () => {
                     {assignedJobs.map(job => {
                         const contract = contracts.find(c => c.job?._id === job._id);
                         const isExpanded = expandedJobs.has(job._id);
+                        const status = getJobStatus(job, contract);
                         
                         console.log('Rendering assigned job:', job._id);
                         console.log('Found contract:', contract);
@@ -256,7 +302,12 @@ const ClientJobsTab = () => {
                                 <div className="p-6 border-b border-gray-200">
                                     <div className="flex justify-between items-start">
                                         <div>
-                                            <h3 className="text-xl font-semibold text-gray-900">{job.title}</h3>
+                                            <div className="flex items-center gap-3">
+                                                <h3 className="text-xl font-semibold text-gray-900">{job.title}</h3>
+                                                <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${getStatusBadgeClass(status)}`}>
+                                                    {status.charAt(0).toUpperCase() + status.slice(1)}
+                                                </span>
+                                            </div>
                                             <div className="flex items-center space-x-4 text-sm text-gray-500 mt-2">
                                                 <span className="flex items-center">
                                                     <User className="h-4 w-4 mr-1" />
@@ -386,6 +437,105 @@ const ClientJobsTab = () => {
                                                             </div>
                                                         ))}
                                                     </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
+
+            {/* Completed Jobs Section */}
+            {activeTab === 'completed' && (
+                <div className="space-y-6">
+                    {completedJobs.map(job => {
+                        const contract = contracts.find(c => c.job?._id === job._id);
+                        const isExpanded = expandedJobs.has(job._id);
+                        
+                        return (
+                            <div key={job._id} className="bg-white rounded-lg shadow-md overflow-hidden">
+                                <div className="p-6 border-b border-gray-200">
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <div className="flex items-center gap-3">
+                                                <h3 className="text-xl font-semibold text-gray-900">{job.title}</h3>
+                                                <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                                                    Completed
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center space-x-4 text-sm text-gray-500 mt-2">
+                                                <span className="flex items-center">
+                                                    <User className="h-4 w-4 mr-1" />
+                                                    {contract?.freelancer?.name || 'Assigned Freelancer'}
+                                                </span>
+                                                <span className="flex items-center">
+                                                    <DollarSign className="h-4 w-4 mr-1" />
+                                                    ${contract?.totalAmount || job.budget.max}
+                                                </span>
+                                                <span className="flex items-center">
+                                                    <Calendar className="h-4 w-4 mr-1" />
+                                                    Completed: {formatSafeDate(contract?.endDate, 'MMM dd, yyyy')}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div className="flex space-x-3">
+                                            <button
+                                                onClick={() => handleViewContract(job)}
+                                                className="flex items-center px-4 py-2 text-sm font-medium text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100"
+                                            >
+                                                <Eye className="w-4 h-4 mr-2" />
+                                                View Contract
+                                            </button>
+                                            <button
+                                                onClick={() => toggleJobDetails(job._id)}
+                                                className="flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                                            >
+                                                {isExpanded ? (
+                                                    <>
+                                                        <ChevronUp className="w-4 h-4 mr-2" />
+                                                        Hide Details
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <ChevronDown className="w-4 h-4 mr-2" />
+                                                        View Details
+                                                    </>
+                                                )}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Contract Details Section - Only shown when expanded */}
+                                {isExpanded && contract && (
+                                    <div className="p-6">
+                                        <div className="space-y-4">
+                                            <div className="bg-gray-50 p-4 rounded-lg">
+                                                <h4 className="font-medium text-gray-900 mb-2">Project Summary</h4>
+                                                <p className="text-gray-600">{job.description}</p>
+                                            </div>
+
+                                            <div className="bg-gray-50 p-4 rounded-lg">
+                                                <h4 className="font-medium text-gray-900 mb-2">Milestones</h4>
+                                                <div className="space-y-2">
+                                                    {contract.milestones.map((milestone, index) => (
+                                                        <div key={index} className="flex justify-between items-center">
+                                                            <span className="text-sm text-gray-600">
+                                                                {milestone.title}
+                                                            </span>
+                                                            <div className="flex items-center space-x-2">
+                                                                <span className="text-sm font-medium text-green-600">
+                                                                    ${milestone.amount}
+                                                                </span>
+                                                                <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                                                                    Completed
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    ))}
                                                 </div>
                                             </div>
                                         </div>
