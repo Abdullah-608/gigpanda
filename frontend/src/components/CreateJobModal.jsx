@@ -166,7 +166,7 @@ const CreateJobModal = ({ isOpen, onClose }) => {
                         className="fixed inset-0 bg-black bg-opacity-50"
                         onClick={handleClose}
                     />
-                    <motion.div
+                        <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 20 }}

@@ -1,4 +1,4 @@
-import { X, DollarSign, Check, MessageCircle } from "lucide-react";
+import { X, DollarSign, Check, MessageCircle, AlertCircle } from "lucide-react";
 import { useAuthStore } from "../store/authStore";
 import { useContractStore } from "../store/contractStore";
 import { useNavigate } from "react-router-dom";
@@ -10,7 +10,14 @@ const ContractDetailsModal = ({ isOpen, onClose, contract }) => {
     const navigate = useNavigate();
     const isClient = user._id === contract?.client._id;
 
-    const handleReleasePayment = async (milestoneId) => {
+    const handleReleasePayment = async (milestoneId, amount) => {
+        // Check if escrow balance is sufficient
+        const escrowBalance = contract.escrowBalance || 0;
+        if (escrowBalance < amount) {
+            toast.error(`Insufficient escrow balance. Please add funds to release payment. Required: $${amount}, Available: $${escrowBalance}`);
+            return;
+        }
+
         try {
             await releasePayment(contract._id, milestoneId);
             toast.success("Payment released successfully!");
@@ -60,13 +67,13 @@ const ContractDetailsModal = ({ isOpen, onClose, contract }) => {
                     {/* Header */}
                     <div className="flex items-center justify-between mb-6">
                         <h2 className="text-2xl font-bold text-gray-900">Contract Details</h2>
-                    <button
-                        onClick={onClose}
+                        <button
+                            onClick={onClose}
                             className="text-gray-400 hover:text-gray-500"
-                    >
+                        >
                             <X className="w-6 h-6" />
-                    </button>
-                </div>
+                        </button>
+                    </div>
 
                     {/* Contract Overview */}
                     <div className="mb-6">
@@ -76,6 +83,12 @@ const ContractDetailsModal = ({ isOpen, onClose, contract }) => {
                                 <DollarSign className="w-4 h-4 mr-2" />
                                 <span>Total Amount: ${contract.totalAmount}</span>
                             </div>
+                            {isClient && (
+                                <div className="flex items-center">
+                                    <AlertCircle className="w-4 h-4 mr-2" />
+                                    <span>Escrow Balance: ${contract.escrowBalance || 0}</span>
+                                </div>
+                            )}
                             <div>
                                 Status: <span className="font-medium">{contract.status}</span>
                             </div>
@@ -138,7 +151,7 @@ const ContractDetailsModal = ({ isOpen, onClose, contract }) => {
                                     {/* Release Payment Button */}
                                     {isClient && milestone.status === "completed" && (
                                         <button
-                                            onClick={() => handleReleasePayment(milestone._id)}
+                                            onClick={() => handleReleasePayment(milestone._id, milestone.amount)}
                                             className="mt-4 w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center"
                                         >
                                             <DollarSign className="w-4 h-4 mr-2" />

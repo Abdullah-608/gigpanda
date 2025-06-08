@@ -149,11 +149,11 @@ const AcceptedWorkTab = () => {
                     </div>
                 ) : (
                     (activeTab === 'ongoing' ? ongoingContracts : completedContracts).map(contract => (
-                        <div key={contract._id} className="bg-white rounded-lg shadow-md overflow-hidden">
+                    <div key={contract._id} className="bg-white rounded-lg shadow-md overflow-hidden">
                             <div className="p-6">
                                 <div className="flex justify-between items-start">
-                                    <div>
-                                        <h3 className="text-xl font-semibold text-gray-900">{contract.title}</h3>
+                                <div>
+                                    <h3 className="text-xl font-semibold text-gray-900">{contract.title}</h3>
                                         <div className="mt-2 space-y-2">
                                             <p className="text-sm text-gray-600">
                                                 Created on {formatSafeDate(contract.createdAt, 'MMM dd, yyyy')}
@@ -169,39 +169,39 @@ const AcceptedWorkTab = () => {
                                                 </span>
                                             </div>
                                         </div>
-                                    </div>
-                                    <div className="flex items-center space-x-4">
-                                        <span className="text-2xl font-bold text-green-600">
-                                            ${contract.totalAmount}
-                                        </span>
-                                        <button
-                                            onClick={() => handleViewDetails(contract)}
-                                            className="flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                                        >
-                                            <Eye className="w-4 h-4 mr-2" />
-                                            View Details
-                                        </button>
-                                        <button
-                                            onClick={() => setExpandedContract(expandedContract === contract._id ? null : contract._id)}
-                                            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                                        >
-                                            {expandedContract === contract._id ? <ChevronUp /> : <ChevronDown />}
-                                        </button>
-                                    </div>
                                 </div>
+                                <div className="flex items-center space-x-4">
+                                    <span className="text-2xl font-bold text-green-600">
+                                        ${contract.totalAmount}
+                                    </span>
+                                    <button
+                                        onClick={() => handleViewDetails(contract)}
+                                        className="flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                                    >
+                                        <Eye className="w-4 h-4 mr-2" />
+                                        View Details
+                                    </button>
+                                    <button
+                                        onClick={() => setExpandedContract(expandedContract === contract._id ? null : contract._id)}
+                                        className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                                    >
+                                        {expandedContract === contract._id ? <ChevronUp /> : <ChevronDown />}
+                                    </button>
+                            </div>
+                        </div>
 
-                                {/* Expanded Contract Details */}
-                                {expandedContract === contract._id && (
+                        {/* Expanded Contract Details */}
+                        {expandedContract === contract._id && (
                                     <div className="mt-6 border-t border-gray-200 pt-6">
                                         <div className="space-y-6">
-                                            {/* Milestones */}
+                                {/* Milestones */}
                                             <div>
                                                 <h4 className="text-lg font-medium text-gray-900 mb-4">Milestones</h4>
-                                                <div className="space-y-4">
+                                <div className="space-y-4">
                                                     {contract.milestones.map((milestone, index) => (
                                                         <div key={index} className="border border-gray-200 rounded-lg p-4">
                                                             <div className="flex justify-between items-start">
-                                                                <div>
+                                                <div>
                                                                     <h5 className="font-medium text-gray-900">{milestone.title}</h5>
                                                                     <p className="text-sm text-gray-600 mt-1">{milestone.description}</p>
                                                                     <p className="text-sm text-gray-600 mt-1">
@@ -209,43 +209,43 @@ const AcceptedWorkTab = () => {
                                                                     </p>
                                                                     <p className="text-sm font-medium text-green-600 mt-1">
                                                                         ${milestone.amount}
-                                                                    </p>
-                                                                </div>
+                                                    </p>
+                                                </div>
                                                                 <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(milestone.status)}`}>
                                                                     {milestone.status.replace('_', ' ').charAt(0).toUpperCase() + milestone.status.slice(1)}
                                                                 </span>
-                                                            </div>
+                                            </div>
 
                                                             {/* Submit Work Form */}
                                                             {activeMilestone === milestone._id && milestone.status !== 'completed' && milestone.status !== 'paid' && (
                                                                 <div className="mt-4 space-y-4">
-                                                                    <div>
-                                                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                                            Work Description
-                                                                        </label>
-                                                                        <textarea
-                                                                            value={submissionComment}
-                                                                            onChange={(e) => setSubmissionComment(e.target.value)}
+                                                            <div>
+                                                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                                    Work Description
+                                                                </label>
+                                                                <textarea
+                                                                    value={submissionComment}
+                                                                    onChange={(e) => setSubmissionComment(e.target.value)}
                                                                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                                                                            rows="4"
+                                                                    rows="4"
                                                                             placeholder="Describe the work you've completed..."
-                                                                        />
-                                                                    </div>
-                                                                    <div>
-                                                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                                />
+                                                            </div>
+                                                            <div>
+                                                                <label className="block text-sm font-medium text-gray-700 mb-2">
                                                                             Attach Files
-                                                                        </label>
-                                                                        <input
-                                                                            type="file"
-                                                                            multiple
-                                                                            onChange={handleFileChange}
-                                                                            className="block w-full text-sm text-gray-500
-                                                                                file:mr-4 file:py-2 file:px-4
-                                                                                file:rounded-full file:border-0
-                                                                                file:text-sm file:font-semibold
-                                                                                file:bg-green-50 file:text-green-700
-                                                                                hover:file:bg-green-100"
-                                                                        />
+                                                                </label>
+                                                                <input
+                                                                    type="file"
+                                                                    multiple
+                                                                    onChange={handleFileChange}
+                                                                    className="block w-full text-sm text-gray-500
+                                                                        file:mr-4 file:py-2 file:px-4
+                                                                        file:rounded-full file:border-0
+                                                                        file:text-sm file:font-semibold
+                                                                        file:bg-green-50 file:text-green-700
+                                                                        hover:file:bg-green-100"
+                                                                />
                                                                         {selectedFiles.length > 0 && (
                                                                             <div className="mt-2">
                                                                                 <p className="text-sm text-gray-600">
@@ -253,17 +253,17 @@ const AcceptedWorkTab = () => {
                                                                                 </p>
                                                                             </div>
                                                                         )}
-                                                                    </div>
+                                                            </div>
                                                                     <div className="flex justify-end space-x-2">
-                                                                        <button
-                                                                            onClick={() => setActiveMilestone(null)}
+                                                                <button
+                                                                    onClick={() => setActiveMilestone(null)}
                                                                             className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
                                                                             disabled={isSubmitting}
-                                                                        >
-                                                                            Cancel
-                                                                        </button>
-                                                                        <button
-                                                                            onClick={() => handleSubmit(contract._id, milestone._id)}
+                                                                >
+                                                                    Cancel
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => handleSubmit(contract._id, milestone._id)}
                                                                             className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 flex items-center"
                                                                             disabled={isSubmitting}
                                                                         >
@@ -277,36 +277,89 @@ const AcceptedWorkTab = () => {
                                                                             ) : (
                                                                                 <>
                                                                                     <Upload className="w-4 h-4 mr-2" />
-                                                                                    Submit Work
+                                                                    Submit Work
                                                                                 </>
                                                                             )}
-                                                                        </button>
-                                                                    </div>
-                                                                </div>
+                                                                </button>
+                                                            </div>
+                                                        </div>
                                                             )}
 
                                                             {/* Submit Work Button */}
-                                                            {activeMilestone !== milestone._id && milestone.status !== 'completed' && milestone.status !== 'paid' && (
-                                                                <button
-                                                                    onClick={() => setActiveMilestone(milestone._id)}
+                                                            {activeMilestone !== milestone._id && 
+                                                            milestone.status !== 'completed' && 
+                                                            milestone.status !== 'paid' && 
+                                                            milestone.status !== 'submitted' && (
+                                                        <button
+                                                            onClick={() => setActiveMilestone(milestone._id)}
                                                                     className="mt-4 w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center"
-                                                                >
-                                                                    <Upload className="w-4 h-4 mr-2" />
-                                                                    Submit Work
-                                                                </button>
-                                                            )}
+                                                        >
+                                                            <Upload className="w-4 h-4 mr-2" />
+                                                            Submit Work
+                                                        </button>
+                                                    )}
 
                                                             {/* Submission History */}
-                                                            {milestone.submissionHistory && milestone.submissionHistory.length > 0 && (
+                                                            {(milestone.submissionHistory?.length > 0 || milestone.currentSubmission) && (
                                                                 <div className="mt-4 pt-4 border-t border-gray-200">
                                                                     <h6 className="font-medium text-gray-900 mb-2">Submission History</h6>
-                                                                    {milestone.submissionHistory.map((submission, subIndex) => (
-                                                                        <div key={subIndex} className="text-sm text-gray-600">
-                                                                            <p>Submitted on {formatSafeDate(submission.submittedAt, 'MMM dd, yyyy HH:mm')}</p>
-                                                                            <p className="mt-1">{submission.comments}</p>
+                                                                    
+                                                                    {/* Current Submission */}
+                                                                    {milestone.currentSubmission && (
+                                                                        <div className="mb-4 p-3 bg-blue-50 border border-blue-100 rounded-lg">
+                                                                            <div className="flex justify-between items-start">
+                                                                                <div>
+                                                                                    <span className="text-sm font-medium text-blue-800">Current Submission</span>
+                                                                                    <p className="text-sm text-gray-600 mt-1">
+                                                                                        Submitted on {formatSafeDate(milestone.currentSubmission.submittedAt, 'MMM dd, yyyy HH:mm')}
+                                                                                    </p>
+                                                                                </div>
+                                                                                <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                                                                                    Pending Review
+                                                                                </span>
+                                                </div>
+                                                                            <p className="mt-2 text-sm text-gray-700">{milestone.currentSubmission.comments}</p>
+                                                                            {milestone.currentSubmission.files && milestone.currentSubmission.files.length > 0 && (
+                                                                                <div className="mt-2">
+                                                                                    <p className="text-sm font-medium text-gray-700">Attachments:</p>
+                                                                                    <div className="flex flex-wrap gap-2 mt-1">
+                                                                                        {milestone.currentSubmission.files.map((file, fileIndex) => (
+                                                                                            <a
+                                                                                                key={fileIndex}
+                                                                href={file.url}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                                                className="flex items-center px-3 py-1 bg-white rounded-lg hover:bg-gray-50"
+                                                            >
+                                                                <FileText className="w-4 h-4 mr-2" />
+                                                                {file.filename}
+                                                            </a>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                                                    )}
+                                                                    
+                                                                    {/* Previous Submissions */}
+                                                                    {milestone.submissionHistory?.map((submission, subIndex) => (
+                                                                        <div key={subIndex} className="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                                                                            <div className="flex justify-between items-start">
+                                                                                <p className="text-sm text-gray-600">
+                                                                                    Submitted on {formatSafeDate(submission.submittedAt, 'MMM dd, yyyy HH:mm')}
+                                                                                </p>
+                                                                                <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                                                                                    submission.status === 'approved' ? 'bg-green-100 text-green-800' :
+                                                                                    submission.status === 'changes_requested' ? 'bg-yellow-100 text-yellow-800' :
+                                                                                    'bg-gray-100 text-gray-800'
+                                                                                }`}>
+                                                                                    {submission.status.replace('_', ' ')}
+                                                                                </span>
+                                                                            </div>
+                                                                            <p className="mt-2 text-sm text-gray-700">{submission.comments}</p>
                                                                             {submission.files && submission.files.length > 0 && (
                                                                                 <div className="mt-2">
-                                                                                    <p className="font-medium">Attachments:</p>
+                                                                                    <p className="text-sm font-medium text-gray-700">Attachments:</p>
                                                                                     <div className="flex flex-wrap gap-2 mt-1">
                                                                                         {submission.files.map((file, fileIndex) => (
                                                                                             <a
@@ -314,18 +367,18 @@ const AcceptedWorkTab = () => {
                                                                                                 href={file.url}
                                                                                                 target="_blank"
                                                                                                 rel="noopener noreferrer"
-                                                                                                className="flex items-center px-3 py-1 bg-gray-100 rounded-lg hover:bg-gray-200"
+                                                                                                className="flex items-center px-3 py-1 bg-white rounded-lg hover:bg-gray-50"
                                                                                             >
                                                                                                 <FileText className="w-4 h-4 mr-2" />
                                                                                                 {file.filename}
                                                                                             </a>
-                                                                                        ))}
-                                                                                    </div>
+                                    ))}
+                                </div>
                                                                                 </div>
                                                                             )}
                                                                             {/* Show client feedback if any */}
                                                                             {submission.clientFeedback && (
-                                                                                <div className="mt-3 pt-3 border-t">
+                                                                                <div className="mt-3 pt-3 border-t border-gray-200">
                                                                                     <p className="text-sm font-medium text-gray-900">Client Feedback:</p>
                                                                                     <p className="text-sm text-gray-700 mt-1">{submission.clientFeedback}</p>
                                                                                     <p className="text-xs text-gray-500 mt-1">
@@ -335,10 +388,10 @@ const AcceptedWorkTab = () => {
                                                                             )}
                                                                         </div>
                                                                     ))}
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    ))}
+                            </div>
+                        )}
+                    </div>
+                ))}
                                                 </div>
                                             </div>
                                         </div>

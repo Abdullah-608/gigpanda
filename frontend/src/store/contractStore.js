@@ -109,27 +109,22 @@ export const useContractStore = create((set) => ({
     submitWork: async (contractId, milestoneId, submissionData) => {
         set({ isLoading: true, error: null });
         try {
-            // Create FormData object
             let formData;
             
-            // If submissionData is already FormData, use it directly
             if (submissionData instanceof FormData) {
                 formData = submissionData;
             } else {
                 formData = new FormData();
-                // Add files if they exist
                 if (submissionData.files) {
                     submissionData.files.forEach(file => {
                         formData.append('files', file);
                     });
                 }
-                // Add comments if they exist
                 if (submissionData.comments) {
                     formData.append('comments', submissionData.comments);
                 }
             }
 
-            // Add submission date
             formData.append('submittedAt', new Date().toISOString());
 
             const response = await axios.post(
@@ -142,18 +137,14 @@ export const useContractStore = create((set) => ({
                 }
             );
 
+            // Only update the specific milestone in the specific contract
             set(state => {
-                // Deep clone the contract to avoid mutation
                 const updatedContracts = state.contracts.map(contract => {
                     if (contract._id === contractId) {
-                        const updatedContract = JSON.parse(JSON.stringify(contract));
-                        const milestone = updatedContract.milestones.find(m => m._id === milestoneId);
-                        
-                        if (milestone) {
-                            // Ensure the submission has a submittedAt date
-                            if (milestone.currentSubmission && !milestone.currentSubmission.submittedAt) {
-                                milestone.currentSubmission.submittedAt = new Date().toISOString();
-                            }
+                        const updatedContract = { ...contract };
+                        const milestoneIndex = updatedContract.milestones.findIndex(m => m._id === milestoneId);
+                        if (milestoneIndex !== -1) {
+                            updatedContract.milestones[milestoneIndex] = response.data.contract.milestones.find(m => m._id === milestoneId);
                         }
                         return updatedContract;
                     }
@@ -162,7 +153,7 @@ export const useContractStore = create((set) => ({
 
                 return {
                     contracts: updatedContracts,
-                    currentContract: response.data.contract,
+                    currentContract: state.currentContract?._id === contractId ? response.data.contract : state.currentContract,
                     isLoading: false
                 };
             });
@@ -188,37 +179,14 @@ export const useContractStore = create((set) => ({
                 { status, feedback }
             );
 
-            // Update the contracts in the store
+            // Only update the specific milestone in the specific contract
             set(state => {
                 const updatedContracts = state.contracts.map(contract => {
                     if (contract._id === contractId) {
-                        // Deep clone the contract to avoid mutation
-                        const updatedContract = JSON.parse(JSON.stringify(contract));
-                        const milestone = updatedContract.milestones.find(m => m._id === milestoneId);
-                        
-                        if (milestone) {
-                            // Update milestone status
-                            milestone.status = status === "approved" ? "completed" : "changes_requested";
-                            
-                            // Update current submission status and add feedback
-                            if (milestone.currentSubmission) {
-                                const now = new Date().toISOString();
-                                milestone.currentSubmission.status = status;
-                                milestone.currentSubmission.clientFeedback = feedback;
-                                milestone.currentSubmission.feedbackAt = now;
-                                
-                                // Move current submission to history with the correct status and dates
-                                if (!milestone.submissionHistory) {
-                                    milestone.submissionHistory = [];
-                                }
-                                milestone.submissionHistory.push({
-                                    ...milestone.currentSubmission,
-                                    status: status,
-                                    submittedAt: milestone.currentSubmission.submittedAt || now, // Preserve original submission date
-                                    feedbackAt: now
-                                });
-                                milestone.currentSubmission = null;
-                            }
+                        const updatedContract = { ...contract };
+                        const milestoneIndex = updatedContract.milestones.findIndex(m => m._id === milestoneId);
+                        if (milestoneIndex !== -1) {
+                            updatedContract.milestones[milestoneIndex] = response.data.contract.milestones.find(m => m._id === milestoneId);
                         }
                         return updatedContract;
                     }
@@ -227,6 +195,7 @@ export const useContractStore = create((set) => ({
 
                 return {
                     contracts: updatedContracts,
+                    currentContract: state.currentContract?._id === contractId ? response.data.contract : state.currentContract,
                     isLoading: false
                 };
             });

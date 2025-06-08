@@ -70,13 +70,13 @@ const ClientJobsTab = () => {
             // Find the matching contract from the fresh data
             const matchingContract = freshContracts?.find(c => c.job?._id === job._id);
             
-            console.log('Found matching contract:', matchingContract);
+        console.log('Found matching contract:', matchingContract);
             
-            if (matchingContract) {
-                setSelectedContract(matchingContract);
-                setIsContractModalOpen(true);
-            } else {
-                toast.error('Contract not found');
+        if (matchingContract) {
+            setSelectedContract(matchingContract);
+            setIsContractModalOpen(true);
+        } else {
+            toast.error('Contract not found');
             }
         } catch (error) {
             console.error('Error loading contract:', error);
@@ -133,25 +133,23 @@ const ClientJobsTab = () => {
         navigate(`/proposals/job/${jobId}`);
     };
 
-    const toggleJobDetails = async (jobId) => {
+    const toggleJobDetails = (jobId) => {
         console.log('Toggling job details for:', jobId);
         setIsTogglingDetails(jobId);
-        try {
-            setExpandedJobs(prev => {
-                const newSet = new Set(prev);
-                if (newSet.has(jobId)) {
-                    newSet.delete(jobId);
-                } else {
-                    newSet.add(jobId);
-                }
-                return newSet;
-            });
-        } finally {
-            // Add a small delay to make the loading state visible
-            setTimeout(() => {
-                setIsTogglingDetails(null);
-            }, 300);
-        }
+        
+        // Update the expanded jobs state
+        setExpandedJobs(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(jobId)) {
+                newSet.delete(jobId);
+            } else {
+                newSet.add(jobId);
+            }
+            return newSet;
+        });
+        
+        // Clear the loading state immediately
+        setIsTogglingDetails(null);
     };
 
     const formatBudget = (budget, budgetType) => {
@@ -196,6 +194,12 @@ const ClientJobsTab = () => {
                 return 'bg-blue-100 text-blue-800';
             case 'pending':
                 return 'bg-yellow-100 text-yellow-800';
+            case 'review needed':
+                return 'bg-purple-100 text-purple-800';
+            case 'changes requested':
+                return 'bg-red-100 text-red-800';
+            case 'submitted':
+                return 'bg-blue-100 text-blue-800';
             default:
                 return 'bg-gray-100 text-gray-800';
         }
@@ -205,8 +209,13 @@ const ClientJobsTab = () => {
         if (contract?.status === 'completed') return 'completed';
         if (contract) {
             const hasSubmittedMilestone = contract.milestones.some(m => m.status === 'submitted');
+            const hasChangesRequested = contract.milestones.some(m => m.status === 'changes_requested');
+            const hasInProgress = contract.milestones.some(m => m.status === 'in_progress');
+            
             if (hasSubmittedMilestone) return 'review needed';
-            return 'in progress';
+            if (hasChangesRequested) return 'changes requested';
+            if (hasInProgress) return 'in progress';
+            return 'pending';
         }
         return 'open';
     };
@@ -277,7 +286,7 @@ const ClientJobsTab = () => {
                                 <div className="flex justify-between items-start">
                                     <div className="flex-1">
                                         <div className="flex items-center gap-3">
-                                            <h3 className="text-xl font-semibold text-gray-900">{job.title}</h3>
+                                        <h3 className="text-xl font-semibold text-gray-900">{job.title}</h3>
                                             <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">
                                                 Open
                                             </span>
@@ -334,8 +343,8 @@ const ClientJobsTab = () => {
                                                 <InlineLoading text="Deleting..." size="small" spinnerColor="text-red-600" textColor="text-red-700" className="py-0" />
                                             ) : (
                                                 <>
-                                                    <Trash2 className="h-4 w-4 mr-1.5" />
-                                                    Delete Job
+                                            <Trash2 className="h-4 w-4 mr-1.5" />
+                                            Delete Job
                                                 </>
                                             )}
                                         </button>
@@ -365,7 +374,7 @@ const ClientJobsTab = () => {
                                     <div className="flex justify-between items-start">
                                         <div>
                                             <div className="flex items-center gap-3">
-                                                <h3 className="text-xl font-semibold text-gray-900">{job.title}</h3>
+                                            <h3 className="text-xl font-semibold text-gray-900">{job.title}</h3>
                                                 <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${getStatusBadgeClass(status)}`}>
                                                     {status.charAt(0).toUpperCase() + status.slice(1)}
                                                 </span>
@@ -391,8 +400,8 @@ const ClientJobsTab = () => {
                                                     <InlineLoading text="Loading..." size="small" spinnerColor="text-blue-600" textColor="text-blue-700" className="py-0" />
                                                 ) : (
                                                     <>
-                                                        <Eye className="w-4 h-4 mr-2" />
-                                                        View Contract
+                                                <Eye className="w-4 h-4 mr-2" />
+                                                View Contract
                                                     </>
                                                 )}
                                             </button>
@@ -509,9 +518,13 @@ const ClientJobsTab = () => {
                                                                     <span className={`px-2 py-1 text-xs font-medium rounded-full ${
                                                                         milestone.status === 'completed' ? 'bg-green-100 text-green-800' :
                                                                         milestone.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
+                                                                        milestone.status === 'submitted' ? 'bg-purple-100 text-purple-800' :
+                                                                        milestone.status === 'changes_requested' ? 'bg-red-100 text-red-800' :
                                                                         'bg-gray-100 text-gray-800'
                                                                     }`}>
-                                                                        {milestone.status}
+                                                                        {milestone.status.replace(/_/g, ' ').split(' ').map(word => 
+                                                                            word.charAt(0).toUpperCase() + word.slice(1)
+                                                                        ).join(' ')}
                                                                     </span>
                                                                 </div>
 

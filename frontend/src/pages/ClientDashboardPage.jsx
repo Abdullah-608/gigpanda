@@ -116,13 +116,17 @@ const ClientDashboardPage = () => {
 		// Handle navigation based on notification type
 		switch (notification.type) {
 			case 'NEW_PROPOSAL':
-				setActiveTab('myjobs');
+				if (notification.job) {
+					setActiveTab('myjobs');
+				}
 				break;
 			case 'NEW_MESSAGE':
 				setActiveTab('messages');
 				break;
 			case 'MILESTONE_SUBMITTED':
-				setActiveTab('myjobs');
+				if (notification.job) {
+					setActiveTab('myjobs');
+				}
 				break;
 		}
 		setIsNotificationOpen(false);
@@ -231,60 +235,64 @@ const ClientDashboardPage = () => {
 														No notifications
 													</div>
 												) : (
-													notifications.map((notification) => (
-														<div
-															key={notification._id}
-															onClick={() => handleNotificationClick(notification)}
-															className={`block p-4 hover:bg-gray-50 transition-colors cursor-pointer ${
-																!notification.read ? 'bg-blue-50' : ''
-															}`}
-														>
-															<div className="flex items-start gap-3">
-																<img
-																	src={notification.sender.profile?.pictureUrl || '/default-avatar.png'}
-																	alt={notification.sender.name}
-																	className="w-10 h-10 rounded-full object-cover"
-																/>
-																<div className="flex-1">
-																	<p className="text-sm text-gray-800">
-																		{(() => {
-																			const senderName = notification.sender.name;
-																			switch (notification.type) {
-																				case 'NEW_PROPOSAL':
-																					return (
-																						<>
-																							<span className="font-semibold">{senderName}</span> submitted a proposal for "
-																							<span className="font-semibold">{notification.job.title}</span>"
-																						</>
-																					);
-																				case 'NEW_MESSAGE':
-																					return (
-																						<>
-																							New message from <span className="font-semibold">{senderName}</span>
-																						</>
-																					);
-																				case 'MILESTONE_SUBMITTED':
-																					return (
-																						<>
-																							<span className="font-semibold">{senderName}</span> submitted work for a milestone in "
-																							<span className="font-semibold">{notification.job.title}</span>"
-																						</>
-																					);
-																				default:
-																					return notification.message || 'New notification';
-																			}
-																		})()}
-																	</p>
-																	<p className="text-xs text-gray-500 mt-1">
-																		{format(new Date(notification.createdAt), 'MMM d, yyyy h:mm a')}
-																	</p>
+													notifications.map((notification) => {
+														const senderName = notification.sender?.name || 'Someone';
+														const jobTitle = notification.job?.title || 'a job';
+														
+														return (
+															<div
+																key={notification._id}
+																onClick={() => handleNotificationClick(notification)}
+																className={`block p-4 hover:bg-gray-50 transition-colors cursor-pointer ${
+																	!notification.read ? 'bg-blue-50' : ''
+																}`}
+															>
+																<div className="flex items-start gap-3">
+																	<img
+																		src={notification.sender?.profile?.pictureUrl || '/default-avatar.png'}
+																		alt={senderName}
+																		className="w-10 h-10 rounded-full object-cover"
+																	/>
+																	<div className="flex-1">
+																		<p className="text-sm text-gray-800">
+																			{(() => {
+																				switch (notification.type) {
+																					case 'NEW_PROPOSAL':
+																						return (
+																							<>
+																								<span className="font-semibold">{senderName}</span> submitted a proposal for "
+																								<span className="font-semibold">{jobTitle}</span>"
+																							</>
+																						);
+																					case 'NEW_MESSAGE':
+																						return (
+																							<>
+																								New message from <span className="font-semibold">{senderName}</span>
+																							</>
+																						);
+																					case 'MILESTONE_SUBMITTED':
+																						return (
+																							<>
+																								<span className="font-semibold">{senderName}</span> submitted work for a milestone in "
+																								<span className="font-semibold">{jobTitle}</span>"
+																							</>
+																						);
+																					default:
+																						return notification.message || 'New notification';
+																				}
+																			})()}
+																		</p>
+																		<p className="text-xs text-gray-500 mt-1">
+																			{format(new Date(notification.createdAt), 'MMM d, yyyy h:mm a')}
+																		</p>
+																	</div>
+																	{!notification.read && (
+																		<div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+																	)}
 																</div>
-																{!notification.read && (
-																	<div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
-																)}
 															</div>
-														</div>
-													))
+														);
+													})
 												)}
 											</div>
 										</div>
