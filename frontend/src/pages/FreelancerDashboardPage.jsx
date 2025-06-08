@@ -1,9 +1,11 @@
 import { motion } from "framer-motion";
 import { useAuthStore } from "../store/authStore";
 import { useJobStore } from "../store/jobStore";
-import { BookmarkIcon, BellIcon, User, Menu, LogOut, ChevronDown, DollarSign, Briefcase, Clock, MessageSquare, Award, Loader, Filter } from "lucide-react";
+import { usePostStore } from "../store/postStore";
+import { BookmarkIcon, BellIcon, User, Menu, LogOut, ChevronDown, DollarSign, Briefcase, Clock, MessageSquare, Award, Loader, Filter, Plus } from "lucide-react";
 import SearchBar from "../components/SearchBar";
 import CreateProposalModal from "../components/CreateProposalModal";
+import CreatePostModal from "../components/CreatePostModal";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import MyProposalsPage from "./MyProposalsPage";
@@ -15,9 +17,11 @@ import AcceptedWorkTab from "../components/AcceptedWorkTab";
 const FreelancerDashboardPage = () => {
 	const { user, logout, activeTab, setActiveTab } = useAuthStore();
 	const { jobs, isLoading, error, pagination, fetchJobs, loadMoreJobs } = useJobStore();
+	const { fetchPosts } = usePostStore();
 	const navigate = useNavigate();
 	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 	const [isProposalModalOpen, setIsProposalModalOpen] = useState(false);
+	const [isCreatePostModalOpen, setIsCreatePostModalOpen] = useState(false);
 	const [selectedJob, setSelectedJob] = useState(null);
 	const { notifications, unreadCount, fetchNotifications, markAsRead, markAllAsRead, loadMoreNotifications, isLoading: notificationLoading, pagination: notificationPagination } = useNotificationStore();
 	const [isNotificationOpen, setIsNotificationOpen] = useState(false);
@@ -26,6 +30,7 @@ const FreelancerDashboardPage = () => {
 	
 	useEffect(() => {
 		fetchJobs();
+		fetchPosts();
 		fetchNotifications();
 		
 		const handleClickOutside = (event) => {
@@ -38,7 +43,7 @@ const FreelancerDashboardPage = () => {
 		return () => {
 			document.removeEventListener('mousedown', handleClickOutside);
 		};
-	}, [fetchJobs, fetchNotifications]);
+	}, [fetchJobs, fetchPosts, fetchNotifications]);
 	
 	// Check if user has the correct role
 	if (user?.role !== "freelancer") {
@@ -165,6 +170,12 @@ const FreelancerDashboardPage = () => {
 				setActiveTab('accepted-work');
 				if (notification.job?._id) {
 					navigate(`/contracts/${notification.job._id}`);
+				}
+				break;
+			case 'POST_LIKED':
+			case 'POST_COMMENTED':
+				if (notification.post?._id) {
+					navigate(`/posts/${notification.post._id}`);
 				}
 				break;
 		}
@@ -377,6 +388,18 @@ const FreelancerDashboardPage = () => {
 																							<>
 																								<span className="font-semibold">{senderName}</span> requested changes for your milestone submission in "
 																								<span className="font-semibold">{jobTitle}</span>"
+																							</>
+																						);
+																					case 'POST_LIKED':
+																						return (
+																							<>
+																								<span className="font-semibold">{senderName}</span> liked your post
+																							</>
+																						);
+																					case 'POST_COMMENTED':
+																						return (
+																							<>
+																								<span className="font-semibold">{senderName}</span> commented on your post
 																							</>
 																						);
 																					default:
@@ -825,7 +848,25 @@ const FreelancerDashboardPage = () => {
 				) : null}
 			</main>
 
-			{/* Proposal Modal */}
+			{/* Add the floating action button for creating posts */}
+			<motion.button
+				initial={{ scale: 0 }}
+				animate={{ scale: 1 }}
+				whileHover={{ scale: 1.1 }}
+				whileTap={{ scale: 0.9 }}
+				onClick={() => setIsCreatePostModalOpen(true)}
+				className="fixed bottom-6 right-6 w-14 h-14 bg-green-600 text-white rounded-full shadow-lg hover:bg-green-700 transition-colors flex items-center justify-center z-40"
+			>
+				<Plus className="h-6 w-6" />
+			</motion.button>
+
+			{/* Add the CreatePostModal */}
+			<CreatePostModal 
+				isOpen={isCreatePostModalOpen}
+				onClose={() => setIsCreatePostModalOpen(false)}
+			/>
+
+			{/* Existing CreateProposalModal */}
 			<CreateProposalModal
 				isOpen={isProposalModalOpen}
 				onClose={() => {

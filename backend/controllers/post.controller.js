@@ -1,6 +1,7 @@
 import Post from "../models/post.model.js";
 import User from '../models/user.model.js';
 import mongoose from 'mongoose';
+import { createNotification } from '../utils/notification.utils.js';
 
 // Create a new post
 export const createPost = async (req, res) => {
@@ -338,6 +339,17 @@ export const toggleLikePost = async (req, res) => {
         } else {
             // Like the post
             post.likes.push({ user: userId });
+            
+            // Create notification for the post author if it's not their own post
+            if (post.author.toString() !== userId.toString()) {
+                await createNotification({
+                    recipient: post.author,
+                    sender: userId,
+                    type: 'POST_LIKED',
+                    post: postId,
+                    message: 'liked your post'
+                });
+            }
         }
 
         await post.save();
@@ -395,6 +407,17 @@ export const addComment = async (req, res) => {
 
         post.comments.push(newComment);
         await post.save();
+
+        // Create notification for the post author if it's not their own comment
+        if (post.author.toString() !== userId.toString()) {
+            await createNotification({
+                recipient: post.author,
+                sender: userId,
+                type: 'POST_COMMENTED',
+                post: postId,
+                message: 'commented on your post'
+            });
+        }
 
         // Populate the new comment with user details
         await post.populate({
