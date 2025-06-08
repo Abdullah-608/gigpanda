@@ -1,6 +1,7 @@
 import Job from "../models/job.model.js";
 import User from "../models/user.model.js";
 import Proposal from "../models/proposal.model.js";
+import { validateJobInput } from '../utils/validation.js';
 
 // Create a new job posting
 export const createJob = async (req, res) => {
@@ -17,19 +18,13 @@ export const createJob = async (req, res) => {
             location
         } = req.body;
 
-        // Validate required fields
-        if (!title || !description || !category || !budget || !budgetType || !timeline || !experienceLevel) {
+        // Validate job input
+        const { isValid, errors } = validateJobInput(req.body);
+        if (!isValid) {
             return res.status(400).json({
                 success: false,
-                message: "Please provide all required fields"
-            });
-        }
-
-        // Validate budget
-        if (!budget.min || !budget.max || budget.min < 0 || budget.max < 0 || budget.min > budget.max) {
-            return res.status(400).json({
-                success: false,
-                message: "Please provide valid budget range"
+                message: "Validation failed",
+                errors
             });
         }
 
@@ -81,7 +76,7 @@ export const getJobs = async (req, res) => {
         const { page = 1, limit = 10, search, category, experienceLevel, budgetMin, budgetMax, location } = req.query;
 
         // Build filter
-        const filter = {};
+        const filter = { status: 'open' }; // Only show open jobs
         if (search) {
             filter.$or = [
                 { title: { $regex: search, $options: 'i' } },
@@ -102,6 +97,15 @@ export const getJobs = async (req, res) => {
             if (budgetMin) filter.budget.$gte = parseInt(budgetMin);
             if (budgetMax) filter.budget.$lte = parseInt(budgetMax);
         }
+
+        // Get jobs where the freelancer's proposal hasn't been accepted
+        const acceptedProposals = await Proposal.find({
+            freelancer: req.user._id,
+            status: 'accepted'
+        }).select('job');
+
+        const acceptedJobIds = acceptedProposals.map(p => p.job);
+        filter._id = { $nin: acceptedJobIds };
 
         // Calculate pagination
         const skip = (parseInt(page) - 1) * parseInt(limit);
