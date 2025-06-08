@@ -1,13 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useJobStore } from '../store/jobStore';
 import { useContractStore } from '../store/contractStore';
-import { DollarSign, User, Clock, Eye, Trash2, FileText, ChevronDown, ChevronUp, XCircle, FileIcon, ExternalLink, Calendar } from 'lucide-react';
+import { useAuthStore } from '../store/authStore';
+import { DollarSign, User, Clock, Eye, Trash2, FileText, ChevronDown, ChevronUp, Calendar, Briefcase, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
-import ContractDetailsModal from './ContractDetailsModal';
-import MilestoneReview from './MilestoneReview';
 import { useNavigate } from 'react-router-dom';
-import { useAuthStore } from '../store/authStore';
+import ContractDetailsModal from './ContractDetailsModal';
+import InlineLoading from './InlineLoading';
+import MilestoneReview from './MilestoneReview';
 
 const formatSafeDate = (dateString, formatString) => {
     if (!dateString) return 'N/A';
@@ -17,7 +18,7 @@ const formatSafeDate = (dateString, formatString) => {
 };
 
 const ClientJobsTab = () => {
-    const { myJobs, fetchMyJobs, deleteJob } = useJobStore();
+    const { myJobs, fetchMyJobs, deleteJob, isLoading } = useJobStore();
     const { contracts, getMyContracts, fundEscrow, reviewSubmission } = useContractStore();
     const { user } = useAuthStore();
     const [activeTab, setActiveTab] = useState('open');
@@ -25,24 +26,29 @@ const ClientJobsTab = () => {
     const [isContractModalOpen, setIsContractModalOpen] = useState(false);
     const [escrowAmount, setEscrowAmount] = useState('');
     const [expandedJobs, setExpandedJobs] = useState(new Set());
-    const [selectedFile, setSelectedFile] = useState(null);
+    const [isDeletingJob, setIsDeletingJob] = useState(null);
+    const [isFundingEscrow, setIsFundingEscrow] = useState(null);
+    const [isTogglingDetails, setIsTogglingDetails] = useState(null);
+    const [isViewingContract, setIsViewingContract] = useState(null);
+    const [isRefreshing, setIsRefreshing] = useState(false);
     const navigate = useNavigate();
 
     const isClient = user?.role === 'client';
 
-    useEffect(() => {
-        const loadData = async () => {
-            console.log('Loading data...');
-            await fetchMyJobs();
-            await getMyContracts();
-        };
-        loadData();
-    }, [fetchMyJobs, getMyContracts]);
-
-    useEffect(() => {
-        console.log('Current contracts:', contracts);
-        console.log('Current jobs:', myJobs);
-    }, [contracts, myJobs]);
+    const handleRefresh = async () => {
+        setIsRefreshing(true);
+        try {
+            await Promise.all([
+                fetchMyJobs(),
+                getMyContracts()
+            ]);
+        } catch (error) {
+            console.error('Error refreshing data:', error);
+            toast.error('Failed to refresh data');
+        } finally {
+            setIsRefreshing(false);
+        }
+    };
 
     // Filter jobs based on their status
     const openJobs = myJobs.filter(job => !job.proposals?.some(proposal => proposal.status === 'accepted'));
@@ -55,15 +61,29 @@ const ClientJobsTab = () => {
         return contract?.status === 'completed';
     });
 
-    const handleViewContract = (job) => {
+    const handleViewContract = async (job) => {
         console.log('Viewing contract for job:', job);
-        const matchingContract = contracts.find(c => c.job?._id === job._id);
+        setIsViewingContract(job._id);
+        try {
+            // Fetch latest contracts
+            const freshContracts = await getMyContracts();
+            
+            // Find the matching contract from the fresh data
+            const matchingContract = freshContracts?.find(c => c.job?._id === job._id);
+            
         console.log('Found matching contract:', matchingContract);
+            
         if (matchingContract) {
             setSelectedContract(matchingContract);
             setIsContractModalOpen(true);
         } else {
             toast.error('Contract not found');
+            }
+        } catch (error) {
+            console.error('Error loading contract:', error);
+            toast.error('Error loading contract details');
+        } finally {
+            setIsViewingContract(null);
         }
     };
 
@@ -74,11 +94,14 @@ const ClientJobsTab = () => {
         }
 
         try {
+            setIsFundingEscrow(contractId);
             await fundEscrow(contractId, parseFloat(escrowAmount));
             setEscrowAmount('');
             toast.success('Escrow funded successfully');
         } catch (error) {
             toast.error(error.message || 'Failed to fund escrow');
+        } finally {
+            setIsFundingEscrow(null);
         }
     };
 
@@ -95,11 +118,14 @@ const ClientJobsTab = () => {
     const handleDeleteJob = async (jobId) => {
         if (window.confirm('Are you sure you want to delete this job? This action cannot be undone.')) {
             try {
+                setIsDeletingJob(jobId);
                 await deleteJob(jobId);
                 toast.success('Job deleted successfully');
-                fetchMyJobs(); // Refresh the jobs list
+                await fetchMyJobs();
             } catch (error) {
                 toast.error(error.message || 'Failed to delete job');
+            } finally {
+                setIsDeletingJob(null);
             }
         }
     };
@@ -110,6 +136,9 @@ const ClientJobsTab = () => {
 
     const toggleJobDetails = (jobId) => {
         console.log('Toggling job details for:', jobId);
+        setIsTogglingDetails(jobId);
+        
+        // Update the expanded jobs state
         setExpandedJobs(prev => {
             const newSet = new Set(prev);
             if (newSet.has(jobId)) {
@@ -119,6 +148,9 @@ const ClientJobsTab = () => {
             }
             return newSet;
         });
+        
+        // Clear the loading state immediately
+        setIsTogglingDetails(null);
     };
 
     const formatBudget = (budget, budgetType) => {
@@ -129,25 +161,45 @@ const ClientJobsTab = () => {
         }
     };
 
-    const handlePreviewFile = (file) => {
-        setSelectedFile(file);
-    };
-
     const handleDownloadFile = async (contractId, milestoneId, file) => {
         try {
-            const response = await fetch(`/api/contracts/${contractId}/milestones/${milestoneId}/files/${file._id}/download`);
-            if (!response.ok) throw new Error('Download failed');
-            
+            const response = await fetch(`/api/contracts/${contractId}/milestones/${milestoneId}/files/${file._id}/download`, {
+                method: 'GET',
+                headers: {
+                    'Accept': '*/*'  // Accept any content type
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Download failed');
+            }
+
+            // Get the filename from the Content-Disposition header or use the original filename
+            const contentDisposition = response.headers.get('Content-Disposition');
+            const filename = contentDisposition
+                ? decodeURIComponent(contentDisposition.split('filename=')[1].replace(/"/g, ''))
+                : file.filename;
+
+            // Create blob with the correct type from response headers
             const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = file.filename;
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
-            document.body.removeChild(a);
+            const blobWithType = new Blob([blob], { 
+                type: response.headers.get('Content-Type') || 'application/octet-stream' 
+            });
+
+            // Create download link and trigger download
+            const downloadUrl = window.URL.createObjectURL(blobWithType);
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
             
+            // Cleanup
+            document.body.removeChild(link);
+            setTimeout(() => {
+                window.URL.revokeObjectURL(downloadUrl);
+            }, 100);
+
             toast.success('File download started');
         } catch (error) {
             console.error('Error downloading file:', error);
@@ -163,6 +215,12 @@ const ClientJobsTab = () => {
                 return 'bg-blue-100 text-blue-800';
             case 'pending':
                 return 'bg-yellow-100 text-yellow-800';
+            case 'review needed':
+                return 'bg-purple-100 text-purple-800';
+            case 'changes requested':
+                return 'bg-red-100 text-red-800';
+            case 'submitted':
+                return 'bg-blue-100 text-blue-800';
             default:
                 return 'bg-gray-100 text-gray-800';
         }
@@ -172,25 +230,36 @@ const ClientJobsTab = () => {
         if (contract?.status === 'completed') return 'completed';
         if (contract) {
             const hasSubmittedMilestone = contract.milestones.some(m => m.status === 'submitted');
+            const hasChangesRequested = contract.milestones.some(m => m.status === 'changes_requested');
+            const hasInProgress = contract.milestones.some(m => m.status === 'in_progress');
+            
             if (hasSubmittedMilestone) return 'review needed';
-            return 'in progress';
+            if (hasChangesRequested) return 'changes requested';
+            if (hasInProgress) return 'in progress';
+            return 'pending';
         }
         return 'open';
     };
 
     return (
         <div className="max-w-7xl mx-auto px-4 py-6">
-            {/* Tab Navigation */}
-            <div className="flex space-x-4 mb-6">
+            {/* Tab Navigation with Refresh Button */}
+            <div className="flex justify-between items-center mb-6">
+                <div className="flex space-x-4">
                 <button
                     onClick={() => setActiveTab('open')}
+                        disabled={isLoading}
                     className={`px-4 py-2 rounded-lg font-medium ${
                         activeTab === 'open'
                             ? 'bg-green-600 text-white'
                             : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                >
-                    Open Jobs ({openJobs.length})
+                        } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                        {isLoading ? (
+                            <InlineLoading text="Loading..." size="small" className="py-0" />
+                        ) : (
+                            `Open Jobs (${openJobs.length})`
+                        )}
                 </button>
                 <button
                     onClick={() => setActiveTab('assigned')}
@@ -201,18 +270,42 @@ const ClientJobsTab = () => {
                     }`}
                 >
                     Assigned Jobs ({assignedJobs.length})
-                </button>
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('completed')}
+                        className={`px-4 py-2 rounded-lg font-medium ${
+                            activeTab === 'completed'
+                                ? 'bg-green-600 text-white'
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                    >
+                        Completed Jobs ({completedJobs.length})
+                    </button>
+                </div>
                 <button
-                    onClick={() => setActiveTab('completed')}
-                    className={`px-4 py-2 rounded-lg font-medium ${
-                        activeTab === 'completed'
-                            ? 'bg-green-600 text-white'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
+                    onClick={handleRefresh}
+                    disabled={isRefreshing}
+                    className="flex items-center px-3 py-2 text-gray-600 hover:text-gray-900 transition-colors"
                 >
-                    Completed Jobs ({completedJobs.length})
+                    <RefreshCw className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
                 </button>
             </div>
+
+            {/* Loading state for the entire section */}
+            {isLoading && myJobs.length === 0 && (
+                <div className="bg-white rounded-lg shadow-md p-6">
+                    <InlineLoading text="Loading jobs..." size="medium" className="justify-center" />
+                </div>
+            )}
+
+            {/* Empty state */}
+            {!isLoading && myJobs.length === 0 && (
+                <div className="bg-white rounded-lg shadow-md p-8 text-center">
+                    <Briefcase className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No jobs found</h3>
+                    <p className="text-gray-500">You haven't posted any jobs yet.</p>
+                </div>
+            )}
 
             {/* Open Jobs Section */}
             {activeTab === 'open' && (
@@ -223,7 +316,7 @@ const ClientJobsTab = () => {
                                 <div className="flex justify-between items-start">
                                     <div className="flex-1">
                                         <div className="flex items-center gap-3">
-                                            <h3 className="text-xl font-semibold text-gray-900">{job.title}</h3>
+                                        <h3 className="text-xl font-semibold text-gray-900">{job.title}</h3>
                                             <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">
                                                 Open
                                             </span>
@@ -265,17 +358,25 @@ const ClientJobsTab = () => {
                                         </span>
                                         <button
                                             onClick={() => handleViewProposals(job._id)}
-                                            className="flex items-center px-3 py-1.5 text-sm font-medium text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100"
+                                            disabled={isLoading}
+                                            className="flex items-center px-3 py-1.5 text-sm font-medium text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 disabled:opacity-50"
                                         >
                                             <FileText className="h-4 w-4 mr-1.5" />
                                             View Proposals
                                         </button>
                                         <button
                                             onClick={() => handleDeleteJob(job._id)}
-                                            className="flex items-center px-3 py-1.5 text-sm font-medium text-red-700 bg-red-50 rounded-lg hover:bg-red-100"
+                                            disabled={isDeletingJob === job._id}
+                                            className="flex items-center px-3 py-1.5 text-sm font-medium text-red-700 bg-red-50 rounded-lg hover:bg-red-100 disabled:opacity-50"
                                         >
+                                            {isDeletingJob === job._id ? (
+                                                <InlineLoading text="Deleting..." size="small" spinnerColor="text-red-600" textColor="text-red-700" className="py-0" />
+                                            ) : (
+                                                <>
                                             <Trash2 className="h-4 w-4 mr-1.5" />
                                             Delete Job
+                                                </>
+                                            )}
                                         </button>
                                     </div>
                                 </div>
@@ -303,7 +404,7 @@ const ClientJobsTab = () => {
                                     <div className="flex justify-between items-start">
                                         <div>
                                             <div className="flex items-center gap-3">
-                                                <h3 className="text-xl font-semibold text-gray-900">{job.title}</h3>
+                                            <h3 className="text-xl font-semibold text-gray-900">{job.title}</h3>
                                                 <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${getStatusBadgeClass(status)}`}>
                                                     {status.charAt(0).toUpperCase() + status.slice(1)}
                                                 </span>
@@ -322,16 +423,26 @@ const ClientJobsTab = () => {
                                         <div className="flex space-x-3">
                                             <button
                                                 onClick={() => handleViewContract(job)}
-                                                className="flex items-center px-4 py-2 text-sm font-medium text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100"
+                                                disabled={isViewingContract === job._id}
+                                                className="flex items-center px-4 py-2 text-sm font-medium text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 disabled:opacity-50"
                                             >
+                                                {isViewingContract === job._id ? (
+                                                    <InlineLoading text="Loading..." size="small" spinnerColor="text-blue-600" textColor="text-blue-700" className="py-0" />
+                                                ) : (
+                                                    <>
                                                 <Eye className="w-4 h-4 mr-2" />
                                                 View Contract
+                                                    </>
+                                                )}
                                             </button>
                                             <button
                                                 onClick={() => toggleJobDetails(job._id)}
-                                                className="flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                                                disabled={isTogglingDetails === job._id}
+                                                className="flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 disabled:opacity-50"
                                             >
-                                                {isExpanded ? (
+                                                {isTogglingDetails === job._id ? (
+                                                    <InlineLoading text="Loading..." size="small" spinnerColor="text-gray-600" textColor="text-gray-700" className="py-0" />
+                                                ) : isExpanded ? (
                                                     <>
                                                         <ChevronUp className="w-4 h-4 mr-2" />
                                                         Hide Details
@@ -340,6 +451,20 @@ const ClientJobsTab = () => {
                                                     <>
                                                         <ChevronDown className="w-4 h-4 mr-2" />
                                                         View Details
+                                                    </>
+                                                )}
+                                            </button>
+                                            <button
+                                                onClick={() => handleDeleteJob(job._id)}
+                                                disabled={isDeletingJob === job._id}
+                                                className="flex items-center px-3 py-1.5 text-sm font-medium text-red-700 bg-red-50 rounded-lg hover:bg-red-100 disabled:opacity-50"
+                                            >
+                                                {isDeletingJob === job._id ? (
+                                                    <InlineLoading text="Deleting..." size="small" spinnerColor="text-red-600" textColor="text-red-700" className="py-0" />
+                                                ) : (
+                                                    <>
+                                                        <Trash2 className="h-4 w-4 mr-1.5" />
+                                                        Delete Job
                                                     </>
                                                 )}
                                             </button>
@@ -364,13 +489,19 @@ const ClientJobsTab = () => {
                                                             value={escrowAmount}
                                                             onChange={(e) => setEscrowAmount(e.target.value)}
                                                             placeholder="Enter amount"
-                                                            className="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
+                                                            disabled={isFundingEscrow === contract._id}
+                                                            className="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 disabled:opacity-50"
                                                         />
                                                         <button
                                                             onClick={() => handleFundEscrow(contract._id)}
-                                                            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                                                            disabled={isFundingEscrow === contract._id}
+                                                            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
                                                         >
-                                                            Fund
+                                                            {isFundingEscrow === contract._id ? (
+                                                                <InlineLoading text="Funding..." size="small" spinnerColor="text-white" textColor="text-white" className="py-0" />
+                                                            ) : (
+                                                                'Fund'
+                                                            )}
                                                         </button>
                                                     </div>
                                                 </div>
@@ -417,9 +548,13 @@ const ClientJobsTab = () => {
                                                                     <span className={`px-2 py-1 text-xs font-medium rounded-full ${
                                                                         milestone.status === 'completed' ? 'bg-green-100 text-green-800' :
                                                                         milestone.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
+                                                                        milestone.status === 'submitted' ? 'bg-purple-100 text-purple-800' :
+                                                                        milestone.status === 'changes_requested' ? 'bg-red-100 text-red-800' :
                                                                         'bg-gray-100 text-gray-800'
                                                                     }`}>
-                                                                        {milestone.status}
+                                                                        {milestone.status.replace(/_/g, ' ').split(' ').map(word => 
+                                                                            word.charAt(0).toUpperCase() + word.slice(1)
+                                                                        ).join(' ')}
                                                                     </span>
                                                                 </div>
 
@@ -430,7 +565,6 @@ const ClientJobsTab = () => {
                                                                         contractId={contract._id}
                                                                         milestoneId={milestone._id}
                                                                         onReviewSubmission={handleReviewSubmission}
-                                                                        onPreviewFile={handlePreviewFile}
                                                                         onDownloadFile={handleDownloadFile}
                                                                     />
                                                                 )}
@@ -481,19 +615,43 @@ const ClientJobsTab = () => {
                                                 </span>
                                             </div>
                                         </div>
-                                        <div className="flex space-x-3">
+                                        <div className="flex items-center space-x-3">
                                             <button
                                                 onClick={() => handleViewContract(job)}
-                                                className="flex items-center px-4 py-2 text-sm font-medium text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100"
+                                                disabled={isViewingContract === job._id}
+                                                className="flex items-center px-4 py-2 text-sm font-medium text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 disabled:opacity-50"
                                             >
-                                                <Eye className="w-4 h-4 mr-2" />
-                                                View Contract
+                                                {isViewingContract === job._id ? (
+                                                    <InlineLoading text="Loading..." size="small" spinnerColor="text-blue-600" textColor="text-blue-700" className="py-0" />
+                                                ) : (
+                                                    <>
+                                                        <Eye className="w-4 h-4 mr-2" />
+                                                        View Contract
+                                                    </>
+                                                )}
+                                            </button>
+                                            <button
+                                                onClick={() => handleDeleteJob(job._id)}
+                                                disabled={isDeletingJob === job._id}
+                                                className="flex items-center px-3 py-1.5 text-sm font-medium text-red-700 bg-red-50 rounded-lg hover:bg-red-100 disabled:opacity-50"
+                                            >
+                                                {isDeletingJob === job._id ? (
+                                                    <InlineLoading text="Deleting..." size="small" spinnerColor="text-red-600" textColor="text-red-700" className="py-0" />
+                                                ) : (
+                                                    <>
+                                                        <Trash2 className="h-4 w-4 mr-1.5" />
+                                                        Delete Job
+                                                    </>
+                                                )}
                                             </button>
                                             <button
                                                 onClick={() => toggleJobDetails(job._id)}
-                                                className="flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                                                disabled={isTogglingDetails === job._id}
+                                                className="flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 disabled:opacity-50"
                                             >
-                                                {isExpanded ? (
+                                                {isTogglingDetails === job._id ? (
+                                                    <InlineLoading text="Loading..." size="small" spinnerColor="text-gray-600" textColor="text-gray-700" className="py-0" />
+                                                ) : isExpanded ? (
                                                     <>
                                                         <ChevronUp className="w-4 h-4 mr-2" />
                                                         Hide Details
@@ -520,20 +678,79 @@ const ClientJobsTab = () => {
 
                                             <div className="bg-gray-50 p-4 rounded-lg">
                                                 <h4 className="font-medium text-gray-900 mb-2">Milestones</h4>
-                                                <div className="space-y-2">
+                                                <div className="space-y-4">
                                                     {contract.milestones.map((milestone, index) => (
-                                                        <div key={index} className="flex justify-between items-center">
-                                                            <span className="text-sm text-gray-600">
-                                                                {milestone.title}
-                                                            </span>
-                                                            <div className="flex items-center space-x-2">
-                                                                <span className="text-sm font-medium text-green-600">
-                                                                    ${milestone.amount}
-                                                                </span>
+                                                        <div key={index} className="border-b border-gray-200 pb-4 last:border-0 last:pb-0">
+                                                            <div className="flex justify-between items-start mb-2">
+                                                                <div>
+                                                                    <h5 className="font-medium text-gray-900">{milestone.title}</h5>
+                                                                    <p className="text-sm text-gray-600 mt-1">
+                                                                        Due: {formatSafeDate(milestone.dueDate, 'MMM dd, yyyy')}
+                                                                    </p>
+                                                                    <p className="text-sm font-medium text-green-600 mt-1">
+                                                                        ${milestone.amount}
+                                                                    </p>
+                                                                </div>
                                                                 <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
                                                                     Completed
                                                                 </span>
                                                             </div>
+
+                                                            {/* Submission History */}
+                                                            {(milestone.submissionHistory?.length > 0) && (
+                                                                <div className="mt-4">
+                                                                    <h6 className="text-sm font-medium text-gray-900 mb-2">Submission History</h6>
+                                                                    <div className="space-y-3">
+                                                                        {milestone.submissionHistory.map((submission, subIndex) => (
+                                                                            <div key={subIndex} className="bg-white p-3 rounded-lg border border-gray-200">
+                                                                                <div className="flex justify-between items-start mb-2">
+                                                                                    <p className="text-sm text-gray-600">
+                                                                                        Submitted on {formatSafeDate(submission.submittedAt, 'MMM dd, yyyy HH:mm')}
+                                                                                    </p>
+                                                                                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                                                                                        submission.status === 'approved' ? 'bg-green-100 text-green-800' :
+                                                                                        submission.status === 'changes_requested' ? 'bg-yellow-100 text-yellow-800' :
+                                                                                        'bg-gray-100 text-gray-800'
+                                                                                    }`}>
+                                                                                        {submission.status.replace('_', ' ')}
+                                                                                    </span>
+                                                                                </div>
+                                                                                <p className="text-sm text-gray-700 mb-2">{submission.comments}</p>
+
+                                                                                {/* Submission Files */}
+                                                                                {submission.files && submission.files.length > 0 && (
+                                                                                    <div className="mt-2">
+                                                                                        <p className="text-sm font-medium text-gray-700 mb-1">Files:</p>
+                                                                                        <div className="flex flex-wrap gap-2">
+                                                                                            {submission.files.map((file, fileIndex) => (
+                                                                                                <button
+                                                                                                    key={fileIndex}
+                                                                                                    onClick={() => handleDownloadFile(contract._id, milestone._id, file)}
+                                                                                                    className="flex items-center px-3 py-1 text-sm text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                                                                                                >
+                                                                                                    <FileText className="w-4 h-4 mr-2" />
+                                                                                                    {file.filename}
+                                                                                                </button>
+                                                                                            ))}
+                                                                                        </div>
+                                                                                    </div>
+                                                                                )}
+
+                                                                                {/* Client Feedback */}
+                                                                                {submission.clientFeedback && (
+                                                                                    <div className="mt-3 pt-3 border-t border-gray-200">
+                                                                                        <p className="text-sm font-medium text-gray-900">Your Feedback:</p>
+                                                                                        <p className="text-sm text-gray-700 mt-1">{submission.clientFeedback}</p>
+                                                                                        <p className="text-xs text-gray-500 mt-1">
+                                                                                            Provided on {formatSafeDate(submission.feedbackAt, 'MMM dd, yyyy HH:mm')}
+                                                                                        </p>
+                                                                                    </div>
+                                                                                )}
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     ))}
                                                 </div>
@@ -544,41 +761,6 @@ const ClientJobsTab = () => {
                             </div>
                         );
                     })}
-                </div>
-            )}
-
-            {/* File Preview Modal */}
-            {selectedFile && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-                        <div className="flex justify-between items-center p-4 border-b">
-                            <h3 className="text-lg font-semibold">{selectedFile.filename}</h3>
-                            <button onClick={() => setSelectedFile(null)} className="text-gray-500 hover:text-gray-700">
-                                <XCircle className="w-6 h-6" />
-                            </button>
-                        </div>
-                        <div className="p-4">
-                            {selectedFile.mimetype?.startsWith('image/') ? (
-                                <img src={selectedFile.url} alt={selectedFile.filename} className="max-w-full h-auto" />
-                            ) : selectedFile.mimetype === 'application/pdf' ? (
-                                <iframe src={selectedFile.url} className="w-full h-[70vh]" title={selectedFile.filename} />
-                            ) : (
-                                <div className="text-center py-8">
-                                    <FileIcon className="w-16 h-16 mx-auto text-gray-400" />
-                                    <p className="mt-4 text-gray-600">This file type cannot be previewed.</p>
-                                    <a 
-                                        href={selectedFile.url} 
-                                        target="_blank" 
-                                        rel="noopener noreferrer"
-                                        className="mt-4 inline-flex items-center text-blue-600 hover:text-blue-800"
-                                    >
-                                        Download File
-                                        <ExternalLink className="w-4 h-4 ml-2" />
-                                    </a>
-                                </div>
-                            )}
-                        </div>
-                    </div>
                 </div>
             )}
 

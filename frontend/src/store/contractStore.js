@@ -9,6 +9,8 @@ export const useContractStore = create((set) => ({
     currentContract: null,
     isLoading: false,
     error: null,
+    isReleasingPayment: null, // Track which milestone payment is being released
+    isCompletingContract: null, // Track which contract is being completed
 
     // Create a new contract from accepted proposal
     createContract: async (proposalId, contractData) => {
@@ -109,27 +111,22 @@ export const useContractStore = create((set) => ({
     submitWork: async (contractId, milestoneId, submissionData) => {
         set({ isLoading: true, error: null });
         try {
-            // Create FormData object
             let formData;
             
-            // If submissionData is already FormData, use it directly
             if (submissionData instanceof FormData) {
                 formData = submissionData;
             } else {
                 formData = new FormData();
-                // Add files if they exist
                 if (submissionData.files) {
                     submissionData.files.forEach(file => {
                         formData.append('files', file);
                     });
                 }
-                // Add comments if they exist
                 if (submissionData.comments) {
                     formData.append('comments', submissionData.comments);
                 }
             }
 
-            // Add submission date
             formData.append('submittedAt', new Date().toISOString());
 
             const response = await axios.post(
@@ -142,18 +139,14 @@ export const useContractStore = create((set) => ({
                 }
             );
 
+            // Only update the specific milestone in the specific contract
             set(state => {
-                // Deep clone the contract to avoid mutation
                 const updatedContracts = state.contracts.map(contract => {
                     if (contract._id === contractId) {
-                        const updatedContract = JSON.parse(JSON.stringify(contract));
-                        const milestone = updatedContract.milestones.find(m => m._id === milestoneId);
-                        
-                        if (milestone) {
-                            // Ensure the submission has a submittedAt date
-                            if (milestone.currentSubmission && !milestone.currentSubmission.submittedAt) {
-                                milestone.currentSubmission.submittedAt = new Date().toISOString();
-                            }
+                        const updatedContract = { ...contract };
+                        const milestoneIndex = updatedContract.milestones.findIndex(m => m._id === milestoneId);
+                        if (milestoneIndex !== -1) {
+                            updatedContract.milestones[milestoneIndex] = response.data.contract.milestones.find(m => m._id === milestoneId);
                         }
                         return updatedContract;
                     }
@@ -162,7 +155,7 @@ export const useContractStore = create((set) => ({
 
                 return {
                     contracts: updatedContracts,
-                    currentContract: response.data.contract,
+                    currentContract: state.currentContract?._id === contractId ? response.data.contract : state.currentContract,
                     isLoading: false
                 };
             });
@@ -188,37 +181,14 @@ export const useContractStore = create((set) => ({
                 { status, feedback }
             );
 
-            // Update the contracts in the store
+            // Only update the specific milestone in the specific contract
             set(state => {
                 const updatedContracts = state.contracts.map(contract => {
                     if (contract._id === contractId) {
-                        // Deep clone the contract to avoid mutation
-                        const updatedContract = JSON.parse(JSON.stringify(contract));
-                        const milestone = updatedContract.milestones.find(m => m._id === milestoneId);
-                        
-                        if (milestone) {
-                            // Update milestone status
-                            milestone.status = status === "approved" ? "completed" : "changes_requested";
-                            
-                            // Update current submission status and add feedback
-                            if (milestone.currentSubmission) {
-                                const now = new Date().toISOString();
-                                milestone.currentSubmission.status = status;
-                                milestone.currentSubmission.clientFeedback = feedback;
-                                milestone.currentSubmission.feedbackAt = now;
-                                
-                                // Move current submission to history with the correct status and dates
-                                if (!milestone.submissionHistory) {
-                                    milestone.submissionHistory = [];
-                                }
-                                milestone.submissionHistory.push({
-                                    ...milestone.currentSubmission,
-                                    status: status,
-                                    submittedAt: milestone.currentSubmission.submittedAt || now, // Preserve original submission date
-                                    feedbackAt: now
-                                });
-                                milestone.currentSubmission = null;
-                            }
+                        const updatedContract = { ...contract };
+                        const milestoneIndex = updatedContract.milestones.findIndex(m => m._id === milestoneId);
+                        if (milestoneIndex !== -1) {
+                            updatedContract.milestones[milestoneIndex] = response.data.contract.milestones.find(m => m._id === milestoneId);
                         }
                         return updatedContract;
                     }
@@ -227,6 +197,7 @@ export const useContractStore = create((set) => ({
 
                 return {
                     contracts: updatedContracts,
+                    currentContract: state.currentContract?._id === contractId ? response.data.contract : state.currentContract,
                     isLoading: false
                 };
             });
@@ -243,25 +214,45 @@ export const useContractStore = create((set) => ({
 
     // Release payment for milestone
     releasePayment: async (contractId, milestoneId) => {
-        set({ isLoading: true, error: null });
+        set(state => ({ ...state, isReleasingPayment: milestoneId }));
         try {
             const response = await axios.post(
                 `${API_URL}/${contractId}/milestones/${milestoneId}/release`
             );
 
-            set(state => ({
-                contracts: state.contracts.map(contract =>
-                    contract._id === contractId ? response.data.contract : contract
-                ),
-                currentContract: response.data.contract,
-                isLoading: false
-            }));
+            // Only update the specific milestone and escrow balance
+            set(state => {
+                const updatedContracts = state.contracts.map(contract => {
+                    if (contract._id === contractId) {
+                        const updatedContract = { ...contract };
+                        // Update only the specific milestone
+                        const milestoneIndex = updatedContract.milestones.findIndex(m => m._id === milestoneId);
+                        if (milestoneIndex !== -1) {
+                            updatedContract.milestones[milestoneIndex] = response.data.contract.milestones.find(m => m._id === milestoneId);
+                        }
+                        // Update only the escrow balance
+                        updatedContract.escrowBalance = response.data.contract.escrowBalance;
+                        return updatedContract;
+                    }
+                    return contract;
+                });
+
+                return {
+                    contracts: updatedContracts,
+                    currentContract: state.currentContract?._id === contractId ? {
+                        ...state.currentContract,
+                        milestones: response.data.contract.milestones,
+                        escrowBalance: response.data.contract.escrowBalance
+                    } : state.currentContract,
+                    isReleasingPayment: null
+                };
+            });
 
             return response.data.contract;
         } catch (error) {
             set({ 
                 error: error.response?.data?.message || "Error releasing payment",
-                isLoading: false 
+                isReleasingPayment: null
             });
             throw error;
         }
@@ -331,7 +322,7 @@ export const useContractStore = create((set) => ({
 
     // Complete contract
     completeContract: async (contractId) => {
-        set({ isLoading: true, error: null });
+        set(state => ({ ...state, isCompletingContract: contractId }));
         try {
             const response = await axios.post(`${API_URL}/${contractId}/complete`);
             
@@ -340,14 +331,14 @@ export const useContractStore = create((set) => ({
                     contract._id === contractId ? response.data.contract : contract
                 ),
                 currentContract: response.data.contract,
-                isLoading: false
+                isCompletingContract: null
             }));
 
             return response.data.contract;
         } catch (error) {
             set({ 
                 error: error.response?.data?.message || "Error completing contract",
-                isLoading: false 
+                isCompletingContract: null
             });
             throw error;
         }

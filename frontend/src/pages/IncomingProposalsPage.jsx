@@ -2,66 +2,99 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useProposalStore } from "../store/proposalStore";
 import { useJobStore } from "../store/jobStore";
-import { Clock, DollarSign, Calendar, Star, MessageCircle, ThumbsUp, ThumbsDown, PhoneCall, Trash2 } from "lucide-react";
+import { Clock, DollarSign, Calendar, Star, MessageCircle, ThumbsUp, ThumbsDown, PhoneCall, Trash2, AlertCircle } from "lucide-react";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { useAuthStore } from "../store/authStore";
 import { toast } from "react-hot-toast";
+import { motion } from "framer-motion";
+import InlineLoading from "../components/InlineLoading";
 
 const IncomingProposalsPage = () => {
     const { jobId } = useParams();
     const navigate = useNavigate();
     const [selectedProposal, setSelectedProposal] = useState(null);
     const { setActiveTab } = useAuthStore();
+    const [actionLoading, setActionLoading] = useState({ id: null, action: null });
     
     const { 
         incomingProposals, 
         getJobProposals, 
         updateProposalStatus,
         deleteProposal,
-        isLoading 
+        isLoading,
+        error 
     } = useProposalStore();
     
     const { fetchJobById, currentJob } = useJobStore();
 
     useEffect(() => {
         const loadData = async () => {
-            await Promise.all([
-                getJobProposals(jobId),
-                fetchJobById(jobId)
-            ]);
+            try {
+                await Promise.all([
+                    getJobProposals(jobId),
+                    fetchJobById(jobId)
+                ]);
+            } catch (error) {
+                toast.error(error.message || "Failed to load proposals");
+            }
         };
         loadData();
     }, [jobId, getJobProposals, fetchJobById]);
 
     const handleProposalAction = async (proposalId, status) => {
         try {
+            setActionLoading({ id: proposalId, action: status });
             const updatedProposal = await updateProposalStatus(proposalId, status);
             if (status === "accepted") {
                 navigate(`/contracts/create/${updatedProposal._id}`);
             }
+            toast.success(`Proposal ${status} successfully`);
         } catch (error) {
-            console.error("Error updating proposal:", error);
+            toast.error(error.message || "Failed to update proposal status");
+        } finally {
+            setActionLoading({ id: null, action: null });
         }
     };
 
     const handleDeleteProposal = async (proposalId) => {
         if (window.confirm('Are you sure you want to delete this proposal? This action cannot be undone.')) {
             try {
+                setActionLoading({ id: proposalId, action: 'delete' });
                 await deleteProposal(proposalId);
                 setSelectedProposal(null);
+                toast.success("Proposal deleted successfully");
             } catch (error) {
                 toast.error(error.message || 'Failed to delete proposal');
+            } finally {
+                setActionLoading({ id: null, action: null });
             }
         }
     };
 
-    if (isLoading) return <LoadingSpinner />;
+    if (isLoading && !currentJob && incomingProposals.length === 0) {
+        return <LoadingSpinner />;
+    }
+
+    if (error) {
+        return (
+            <div className="container mx-auto px-4 py-8">
+                <div className="bg-red-50 p-4 rounded-lg flex items-center justify-center text-red-700">
+                    <AlertCircle className="w-5 h-5 mr-2" />
+                    <span>{error}</span>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="container mx-auto px-4 py-8">
             {/* Job Details Header */}
             {currentJob && (
-                <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+                <motion.div
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-white rounded-lg shadow-md p-6 mb-8"
+                >
                     <h1 className="text-2xl font-bold text-gray-900 mb-4">{currentJob.title}</h1>
                     <div className="flex flex-wrap gap-4 text-sm text-gray-600">
                         <div className="flex items-center">
@@ -77,74 +110,80 @@ const IncomingProposalsPage = () => {
                             <span>Posted: {new Date(currentJob.createdAt).toLocaleDateString()}</span>
                         </div>
                     </div>
-                </div>
+                </motion.div>
             )}
 
             {/* Proposals Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Proposals List */}
-                <div className="md:col-span-1 bg-white rounded-lg shadow-md p-4">
+                <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="md:col-span-1 bg-white rounded-lg shadow-md p-4"
+                >
                     <h2 className="text-xl font-semibold mb-4">Proposals ({incomingProposals.length})</h2>
-                    <div className="space-y-4">
-                        {incomingProposals.map((proposal) => (
-                            <div
-                                key={proposal._id}
-                                className={`cursor-pointer p-4 rounded-lg transition-colors ${
-                                    selectedProposal?._id === proposal._id
-                                        ? "bg-green-50 border-2 border-green-500"
-                                        : "bg-gray-50 hover:bg-gray-100"
-                                }`}
-                                onClick={() => setSelectedProposal(proposal)}
-                            >
-                                <div className="flex items-start justify-between">
-                                    <div>
-                                        <h3 className="font-medium text-gray-900">
-                                            {proposal.freelancer.name}
-                                        </h3>
-                                        <div className="flex items-center text-sm text-gray-600 mt-1">
-                                            <Star className="w-4 h-4 text-yellow-400 mr-1" />
-                                            <span>4.8 (120 reviews)</span>
+                    {isLoading && incomingProposals.length === 0 ? (
+                        <div className="py-8">
+                            <InlineLoading text="Loading proposals..." size="medium" className="justify-center" />
+                        </div>
+                    ) : incomingProposals.length === 0 ? (
+                        <div className="text-center py-8 text-gray-500">
+                            No proposals received yet
+                        </div>
+                    ) : (
+                        <div className="space-y-4">
+                            {incomingProposals.map((proposal) => (
+                                <div
+                                    key={proposal._id}
+                                    className={`cursor-pointer p-4 rounded-lg transition-colors ${
+                                        selectedProposal?._id === proposal._id
+                                            ? "bg-green-50 border-2 border-green-500"
+                                            : "bg-gray-50 hover:bg-gray-100"
+                                    }`}
+                                    onClick={() => setSelectedProposal(proposal)}
+                                >
+                                    <div className="flex items-start justify-between">
+                                        <div>
+                                            <h3 className="font-medium text-gray-900">
+                                                {proposal.freelancer.name}
+                                            </h3>
+                                            <div className="flex items-center text-sm text-gray-600 mt-1">
+                                                <Star className="w-4 h-4 text-yellow-400 mr-1" />
+                                                <span>4.8 (120 reviews)</span>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div className="text-right">
-                                        <div className="font-medium text-gray-900">
-                                            ${proposal.bidAmount.amount}
-                                        </div>
-                                        <div className="text-sm text-gray-600">
-                                            {proposal.estimatedDuration}
+                                        <div className="text-right">
+                                            <div className="font-medium text-gray-900">
+                                                ${proposal.bidAmount.amount}
+                                            </div>
+                                            <div className="text-sm text-gray-600">
+                                                {proposal.estimatedDuration}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
+                            ))}
+                        </div>
+                    )}
+                </motion.div>
 
                 {/* Proposal Details */}
-                <div className="md:col-span-2">
+                <motion.div
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="md:col-span-2"
+                >
                     {selectedProposal ? (
                         <div className="bg-white rounded-lg shadow-md p-6">
-                            {/* Freelancer Header */}
-                            <div className="flex items-start justify-between mb-6">
-                                <div className="flex items-center">
-                                    {selectedProposal.freelancer.profile?.pictureUrl ? (
-                                        <img
-                                            src={selectedProposal.freelancer.profile.pictureUrl}
-                                            alt={selectedProposal.freelancer.name}
-                                            className="w-16 h-16 rounded-full mr-4 object-cover"
-                                        />
-                                    ) : (
-                                        <div className="w-16 h-16 rounded-full mr-4 bg-gray-200 flex items-center justify-center text-gray-500 text-xl font-semibold">
-                                            {selectedProposal.freelancer.name.charAt(0).toUpperCase()}
-                                        </div>
-                                    )}
-                                    <div>
-                                        <h2 className="text-xl font-bold text-gray-900">
-                                            {selectedProposal.freelancer.name}
-                                        </h2>
-                                        <p className="text-gray-600">
-                                            {selectedProposal.freelancer.profile?.title || "Freelancer"}
-                                        </p>
+                            {/* Freelancer Details */}
+                            <div className="flex items-start justify-between mb-6 pb-6 border-b border-gray-200">
+                                <div>
+                                    <h2 className="text-xl font-bold text-gray-900 mb-2">
+                                        {selectedProposal.freelancer.name}
+                                    </h2>
+                                    <div className="flex items-center text-sm text-gray-600">
+                                        <Star className="w-4 h-4 text-yellow-400 mr-1" />
+                                        <span>4.8 (120 reviews)</span>
                                     </div>
                                 </div>
                                 <div className="text-right">
@@ -194,27 +233,63 @@ const IncomingProposalsPage = () => {
 
                             {/* Action Buttons */}
                             {selectedProposal.status === "pending" && (
-                                <div className="flex gap-4">
+                                <div className="flex gap-4 mb-4">
                                     <button
                                         onClick={() => handleProposalAction(selectedProposal._id, "accepted")}
-                                        className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center"
+                                        disabled={actionLoading.id === selectedProposal._id}
+                                        className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
-                                        <ThumbsUp className="w-4 h-4 mr-2" />
-                                        Accept Proposal
+                                        {actionLoading.id === selectedProposal._id && actionLoading.action === "accepted" ? (
+                                            <InlineLoading 
+                                                text="Accepting..." 
+                                                size="small"
+                                                textColor="text-white"
+                                                spinnerColor="text-white"
+                                            />
+                                        ) : (
+                                            <>
+                                                <ThumbsUp className="w-4 h-4 mr-2" />
+                                                Accept Proposal
+                                            </>
+                                        )}
                                     </button>
                                     <button
                                         onClick={() => handleProposalAction(selectedProposal._id, "interviewing")}
-                                        className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center"
+                                        disabled={actionLoading.id === selectedProposal._id}
+                                        className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
-                                        <PhoneCall className="w-4 h-4 mr-2" />
-                                        Request Interview
+                                        {actionLoading.id === selectedProposal._id && actionLoading.action === "interviewing" ? (
+                                            <InlineLoading 
+                                                text="Requesting..." 
+                                                size="small"
+                                                textColor="text-white"
+                                                spinnerColor="text-white"
+                                            />
+                                        ) : (
+                                            <>
+                                                <PhoneCall className="w-4 h-4 mr-2" />
+                                                Request Interview
+                                            </>
+                                        )}
                                     </button>
                                     <button
                                         onClick={() => handleProposalAction(selectedProposal._id, "declined")}
-                                        className="flex-1 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center"
+                                        disabled={actionLoading.id === selectedProposal._id}
+                                        className="flex-1 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
-                                        <ThumbsDown className="w-4 h-4 mr-2" />
-                                        Decline
+                                        {actionLoading.id === selectedProposal._id && actionLoading.action === "declined" ? (
+                                            <InlineLoading 
+                                                text="Declining..." 
+                                                size="small"
+                                                textColor="text-white"
+                                                spinnerColor="text-white"
+                                            />
+                                        ) : (
+                                            <>
+                                                <ThumbsDown className="w-4 h-4 mr-2" />
+                                                Decline
+                                            </>
+                                        )}
                                     </button>
                                 </div>
                             )}
@@ -222,10 +297,22 @@ const IncomingProposalsPage = () => {
                             {/* Delete Button */}
                             <button
                                 onClick={() => handleDeleteProposal(selectedProposal._id)}
-                                className="mt-4 w-full border-2 border-red-300 text-red-600 px-4 py-2 rounded-lg hover:bg-red-50 transition-colors flex items-center justify-center"
+                                disabled={actionLoading.id === selectedProposal._id}
+                                className="w-full border-2 border-red-300 text-red-600 px-4 py-2 rounded-lg hover:bg-red-50 transition-colors flex items-center justify-center mb-4 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                <Trash2 className="w-4 h-4 mr-2" />
-                                Delete Proposal
+                                {actionLoading.id === selectedProposal._id && actionLoading.action === "delete" ? (
+                                    <InlineLoading 
+                                        text="Deleting..." 
+                                        size="small"
+                                        textColor="text-red-600"
+                                        spinnerColor="text-red-600"
+                                    />
+                                ) : (
+                                    <>
+                                        <Trash2 className="w-4 h-4 mr-2" />
+                                        Delete Proposal
+                                    </>
+                                )}
                             </button>
 
                             {/* Message Button */}
@@ -242,18 +329,19 @@ const IncomingProposalsPage = () => {
                                         });
                                     }
                                 }}
-                                className="mt-4 w-full border-2 border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center"
+                                disabled={actionLoading.id === selectedProposal._id}
+                                className="w-full border-2 border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 <MessageCircle className="w-4 h-4 mr-2" />
                                 Send Message
                             </button>
                         </div>
                     ) : (
-                        <div className="bg-white rounded-lg shadow-md p-6 flex items-center justify-center text-gray-500">
+                        <div className="bg-white rounded-lg shadow-md p-6 flex items-center justify-center text-gray-500 h-[200px]">
                             Select a proposal to view details
                         </div>
                     )}
-                </div>
+                </motion.div>
             </div>
         </div>
     );

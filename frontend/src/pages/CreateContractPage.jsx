@@ -2,9 +2,10 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useProposalStore } from "../store/proposalStore";
 import { useContractStore } from "../store/contractStore";
-import { DollarSign, Plus, Trash2 } from "lucide-react";
+import { DollarSign, Plus, Trash2, Loader } from "lucide-react";
 import LoadingSpinner from "../components/LoadingSpinner";
 import toast from "react-hot-toast";
+import { motion } from "framer-motion";
 
 const CreateContractPage = () => {
     const { proposalId } = useParams();
@@ -26,6 +27,7 @@ const CreateContractPage = () => {
             }
         ]
     });
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
         const loadProposal = async () => {
@@ -145,22 +147,16 @@ const CreateContractPage = () => {
             }))
         };
 
+        setIsSubmitting(true);
         try {
-            // Show loading toast
-            const loadingToast = toast.loading("Creating contract...");
-            
-            const contract = await createContract(proposalId, contractData);
-            
-            // Dismiss loading toast and show success
-            toast.dismiss(loadingToast);
+            await createContract(proposalId, contractData);
             toast.success("Contract created successfully!");
-            
-            // Navigate to the new contract
-            navigate(`/contracts/${contract._id}`);
+            navigate('/client-dashboard', { state: { activeTab: 'myjobs' } });
         } catch (error) {
-            // Clear loading state and show error
             toast.error(error.response?.data?.message || "Error creating contract. Please try again.");
             console.error("Contract creation error:", error);
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -169,7 +165,13 @@ const CreateContractPage = () => {
     return (
         <div className="container mx-auto px-4 py-8">
             <div className="max-w-4xl mx-auto">
-                <h1 className="text-3xl font-bold text-gray-900 mb-8">Create Contract</h1>
+                <motion.h1 
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-3xl font-bold text-gray-900 mb-8"
+                >
+                    Create Contract
+                </motion.h1>
 
                 <form onSubmit={handleSubmit} className="space-y-8">
                     {/* Contract Details */}
@@ -321,12 +323,22 @@ const CreateContractPage = () => {
 
                     {/* Submit Button */}
                     <div className="flex justify-end">
-                        <button
+                        <motion.button
                             type="submit"
-                            className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors"
+                            disabled={isSubmitting}
+                            className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed min-w-[160px]"
+                            whileHover={{ scale: 1.01 }}
+                            whileTap={{ scale: 0.99 }}
                         >
-                            Create Contract
-                        </button>
+                            {isSubmitting ? (
+                                <>
+                                    <Loader className="w-5 h-5 animate-spin" />
+                                    <span>Creating...</span>
+                                </>
+                            ) : (
+                                <span>Create Contract</span>
+                            )}
+                        </motion.button>
                     </div>
                 </form>
             </div>

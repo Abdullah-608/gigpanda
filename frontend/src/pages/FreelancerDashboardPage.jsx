@@ -147,18 +147,24 @@ const FreelancerDashboardPage = () => {
 			case 'NEW_PROPOSAL':
 			case 'PROPOSAL_ACCEPTED':
 			case 'PROPOSAL_REJECTED':
-				navigate(`/jobs/${notification.job._id}`);
+				if (notification.job?._id) {
+					navigate(`/jobs/${notification.job._id}`);
+				}
 				break;
 			case 'NEW_MESSAGE':
 				setActiveTab('messages');
 				break;
 			case 'MILESTONE_APPROVED':
 			case 'MILESTONE_CHANGES_REQUESTED':
-				navigate(`/jobs/${notification.job._id}`);
+				if (notification.job?._id) {
+					navigate(`/jobs/${notification.job._id}`);
+				}
 				break;
 			case 'CONTRACT_COMPLETED':
 				setActiveTab('accepted-work');
-				navigate(`/contracts/${notification.job._id}`);
+				if (notification.job?._id) {
+					navigate(`/contracts/${notification.job._id}`);
+				}
 				break;
 		}
 		setIsNotificationOpen(false);
@@ -291,34 +297,35 @@ const FreelancerDashboardPage = () => {
 														>
 															<div className="flex items-start gap-3">
 																<img
-																	src={notification.sender.profile?.pictureUrl || '/default-avatar.png'}
-																	alt={notification.sender.name}
+																	src={notification.sender?.profile?.pictureUrl || '/default-avatar.png'}
+																	alt={notification.sender?.name || 'Someone'}
 																	className="w-10 h-10 rounded-full object-cover"
 																/>
 																<div className="flex-1">
 																	<p className="text-sm text-gray-800">
 																		{(() => {
-																			const senderName = notification.sender.name;
+																			const senderName = notification.sender?.name || 'Someone';
+																			const jobTitle = notification.job?.title || 'Unknown Job';
 																			switch (notification.type) {
 																				case 'NEW_PROPOSAL':
 																					return (
 																						<>
 																							<span className="font-semibold">{senderName}</span> submitted a proposal for "
-																							<span className="font-semibold">{notification.job.title}</span>"
+																							<span className="font-semibold">{jobTitle}</span>"
 																						</>
 																					);
 																				case 'PROPOSAL_ACCEPTED':
 																					return (
 																						<>
 																							<span className="font-semibold">{senderName}</span> accepted your proposal for "
-																							<span className="font-semibold">{notification.job.title}</span>"
+																							<span className="font-semibold">{jobTitle}</span>"
 																						</>
 																					);
 																				case 'PROPOSAL_REJECTED':
 																					return (
 																						<>
 																							<span className="font-semibold">{senderName}</span> declined your proposal for "
-																							<span className="font-semibold">{notification.job.title}</span>"
+																							<span className="font-semibold">{jobTitle}</span>"
 																						</>
 																					);
 																				case 'NEW_MESSAGE':
@@ -331,7 +338,7 @@ const FreelancerDashboardPage = () => {
 																					return (
 																						<>
 																							<span className="font-semibold">{senderName}</span> has completed the contract for "
-																							<span className="font-semibold">{notification.job.title}</span>"
+																							<span className="font-semibold">{jobTitle}</span>"
 																							<span className="inline-flex items-center ml-2 px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
 																								Contract Completed
 																							</span>
@@ -341,14 +348,14 @@ const FreelancerDashboardPage = () => {
 																					return (
 																						<>
 																							<span className="font-semibold">{senderName}</span> approved your milestone submission for "
-																							<span className="font-semibold">{notification.job.title}</span>"
+																							<span className="font-semibold">{jobTitle}</span>"
 																						</>
 																					);
 																				case 'MILESTONE_CHANGES_REQUESTED':
 																					return (
 																						<>
 																							<span className="font-semibold">{senderName}</span> requested changes for your milestone submission in "
-																							<span className="font-semibold">{notification.job.title}</span>"
+																							<span className="font-semibold">{jobTitle}</span>"
 																						</>
 																					);
 																				default:
@@ -358,8 +365,8 @@ const FreelancerDashboardPage = () => {
 																	</p>
 																	<div className="flex items-center mt-1 space-x-2">
 																		<p className="text-xs text-gray-500">
-																			{format(new Date(notification.createdAt), 'MMM d, yyyy h:mm a')}
-																		</p>
+																		{format(new Date(notification.createdAt), 'MMM d, yyyy h:mm a')}
+																	</p>
 																		{notification.type === 'CONTRACT_COMPLETED' && (
 																			<span className="text-xs text-gray-500">
 																				• Final milestone completed

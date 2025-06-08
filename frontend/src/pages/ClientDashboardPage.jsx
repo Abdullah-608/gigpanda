@@ -3,10 +3,11 @@ import { MessageSquare, Briefcase, BookmarkIcon, BellIcon, User, Menu, LogOut, C
 import { useAuthStore } from "../store/authStore";
 import { usePostStore } from "../store/postStore";
 import { useJobStore } from "../store/jobStore";
+import { useContractStore } from "../store/contractStore";
 import SearchBar from "../components/SearchBar";
 import Post from "../components/Post";
-import { Navigate, useNavigate } from "react-router-dom";
-import { useEffect, useState, useRef } from "react";
+import { Navigate, useNavigate, useLocation } from "react-router-dom";
+import { useEffect, useState, useRef, useCallback } from "react";
 import CreateJobModal from "../components/CreateJobModal";
 import MessagesPage from "../pages/MessagesPage";
 import ClientJobsTab from "../components/ClientJobsTab";
@@ -17,20 +18,49 @@ const ClientDashboardPage = () => {
 	const { user, logout, activeTab, setActiveTab } = useAuthStore();
 	const { posts, isLoading, error, pagination, fetchPosts, loadMorePosts } = usePostStore();
 	const { hotJobs, isLoadingHotJobs, fetchHotJobs, fetchMyJobs } = useJobStore();
+	const { getMyContracts } = useContractStore();
 	const { topFreelancers, isLoadingFreelancers, fetchTopFreelancers } = useAuthStore();
 	const navigate = useNavigate();
+	const location = useLocation();
 	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 	const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 	const { notifications, unreadCount, fetchNotifications, markAsRead } = useNotificationStore();
 	const [isNotificationOpen, setIsNotificationOpen] = useState(false);
 	const notificationRef = useRef(null);
+	const [lastFetchTime, setLastFetchTime] = useState(null);
+	const FETCH_COOLDOWN = 5 * 60 * 1000; // 5 minutes
+
+	// Function to check if we should fetch data
+	const shouldFetchData = useCallback(() => {
+		if (!lastFetchTime) return true;
+		return Date.now() - lastFetchTime > FETCH_COOLDOWN;
+	}, [lastFetchTime]);
+
+	// Function to load jobs data
+	const loadJobsData = useCallback(async (force = false) => {
+		if (force || shouldFetchData()) {
+			try {
+				await Promise.all([
+					fetchMyJobs(),
+					getMyContracts()
+				]);
+				setLastFetchTime(Date.now());
+			} catch (error) {
+				console.error('Error loading jobs data:', error);
+			}
+		}
+	}, [fetchMyJobs, getMyContracts, shouldFetchData]);
 
 	useEffect(() => {
 		fetchPosts();
 		fetchTopFreelancers(2);
 		fetchHotJobs(4);
-		fetchMyJobs();
 		fetchNotifications();
+		
+		// Set active tab from location state if available
+		if (location.state?.activeTab) {
+			setActiveTab(location.state.activeTab);
+		}
 		
 		const handleClickOutside = (event) => {
 			if (notificationRef.current && !notificationRef.current.contains(event.target)) {
@@ -42,8 +72,15 @@ const ClientDashboardPage = () => {
 		return () => {
 			document.removeEventListener('mousedown', handleClickOutside);
 		};
-	}, [fetchPosts, fetchTopFreelancers, fetchHotJobs, fetchMyJobs, fetchNotifications]);
-	
+	}, [fetchPosts, fetchTopFreelancers, fetchHotJobs, fetchNotifications, location.state?.activeTab, setActiveTab]);
+
+	// Load jobs data when switching to jobs tab
+	useEffect(() => {
+		if (activeTab === 'myjobs') {
+			loadJobsData();
+		}
+	}, [activeTab, loadJobsData]);
+
 	// Check if user has the correct role
 	if (user?.role === "freelancer") {
 		return <Navigate to="/freelancer-dashboard" replace />;
@@ -110,13 +147,17 @@ const ClientDashboardPage = () => {
 		// Handle navigation based on notification type
 		switch (notification.type) {
 			case 'NEW_PROPOSAL':
-				setActiveTab('myjobs');
+				if (notification.job) {
+					setActiveTab('myjobs');
+				}
 				break;
 			case 'NEW_MESSAGE':
 				setActiveTab('messages');
 				break;
 			case 'MILESTONE_SUBMITTED':
-				setActiveTab('myjobs');
+				if (notification.job) {
+					setActiveTab('myjobs');
+				}
 				break;
 		}
 		setIsNotificationOpen(false);
@@ -225,60 +266,64 @@ const ClientDashboardPage = () => {
 														No notifications
 													</div>
 												) : (
-													notifications.map((notification) => (
-														<div
-															key={notification._id}
-															onClick={() => handleNotificationClick(notification)}
-															className={`block p-4 hover:bg-gray-50 transition-colors cursor-pointer ${
-																!notification.read ? 'bg-blue-50' : ''
-															}`}
-														>
-															<div className="flex items-start gap-3">
-																<img
-																	src={notification.sender.profile?.pictureUrl || '/default-avatar.png'}
-																	alt={notification.sender.name}
-																	className="w-10 h-10 rounded-full object-cover"
-																/>
-																<div className="flex-1">
-																	<p className="text-sm text-gray-800">
-																		{(() => {
-																			const senderName = notification.sender.name;
-																			switch (notification.type) {
-																				case 'NEW_PROPOSAL':
-																					return (
-																						<>
-																							<span className="font-semibold">{senderName}</span> submitted a proposal for "
-																							<span className="font-semibold">{notification.job.title}</span>"
-																						</>
-																					);
-																				case 'NEW_MESSAGE':
-																					return (
-																						<>
-																							New message from <span className="font-semibold">{senderName}</span>
-																						</>
-																					);
-																				case 'MILESTONE_SUBMITTED':
-																					return (
-																						<>
-																							<span className="font-semibold">{senderName}</span> submitted work for a milestone in "
-																							<span className="font-semibold">{notification.job.title}</span>"
-																						</>
-																					);
-																				default:
-																					return notification.message || 'New notification';
-																			}
-																		})()}
-																	</p>
-																	<p className="text-xs text-gray-500 mt-1">
-																		{format(new Date(notification.createdAt), 'MMM d, yyyy h:mm a')}
-																	</p>
+													notifications.map((notification) => {
+														const senderName = notification.sender?.name || 'Someone';
+														const jobTitle = notification.job?.title || 'a job';
+														
+														return (
+															<div
+																key={notification._id}
+																onClick={() => handleNotificationClick(notification)}
+																className={`block p-4 hover:bg-gray-50 transition-colors cursor-pointer ${
+																	!notification.read ? 'bg-blue-50' : ''
+																}`}
+															>
+																<div className="flex items-start gap-3">
+																	<img
+																		src={notification.sender?.profile?.pictureUrl || '/default-avatar.png'}
+																		alt={senderName}
+																		className="w-10 h-10 rounded-full object-cover"
+																	/>
+																	<div className="flex-1">
+																		<p className="text-sm text-gray-800">
+																			{(() => {
+																				switch (notification.type) {
+																					case 'NEW_PROPOSAL':
+																						return (
+																							<>
+																								<span className="font-semibold">{senderName}</span> submitted a proposal for "
+																								<span className="font-semibold">{jobTitle}</span>"
+																							</>
+																						);
+																					case 'NEW_MESSAGE':
+																						return (
+																							<>
+																								New message from <span className="font-semibold">{senderName}</span>
+																							</>
+																						);
+																					case 'MILESTONE_SUBMITTED':
+																						return (
+																							<>
+																								<span className="font-semibold">{senderName}</span> submitted work for a milestone in "
+																								<span className="font-semibold">{jobTitle}</span>"
+																							</>
+																						);
+																					default:
+																						return notification.message || 'New notification';
+																				}
+																			})()}
+																		</p>
+																		<p className="text-xs text-gray-500 mt-1">
+																			{format(new Date(notification.createdAt), 'MMM d, yyyy h:mm a')}
+																		</p>
+																	</div>
+																	{!notification.read && (
+																		<div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+																	)}
 																</div>
-																{!notification.read && (
-																	<div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
-																)}
 															</div>
-														</div>
-													))
+														);
+													})
 												)}
 											</div>
 										</div>
@@ -641,7 +686,7 @@ const ClientDashboardPage = () => {
 								Post New Job
 							</button>
 						</div>
-						<ClientJobsTab />
+						<ClientJobsTab onRefresh={() => loadJobsData(true)} />
 					</motion.div>
 				) : activeTab === "messages" ? (
 					<motion.div

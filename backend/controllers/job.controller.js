@@ -1,6 +1,8 @@
 import Job from "../models/job.model.js";
 import User from "../models/user.model.js";
 import Proposal from "../models/proposal.model.js";
+import Contract from "../models/contract.model.js";
+import { validateJobInput } from '../utils/validation.js';
 
 // Create a new job posting
 export const createJob = async (req, res) => {
@@ -17,19 +19,13 @@ export const createJob = async (req, res) => {
             location
         } = req.body;
 
-        // Validate required fields
-        if (!title || !description || !category || !budget || !budgetType || !timeline || !experienceLevel) {
+        // Validate job input
+        const { isValid, errors } = validateJobInput(req.body);
+        if (!isValid) {
             return res.status(400).json({
                 success: false,
-                message: "Please provide all required fields"
-            });
-        }
-
-        // Validate budget
-        if (!budget.min || !budget.max || budget.min < 0 || budget.max < 0 || budget.min > budget.max) {
-            return res.status(400).json({
-                success: false,
-                message: "Please provide valid budget range"
+                message: "Validation failed",
+                errors
             });
         }
 
@@ -81,7 +77,7 @@ export const getJobs = async (req, res) => {
         const { page = 1, limit = 10, search, category, experienceLevel, budgetMin, budgetMax, location } = req.query;
 
         // Build filter
-        const filter = {};
+        const filter = { status: 'open' }; // Only show open jobs
         if (search) {
             filter.$or = [
                 { title: { $regex: search, $options: 'i' } },
@@ -102,6 +98,15 @@ export const getJobs = async (req, res) => {
             if (budgetMin) filter.budget.$gte = parseInt(budgetMin);
             if (budgetMax) filter.budget.$lte = parseInt(budgetMax);
         }
+
+        // Get jobs where the freelancer's proposal hasn't been accepted
+        const acceptedProposals = await Proposal.find({
+            freelancer: req.user._id,
+            status: 'accepted'
+        }).select('job');
+
+        const acceptedJobIds = acceptedProposals.map(p => p.job);
+        filter._id = { $nin: acceptedJobIds };
 
         // Calculate pagination
         const skip = (parseInt(page) - 1) * parseInt(limit);
@@ -277,7 +282,7 @@ export const applyToJob = async (req, res) => {
 // Get jobs posted by the current client
 export const getMyJobs = async (req, res) => {
     try {
-        const { page = 1, limit = 10, status } = req.query;
+        const { page = 1, limit = 10, status, include_contracts } = req.query;
 
         // Validate user exists and has a role
         if (!req.user || !req.user.role) {
@@ -312,7 +317,6 @@ export const getMyJobs = async (req, res) => {
                 .skip(skip)
                 .limit(parseInt(limit));
         } catch (error) {
-            console.error("Error fetching jobs:", error);
             return res.status(500).json({
                 success: false,
                 message: "Error fetching jobs"
@@ -329,11 +333,39 @@ export const getMyJobs = async (req, res) => {
                 .select('job status freelancer')
                 .populate('freelancer', 'name email profile');
         } catch (error) {
-            console.error("Error fetching proposals:", error);
             return res.status(500).json({
                 success: false,
                 message: "Error fetching job proposals"
             });
+        }
+
+        // Get contracts if include_contracts is true
+        let contracts = [];
+        if (include_contracts === 'true') {
+            try {
+                console.log('Fetching contracts for jobs:', jobIds);
+                contracts = await Contract.find({ 
+                    job: { $in: jobIds },
+                    client: req.user._id
+                })
+                .populate('freelancer', 'name email profilePicture')
+                .select('-clientSignedAt -freelancerSignedAt -terms');
+                
+                console.log('Contracts fetched:', contracts.length, 'contracts found');
+                console.log('Contract details:', contracts.map(c => ({
+                    jobId: c.job,
+                    contractId: c._id,
+                    milestones: c.milestones?.length || 0
+                })));
+            } catch (error) {
+                console.error("Contract fetch error:", error.message);
+                return res.status(500).json({
+                    success: false,
+                    message: "Error fetching contracts"
+                });
+            }
+        } else {
+            console.log('Skipping contract fetch - include_contracts not set to true');
         }
 
         // Create a map of job ID to proposals
@@ -357,16 +389,26 @@ export const getMyJobs = async (req, res) => {
         const totalJobs = await Job.countDocuments(filter);
         const totalPages = Math.ceil(totalJobs / parseInt(limit));
 
-        res.status(200).json({
+        const response = {
             success: true,
             jobs: jobsWithProposals,
-            currentPage: parseInt(page),
-            totalPages,
-            totalJobs
-        });
+            pagination: {
+                currentPage: parseInt(page),
+                totalPages,
+                totalJobs,
+                hasNextPage: parseInt(page) < totalPages,
+                hasPrevPage: parseInt(page) > 1
+            }
+        };
+
+        // Include contracts in response if requested
+        if (include_contracts === 'true') {
+            response.contracts = contracts;
+        }
+
+        res.status(200).json(response);
 
     } catch (error) {
-        console.error("Error in getMyJobs:", error);
         res.status(500).json({
             success: false,
             message: "Internal server error",
