@@ -143,7 +143,8 @@ export const useJobStore = create((set, get) => ({
         try {
             const params = new URLSearchParams({
                 page: page.toString(),
-                limit: limit.toString()
+                limit: limit.toString(),
+                include_contracts: 'true'
             });
             
             if (status && status !== 'all') {
@@ -153,8 +154,13 @@ export const useJobStore = create((set, get) => ({
             const response = await axios.get(`${API_URL}/my/jobs?${params}`);
             
             if (response.data.success) {
+                const jobsWithContracts = response.data.jobs.map(job => ({
+                    ...job,
+                    contract: response.data.contracts?.find(c => c.jobId === job._id) || null
+                }));
+
                 set({
-                    myJobs: page === 1 ? response.data.jobs : [...get().myJobs, ...response.data.jobs],
+                    myJobs: page === 1 ? jobsWithContracts : [...get().myJobs, ...jobsWithContracts],
                     myJobsPagination: response.data.pagination,
                     isLoading: false,
                     error: null

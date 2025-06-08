@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useProposalStore } from "../store/proposalStore";
-import { Clock, DollarSign, Calendar, MessageCircle, AlertCircle } from "lucide-react";
+import { Clock, DollarSign, Calendar, MessageCircle, AlertCircle, RefreshCw } from "lucide-react";
 import LoadingSpinner from "../components/LoadingSpinner";
 import toast from "react-hot-toast";
 import { useAuthStore } from "../store/authStore";
@@ -20,6 +20,8 @@ const MyProposalsPage = () => {
         error 
     } = useProposalStore();
 
+    const [isRefreshing, setIsRefreshing] = useState(false);
+
     useEffect(() => {
         const loadProposals = async () => {
             try {
@@ -30,6 +32,18 @@ const MyProposalsPage = () => {
         };
         loadProposals();
     }, [getMyProposals]);
+
+    const handleRefresh = async () => {
+        setIsRefreshing(true);
+        try {
+            await getMyProposals();
+            toast.success('Proposals refreshed');
+        } catch (error) {
+            toast.error('Failed to refresh proposals');
+        } finally {
+            setIsRefreshing(false);
+        }
+    };
 
     if (isLoading && proposals.length === 0) {
         return <LoadingSpinner />;
@@ -49,17 +63,26 @@ const MyProposalsPage = () => {
     if (!proposals.length) {
         return (
             <div className="container mx-auto px-4 py-8">
-                <motion.h1 
-                    initial={{ opacity: 0, y: -20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="text-2xl font-bold text-gray-900 mb-8"
-                >
-                    My Proposals
-                </motion.h1>
+                <div className="flex justify-between items-center">
+                    <motion.h1 
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="text-2xl font-bold text-gray-900"
+                    >
+                        My Proposals
+                    </motion.h1>
+                    <button
+                        onClick={handleRefresh}
+                        disabled={isLoading || isRefreshing}
+                        className="p-2 text-gray-600 hover:text-gray-900 transition-colors disabled:opacity-50"
+                    >
+                        <RefreshCw className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
+                    </button>
+                </div>
                 <motion.div 
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="bg-white rounded-lg shadow-md p-8 text-center"
+                    className="bg-white rounded-lg shadow-md p-8 text-center mt-8"
                 >
                     <h2 className="text-xl text-gray-600 mb-4">No proposals yet</h2>
                     <p className="text-gray-500 mb-6">You haven't submitted any proposals yet. Browse jobs and start applying!</p>
@@ -76,13 +99,22 @@ const MyProposalsPage = () => {
 
     return (
         <div className="container mx-auto px-4 py-8">
-            <motion.h1 
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="text-2xl font-bold text-gray-900 mb-8"
-            >
-                My Proposals
-            </motion.h1>
+            <div className="flex justify-between items-center mb-8">
+                <motion.h1 
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-2xl font-bold text-gray-900"
+                >
+                    My Proposals
+                </motion.h1>
+                <button
+                    onClick={handleRefresh}
+                    disabled={isLoading || isRefreshing}
+                    className="p-2 text-gray-600 hover:text-gray-900 transition-colors disabled:opacity-50"
+                >
+                    <RefreshCw className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
+                </button>
+            </div>
 
             {/* Proposals Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

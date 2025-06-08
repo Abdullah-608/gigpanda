@@ -5,8 +5,21 @@ import Notification from "../models/notification.model.js";
 import { getFileFromStorage, saveFileToStorage } from "../utils/fileStorage.js";
 import multer from 'multer';
 
-// Configure multer for memory storage
-const upload = multer({ storage: multer.memoryStorage() });
+// Configure multer with proper limits and file filter
+const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+        fileSize: 5 * 1024 * 1024, // 5MB limit
+        files: 10 // Maximum 10 files per request
+    },
+    fileFilter: (req, file, cb) => {
+        // Check file type
+        if (!file.mimetype.match(/^(application|image|text|video)\/(pdf|msword|vnd\.openxmlformats-officedocument\.wordprocessingml\.document|jpeg|png|gif|mp4|plain)$/)) {
+            return cb(new Error('Invalid file type. Allowed types: PDF, DOC, DOCX, JPG, PNG, GIF, MP4, TXT'), false);
+        }
+        cb(null, true);
+    }
+});
 
 // Create a new contract from a proposal
 export const createContract = async (req, res) => {
@@ -181,7 +194,8 @@ export const fundEscrow = async (req, res) => {
             });
         }
 
-        contract.escrowBalance = amount;
+        // Add the new amount to the existing escrow balance
+        contract.escrowBalance = (contract.escrowBalance || 0) + Number(amount);
         contract.status = "funded";
         await contract.save();
 
@@ -296,13 +310,30 @@ export const addMilestone = async (req, res) => {
 // Submit work for milestone
 export const submitWork = async (req, res) => {
     try {
-        // Handle file uploads
-        upload.array('files')(req, res, async (err) => {
-            if (err) {
+        // Handle file uploads with proper error handling
+        upload.array('files', 10)(req, res, async (err) => {
+            if (err instanceof multer.MulterError) {
+                if (err.code === 'LIMIT_FILE_SIZE') {
+                    return res.status(400).json({
+                        success: false,
+                        message: "File too large. Maximum size is 5MB"
+                    });
+                }
+                if (err.code === 'LIMIT_FILE_COUNT') {
+                    return res.status(400).json({
+                        success: false,
+                        message: "Too many files. Maximum is 10 files"
+                    });
+                }
                 return res.status(400).json({
                     success: false,
                     message: "Error uploading files",
                     error: err.message
+                });
+            } else if (err) {
+                return res.status(400).json({
+                    success: false,
+                    message: err.message
                 });
             }
 
@@ -332,8 +363,10 @@ export const submitWork = async (req, res) => {
                 });
             }
 
-            // Process and save files
+            // Process and save files with better error handling
             const savedFiles = [];
+            const failedFiles = [];
+            
             if (req.files && req.files.length > 0) {
                 for (const file of req.files) {
                     try {
@@ -346,9 +379,17 @@ export const submitWork = async (req, res) => {
                         });
                     } catch (error) {
                         console.error('Error saving file:', error);
-                        // Continue with other files if one fails
+                        failedFiles.push(file.originalname);
                     }
                 }
+            }
+
+            // If no files were saved successfully, return error
+            if (req.files && req.files.length > 0 && savedFiles.length === 0) {
+                return res.status(500).json({
+                    success: false,
+                    message: "Failed to save any files"
+                });
             }
 
             const now = new Date();
@@ -365,7 +406,6 @@ export const submitWork = async (req, res) => {
                     status: milestone.currentSubmission.status || 'pending'
                 };
 
-                // Add new submissions at the beginning of the array
                 milestone.submissionHistory.unshift(submissionToMove);
             }
 
@@ -379,19 +419,10 @@ export const submitWork = async (req, res) => {
                 feedbackAt: null
             };
 
-            // Update milestone status
             milestone.status = "submitted";
 
             try {
-                await contract.save();
-            } catch (error) {
-                console.error('Error saving contract:', error);
-                return res.status(500).json({
-                    success: false,
-                    message: "Error saving submission",
-                    error: error.message
-                });
-            }
+            await contract.save();
 
             // Create notification for the client
             const notification = new Notification({
@@ -404,19 +435,39 @@ export const submitWork = async (req, res) => {
 
             await notification.save();
 
-            res.status(200).json({
+                // Return response with warning if some files failed
+                const response = {
                 success: true,
                 message: "Work submitted successfully",
                 contract
+                };
+
+                if (failedFiles.length > 0) {
+                    response.warnings = {
+                        failedFiles,
+                        message: "Some files failed to upload"
+                    };
+                }
+
+                res.status(200).json(response);
+            } catch (error) {
+                console.error('Error saving contract:', error);
+                return res.status(500).json({
+                    success: false,
+                    message: "Error saving submission",
+                    error: error.message
             });
+            }
         });
     } catch (error) {
         console.error("Error in submitWork:", error);
+        if (!res.headersSent) {
         res.status(500).json({
             success: false,
             message: "Error submitting work",
             error: error.message
         });
+        }
     }
 };
 
@@ -662,9 +713,9 @@ export const completeContract = async (req, res) => {
 
 // Download submission file
 export const downloadSubmissionFile = async (req, res) => {
-    try {
-        const { contractId, milestoneId, fileId } = req.params;
+    const { contractId, milestoneId, fileId } = req.params;
 
+    try {
         // Find the contract
         const contract = await Contract.findById(contractId);
         if (!contract) {
@@ -692,8 +743,24 @@ export const downloadSubmissionFile = async (req, res) => {
             });
         }
 
-        // Find the file
-        const file = milestone.submission?.files?.find(f => f._id.toString() === fileId);
+        // Look for the file in both current submission and submission history
+        let file = null;
+        
+        // Check current submission first
+        if (milestone.currentSubmission && milestone.currentSubmission.files) {
+            file = milestone.currentSubmission.files.find(f => f._id.toString() === fileId);
+        }
+        
+        // If not found in current submission, check submission history
+        if (!file && milestone.submissionHistory) {
+            for (const submission of milestone.submissionHistory) {
+                if (submission.files) {
+                    file = submission.files.find(f => f._id.toString() === fileId);
+                    if (file) break;
+                }
+            }
+        }
+
         if (!file) {
             return res.status(404).json({
                 success: false,
@@ -702,32 +769,44 @@ export const downloadSubmissionFile = async (req, res) => {
         }
 
         try {
+            // Set response headers before starting the stream
+            res.setHeader('Content-Type', file.mimetype);
+            res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(file.filename)}"`);
+            res.setHeader('Content-Length', file.size);
+
             // Get the file stream
             const fileStream = await getFileFromStorage(file.url);
+
+            // Use stream.pipeline for proper error handling and cleanup
+            const { pipeline } = await import('stream/promises');
             
-            // Set response headers
-            res.setHeader('Content-Type', file.mimetype);
-            res.setHeader('Content-Disposition', `attachment; filename="${file.filename}"`);
-            
-            // Pipe the file stream to response
-            fileStream.pipe(res);
-            
-            // Handle errors during streaming
-            fileStream.on('error', (error) => {
-                console.error('Error streaming file:', error);
-                if (!res.headersSent) {
-                    res.status(500).json({
-                        success: false,
-                        message: "Error streaming file"
-                    });
-                }
-            });
+            await pipeline(
+                fileStream,
+                res
+            );
+
+            // Log success after pipeline completes
+            console.log('File download completed successfully');
+
         } catch (error) {
-            console.error('Error getting file stream:', error);
-            return res.status(404).json({
-                success: false,
-                message: "File not found in storage"
-            });
+            // If headers haven't been sent yet, send error response
+            if (!res.headersSent) {
+                console.error('Error streaming file:', error);
+                return res.status(500).json({
+                    success: false,
+                    message: "Error streaming file",
+                    error: error.message
+                });
+            } else {
+                // If headers were sent but streaming failed, destroy the stream and end the response
+                if (fileStream && !fileStream.destroyed) {
+                    fileStream.destroy();
+                }
+                if (!res.finished) {
+                    res.end();
+                }
+                console.error('Error during file streaming after headers sent:', error);
+            }
         }
 
     } catch (error) {

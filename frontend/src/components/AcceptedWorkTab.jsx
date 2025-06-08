@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useContractStore } from '../store/contractStore';
-import { Upload, FileText, ChevronDown, ChevronUp, Eye } from 'lucide-react';
+import { Upload, FileText, ChevronDown, ChevronUp, Eye, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 import ContractDetailsModal from './ContractDetailsModal';
@@ -16,10 +16,23 @@ const AcceptedWorkTab = () => {
     const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
     const [activeTab, setActiveTab] = useState('ongoing');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isRefreshing, setIsRefreshing] = useState(false);
 
     useEffect(() => {
         getMyContracts();
     }, [getMyContracts]);
+
+    const handleRefresh = async () => {
+        setIsRefreshing(true);
+        try {
+            await getMyContracts();
+            toast.success('Contracts refreshed');
+        } catch (error) {
+            toast.error('Failed to refresh contracts');
+        } finally {
+            setIsRefreshing(false);
+        }
+    };
 
     const handleFileChange = (e) => {
         const files = Array.from(e.target.files);
@@ -87,47 +100,56 @@ const AcceptedWorkTab = () => {
 
     return (
         <div className="p-6">
-            {/* Tabs */}
-            <div className="flex space-x-4 mb-6">
+            {/* Tabs and Refresh Button */}
+            <div className="flex justify-between items-center mb-6">
+                <div className="flex space-x-4">
+                    <button
+                        onClick={() => setActiveTab('ongoing')}
+                        className={`px-4 py-2 rounded-lg font-medium ${
+                            activeTab === 'ongoing'
+                                ? 'bg-green-600 text-white'
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                        disabled={isLoading}
+                    >
+                        {isLoading ? (
+                            <InlineLoading 
+                                text="Loading..." 
+                                size="small"
+                                textColor={activeTab === 'ongoing' ? 'text-white' : 'text-gray-600'}
+                                spinnerColor={activeTab === 'ongoing' ? 'text-white' : 'text-green-600'}
+                            />
+                        ) : (
+                            `Ongoing Contracts (${ongoingContracts.length})`
+                        )}
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('completed')}
+                        className={`px-4 py-2 rounded-lg font-medium ${
+                            activeTab === 'completed'
+                                ? 'bg-green-600 text-white'
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                        disabled={isLoading}
+                    >
+                        {isLoading ? (
+                            <InlineLoading 
+                                text="Loading..." 
+                                size="small"
+                                textColor={activeTab === 'completed' ? 'text-white' : 'text-gray-600'}
+                                spinnerColor={activeTab === 'completed' ? 'text-white' : 'text-green-600'}
+                            />
+                        ) : (
+                            `Completed Contracts (${completedContracts.length})`
+                        )}
+                    </button>
+                </div>
                 <button
-                    onClick={() => setActiveTab('ongoing')}
-                    className={`px-4 py-2 rounded-lg font-medium ${
-                        activeTab === 'ongoing'
-                            ? 'bg-green-600 text-white'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                    disabled={isLoading}
+                    onClick={handleRefresh}
+                    disabled={isLoading || isRefreshing}
+                    className="p-2 text-gray-600 hover:text-gray-900 transition-colors disabled:opacity-50"
                 >
-                    {isLoading ? (
-                        <InlineLoading 
-                            text="Loading..." 
-                            size="small"
-                            textColor={activeTab === 'ongoing' ? 'text-white' : 'text-gray-600'}
-                            spinnerColor={activeTab === 'ongoing' ? 'text-white' : 'text-green-600'}
-                        />
-                    ) : (
-                        `Ongoing Contracts (${ongoingContracts.length})`
-                    )}
-                </button>
-                <button
-                    onClick={() => setActiveTab('completed')}
-                    className={`px-4 py-2 rounded-lg font-medium ${
-                        activeTab === 'completed'
-                            ? 'bg-green-600 text-white'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                    disabled={isLoading}
-                >
-                    {isLoading ? (
-                        <InlineLoading 
-                            text="Loading..." 
-                            size="small"
-                            textColor={activeTab === 'completed' ? 'text-white' : 'text-gray-600'}
-                            spinnerColor={activeTab === 'completed' ? 'text-white' : 'text-green-600'}
-                        />
-                    ) : (
-                        `Completed Contracts (${completedContracts.length})`
-                    )}
+                    <RefreshCw className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
                 </button>
             </div>
 
@@ -324,7 +346,7 @@ const AcceptedWorkTab = () => {
                                                                                     <p className="text-sm font-medium text-gray-700">Attachments:</p>
                                                                                     <div className="flex flex-wrap gap-2 mt-1">
                                                                                         {milestone.currentSubmission.files.map((file, fileIndex) => (
-                                                                                            <a
+                                                            <a
                                                                                                 key={fileIndex}
                                                                 href={file.url}
                                                                 target="_blank"

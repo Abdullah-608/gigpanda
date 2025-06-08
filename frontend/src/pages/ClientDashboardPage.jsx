@@ -3,10 +3,11 @@ import { MessageSquare, Briefcase, BookmarkIcon, BellIcon, User, Menu, LogOut, C
 import { useAuthStore } from "../store/authStore";
 import { usePostStore } from "../store/postStore";
 import { useJobStore } from "../store/jobStore";
+import { useContractStore } from "../store/contractStore";
 import SearchBar from "../components/SearchBar";
 import Post from "../components/Post";
 import { Navigate, useNavigate, useLocation } from "react-router-dom";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import CreateJobModal from "../components/CreateJobModal";
 import MessagesPage from "../pages/MessagesPage";
 import ClientJobsTab from "../components/ClientJobsTab";
@@ -17,6 +18,7 @@ const ClientDashboardPage = () => {
 	const { user, logout, activeTab, setActiveTab } = useAuthStore();
 	const { posts, isLoading, error, pagination, fetchPosts, loadMorePosts } = usePostStore();
 	const { hotJobs, isLoadingHotJobs, fetchHotJobs, fetchMyJobs } = useJobStore();
+	const { getMyContracts } = useContractStore();
 	const { topFreelancers, isLoadingFreelancers, fetchTopFreelancers } = useAuthStore();
 	const navigate = useNavigate();
 	const location = useLocation();
@@ -25,12 +27,34 @@ const ClientDashboardPage = () => {
 	const { notifications, unreadCount, fetchNotifications, markAsRead } = useNotificationStore();
 	const [isNotificationOpen, setIsNotificationOpen] = useState(false);
 	const notificationRef = useRef(null);
+	const [lastFetchTime, setLastFetchTime] = useState(null);
+	const FETCH_COOLDOWN = 5 * 60 * 1000; // 5 minutes
+
+	// Function to check if we should fetch data
+	const shouldFetchData = useCallback(() => {
+		if (!lastFetchTime) return true;
+		return Date.now() - lastFetchTime > FETCH_COOLDOWN;
+	}, [lastFetchTime]);
+
+	// Function to load jobs data
+	const loadJobsData = useCallback(async (force = false) => {
+		if (force || shouldFetchData()) {
+			try {
+				await Promise.all([
+					fetchMyJobs(),
+					getMyContracts()
+				]);
+				setLastFetchTime(Date.now());
+			} catch (error) {
+				console.error('Error loading jobs data:', error);
+			}
+		}
+	}, [fetchMyJobs, getMyContracts, shouldFetchData]);
 
 	useEffect(() => {
 		fetchPosts();
 		fetchTopFreelancers(2);
 		fetchHotJobs(4);
-		fetchMyJobs();
 		fetchNotifications();
 		
 		// Set active tab from location state if available
@@ -48,8 +72,15 @@ const ClientDashboardPage = () => {
 		return () => {
 			document.removeEventListener('mousedown', handleClickOutside);
 		};
-	}, [fetchPosts, fetchTopFreelancers, fetchHotJobs, fetchMyJobs, fetchNotifications, location.state?.activeTab, setActiveTab]);
-	
+	}, [fetchPosts, fetchTopFreelancers, fetchHotJobs, fetchNotifications, location.state?.activeTab, setActiveTab]);
+
+	// Load jobs data when switching to jobs tab
+	useEffect(() => {
+		if (activeTab === 'myjobs') {
+			loadJobsData();
+		}
+	}, [activeTab, loadJobsData]);
+
 	// Check if user has the correct role
 	if (user?.role === "freelancer") {
 		return <Navigate to="/freelancer-dashboard" replace />;
@@ -655,7 +686,7 @@ const ClientDashboardPage = () => {
 								Post New Job
 							</button>
 						</div>
-						<ClientJobsTab />
+						<ClientJobsTab onRefresh={() => loadJobsData(true)} />
 					</motion.div>
 				) : activeTab === "messages" ? (
 					<motion.div

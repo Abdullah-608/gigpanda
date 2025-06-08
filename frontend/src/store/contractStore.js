@@ -9,6 +9,8 @@ export const useContractStore = create((set) => ({
     currentContract: null,
     isLoading: false,
     error: null,
+    isReleasingPayment: null, // Track which milestone payment is being released
+    isCompletingContract: null, // Track which contract is being completed
 
     // Create a new contract from accepted proposal
     createContract: async (proposalId, contractData) => {
@@ -212,25 +214,45 @@ export const useContractStore = create((set) => ({
 
     // Release payment for milestone
     releasePayment: async (contractId, milestoneId) => {
-        set({ isLoading: true, error: null });
+        set(state => ({ ...state, isReleasingPayment: milestoneId }));
         try {
             const response = await axios.post(
                 `${API_URL}/${contractId}/milestones/${milestoneId}/release`
             );
 
-            set(state => ({
-                contracts: state.contracts.map(contract =>
-                    contract._id === contractId ? response.data.contract : contract
-                ),
-                currentContract: response.data.contract,
-                isLoading: false
-            }));
+            // Only update the specific milestone and escrow balance
+            set(state => {
+                const updatedContracts = state.contracts.map(contract => {
+                    if (contract._id === contractId) {
+                        const updatedContract = { ...contract };
+                        // Update only the specific milestone
+                        const milestoneIndex = updatedContract.milestones.findIndex(m => m._id === milestoneId);
+                        if (milestoneIndex !== -1) {
+                            updatedContract.milestones[milestoneIndex] = response.data.contract.milestones.find(m => m._id === milestoneId);
+                        }
+                        // Update only the escrow balance
+                        updatedContract.escrowBalance = response.data.contract.escrowBalance;
+                        return updatedContract;
+                    }
+                    return contract;
+                });
+
+                return {
+                    contracts: updatedContracts,
+                    currentContract: state.currentContract?._id === contractId ? {
+                        ...state.currentContract,
+                        milestones: response.data.contract.milestones,
+                        escrowBalance: response.data.contract.escrowBalance
+                    } : state.currentContract,
+                    isReleasingPayment: null
+                };
+            });
 
             return response.data.contract;
         } catch (error) {
             set({ 
                 error: error.response?.data?.message || "Error releasing payment",
-                isLoading: false 
+                isReleasingPayment: null
             });
             throw error;
         }
@@ -300,7 +322,7 @@ export const useContractStore = create((set) => ({
 
     // Complete contract
     completeContract: async (contractId) => {
-        set({ isLoading: true, error: null });
+        set(state => ({ ...state, isCompletingContract: contractId }));
         try {
             const response = await axios.post(`${API_URL}/${contractId}/complete`);
             
@@ -309,14 +331,14 @@ export const useContractStore = create((set) => ({
                     contract._id === contractId ? response.data.contract : contract
                 ),
                 currentContract: response.data.contract,
-                isLoading: false
+                isCompletingContract: null
             }));
 
             return response.data.contract;
         } catch (error) {
             set({ 
                 error: error.response?.data?.message || "Error completing contract",
-                isLoading: false 
+                isCompletingContract: null
             });
             throw error;
         }
