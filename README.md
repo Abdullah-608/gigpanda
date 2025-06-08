@@ -1,112 +1,217 @@
-# GigPanda 🐼💻
+# GigPanda 🐼
 
-A clean, open-source freelancing marketplace that makes hiring and working with freelancers as easy as a panda with a laptop.
+GigPanda is a modern freelancing platform that connects talented freelancers with clients looking for professional services. Built with React, Node.js, and MongoDB, it provides a seamless experience for both freelancers and clients.
 
-![GigPanda Banner](https://via.placeholder.com/1200x300/4CAF50/FFFFFF?text=GigPanda)
+## Features
 
-## 🚀 What is GigPanda?
+### For Freelancers
+- 📋 Create and manage professional profiles
+- 💼 Browse and apply to job postings
+- 📊 Track earnings and active projects
+- 📬 Real-time messaging with clients
+- 🔔 Instant notifications for job updates
+- 📁 Submit work and manage milestones
+- 💰 Secure payment system for completed work
 
-GigPanda is an Upwork-style platform where:
+### For Clients
+- 📝 Post jobs and manage proposals
+- 👥 Browse and hire talented freelancers
+- 📊 Track project progress
+- 💼 Manage contracts and milestones
+- 📬 Real-time communication with freelancers
+- 🔔 Instant notifications for project updates
+- 💰 Secure escrow payment system
 
-* **Buyers** post projects, set milestones, and define budgets
-* **Freelancers** spend *connects* to submit tailored proposals
-* Both parties collaborate in a secure, feature-rich environment
+## Tech Stack
 
-## ✨ Core Features
+### Frontend
+- React.js with Vite
+- TailwindCSS for styling
+- Framer Motion for animations
+- React Router for navigation
+- Zustand for state management
+- Axios for API requests
+- React Hot Toast for notifications
+- ESLint for code quality
 
-* **Dual Role System**: Two dedicated roles (buyer & freelancer) with switchable dashboards
-* **Proposal Economy**: Connect-based proposal system with free monthly allowance plus optional top-up packs
-* **Secure Payments**: Escrow payments, milestone approvals, and dispute resolution
-* **Trust & Reputation**: Ratings, reviews, and verified work history
-* **Communication Tools**: Real-time chat, file sharing, and notifications
+### Backend
+- Node.js & Express.js
+- MongoDB with Mongoose
+- JWT for authentication
+- Socket.io for real-time features
+- Multer for file uploads
+- Nodemailer for email services
+- Morgan for logging
+- Cookie-parser for handling cookies
 
-## 🛠️ Tech Stack
+### Real-time Features
+- Server-Sent Events (SSE) for real-time notifications
+- Real-time messaging system
+- Live updates for contract status changes
+- Instant payment notifications
+- Read receipts for messages
 
-| Layer       | Technology                              |
-|-------------|----------------------------------------|
-| **Frontend**    | React 18, Tailwind CSS, Vite, Framer Motion |
-| **Backend**     | Node 18, Express 4, CORS              |
-| **Database**    | MongoDB with Mongoose                 |
-| **Realtime**    | Socket.io                             |
-| **Auth**        | JSON Web Tokens (JWT) + optional OAuth2 |
-| **Payments**    | Stripe (cryptocurrency support planned) |
-| **Email**       | Nodemailer, Mailtrap                  |
+### Payment System
+- Secure escrow system for milestone-based payments
+- Automated payment release workflow
+- Payment history tracking
+- Escrow balance management
+- Multiple milestone support
 
-## 🔧 Project Structure
+### File Management
+- Secure file upload system for work submissions
+- Support for multiple file types
+- File versioning for work submissions
+- Secure file storage and retrieval
+- Download functionality for submitted work
 
-```
-gigpanda/
-├── frontend/                # React frontend built with Vite
-│   ├── src/                 # Source files
-│   ├── public/              # Static assets
-│   └── ...
-├── backend/                 # Node.js Express backend
-│   ├── controllers/         # Request handlers
-│   ├── models/              # MongoDB models
-│   ├── routes/              # API routes
-│   ├── middleware/          # Custom middleware
-│   ├── utils/               # Utility functions
-│   ├── emailServices/       # Email functionality
-│   └── server.js            # Entry point
-└── ...
-```
+### Security Features
+- JWT with HTTP-only cookies
+- Rate limiting for API endpoints
+- Input validation and sanitization
+- Secure file upload validation
+- XSS protection
+- CSRF protection
+- Secure password hashing
+- Session management
 
-## 🚦 Getting Started
+## Getting Started
 
 ### Prerequisites
-
-- Node.js 18.x or later
+- Node.js (v14 or higher)
 - MongoDB
+- npm or yarn
 
 ### Installation
 
 1. Clone the repository
-   ```
-   git clone https://github.com/yourusername/gigpanda.git
-   cd gigpanda
-   ```
+```bash
+git clone https://github.com/yourusername/gigpanda.git
+cd gigpanda
+```
 
 2. Install dependencies
-   ```
-   npm install             # Install backend dependencies
-   cd frontend && npm install  # Install frontend dependencies
-   ```
+```bash
+# Install root dependencies
+npm install
+
+# Install frontend dependencies
+cd frontend
+npm install
+
+# Install backend dependencies
+cd ../backend
+npm install
+```
 
 3. Set up environment variables
-   ```
-   # Create .env file in root directory
-   cp .env.example .env  # Then edit .env with your values
-   ```
 
-4. Start development servers
-   ```
-   # Start backend server
-   npm run dev
-   
-   # In a separate terminal, start frontend
-   cd frontend && npm run dev
-   ```
+```bash
+# In backend directory, create .env file
+PORT=5000
+MONGO_URI=your_mongodb_uri
+JWT_SECRET=your_jwt_secret
+EMAIL_SERVICE=your_email_service
+EMAIL_USERNAME=your_email
+EMAIL_APP_PASSWORD=your_email_app_password
+EMAIL_SENDER_NAME=GigPanda
+NODE_ENV=development
+DOMAIN=localhost
 
-## 👥 Contributing
+# In frontend directory, create .env file
+VITE_API_URL=http://localhost:5000/api
+```
 
-Pull requests are welcome! Please:
+4. Start the development servers
+```bash
+# Start backend server (from backend directory)
+npm run dev
 
-1. Create a feature branch
-2. Run `npm run lint` and `npm test`
-3. Describe the change clearly in your PR
+# Start frontend server (from frontend directory)
+npm run dev
+```
 
-By contributing you agree to follow our [Code of Conduct](CODE_OF_CONDUCT.md).
+## Development Features
 
-## 👨‍💻 Team Members
+### API Configuration
+- Development and production API configurations
+- Automatic proxy setup for development
+- CORS configuration for secure communication
 
-- **Abdullah Mansoor** - abdullahmansoor608@gmail.com
-- **Abdullah Iftikhar** - ai868419@gmail.com
-- **Abdul Moiz** - contact@moizmoiz.com
+### Development Tools
+- ESLint configuration for code quality
+- Test data generation for development (disabled in production)
+- Hot module replacement with Vite
+- Source maps enabled for debugging
 
-## 📜 License
+### Security Features
+- HTTP-only cookies for JWT storage
+- Secure cookie settings in production
+- CORS origin restrictions
+- Rate limiting for API endpoints
+- Input validation and sanitization
 
-This project is licensed under the ISC License.
+## Deployment
 
----
+### Production Setup
+1. Build the frontend:
+```bash
+cd frontend
+npm run build
+```
 
-Built with ❤️ by the GigPanda Team
+2. Set production environment variables:
+```bash
+NODE_ENV=production
+DOMAIN=your-domain.com
+MONGO_URI=your_production_mongodb_uri
+```
+
+3. Configure production settings:
+- Frontend API endpoints automatically adjust for production
+- Static file serving enabled
+- Security headers enabled
+- Error logging configured
+- SSL/TLS setup required
+
+### Production Features
+- Optimized static file serving
+- Gzip compression
+- Error handling and logging
+- Secure cookie settings
+- Production-ready MongoDB connection
+- Email service configuration
+
+## Project Structure
+
+```
+gigpanda/
+├── frontend/                # Frontend React application
+│   ├── src/
+│   │   ├── components/     # Reusable components
+│   │   │   ├── auth/      # Authentication components
+│   │   │   ├── common/    # Common UI components
+│   │   │   ├── contract/  # Contract-related components
+│   │   │   ├── messaging/ # Messaging components
+│   │   │   └── payment/   # Payment components
+│   │   ├── pages/         # Page components
+│   │   ├── store/         # Zustand store configurations
+│   │   ├── services/      # API and service integrations
+│   │   ├── hooks/         # Custom React hooks
+│   │   ├── utils/         # Utility functions
+│   │   └── assets/        # Static assets
+│   └── public/            # Public assets
+│
+├── backend/
+│   ├── controllers/       # Route controllers
+│   ├── models/           # Database models
+│   ├── routes/           # API routes
+│   ├── middleware/       # Custom middleware
+│   ├── services/         # Business logic services
+│   ├── utils/            # Utility functions
+│   ├── config/          # Configuration files
+│   ├── emailServices/    # Email service configurations
+│   └── uploads/          # File upload directory
+│
+└── package.json          # Root package.json
+```
