@@ -121,6 +121,8 @@ export const createPost = async (req, res) => {
             createdAt: newPost.createdAt,
             updatedAt: newPost.updatedAt,
             isLiked: false,
+            reactions: [],
+            userReaction: null,
             comments: []
         };
 
@@ -194,8 +196,14 @@ export const getPosts = async (req, res) => {
             isAvailableForWork: post.isAvailableForWork,
             createdAt: post.createdAt,
             updatedAt: post.updatedAt,
-            // Check if current user liked this post
             isLiked: req.user ? post.likes?.some(like => like.user.toString() === req.user._id.toString()) : false,
+            reactions: post.reactions?.map(reaction => ({
+                emoji: reaction.emoji,
+                userId: reaction.user.toString()
+            })) || [],
+            userReaction: req.user 
+                ? (post.reactions?.find(reaction => reaction.user.toString() === req.user._id.toString())?.emoji || null)
+                : null,
             comments: post.comments?.slice(0, 3).map(comment => ({
                 id: comment._id,
                 content: comment.content,
@@ -282,7 +290,17 @@ export const getPostById = async (req, res) => {
             isAvailableForWork: post.isAvailableForWork,
             createdAt: post.createdAt,
             updatedAt: post.updatedAt,
+            // Check if current user liked this post
             isLiked: req.user ? post.likes?.some(like => like.user.toString() === req.user._id.toString()) : false,
+            // Include reactions
+            reactions: post.reactions?.map(reaction => ({
+                emoji: reaction.emoji,
+                userId: reaction.user.toString()
+            })) || [],
+            // Get user's own reaction if they have one
+            userReaction: req.user 
+                ? (post.reactions?.find(reaction => reaction.user.toString() === req.user._id.toString())?.emoji || null)
+                : null,
             comments: post.comments?.map(comment => ({
                 id: comment._id,
                 content: comment.content,
@@ -447,6 +465,74 @@ export const addComment = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to add comment',
+            error: error.message
+        });
+    }
+};
+
+// Add a reaction to a post
+export const addReaction = async (req, res) => {
+    try {
+        const { postId } = req.params;
+        const { emoji } = req.body;
+        const userId = req.user._id;
+
+        if (!emoji) {
+            return res.status(400).json({
+                success: false,
+                message: 'Emoji is required'
+            });
+        }
+
+        const post = await Post.findById(postId);
+        if (!post) {
+            return res.status(404).json({
+                success: false,
+                message: 'Post not found'
+            });
+        }
+
+        // Remove any existing reaction from this user
+        post.reactions = post.reactions.filter(
+            reaction => reaction.user.toString() !== userId.toString()
+        );
+
+        // Add the new reaction
+        post.reactions.push({
+            emoji,
+            user: userId
+        });
+
+        await post.save();
+
+        // Create notification for the post author if it's not their own post
+        if (post.author.toString() !== userId.toString()) {
+            await createNotification({
+                recipient: post.author,
+                sender: userId,
+                type: 'POST_REACTION',
+                post: post._id,
+                message: emoji
+            });
+        }
+
+        // Get all reactions for the post
+        const reactions = post.reactions.map(reaction => ({
+            emoji: reaction.emoji,
+            userId: reaction.user.toString()
+        }));
+
+        res.json({
+            success: true,
+            message: 'Reaction added successfully',
+            reactions
+        });
+
+    } catch (error) {
+        console.error('Error adding reaction:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to add reaction',
             error: error.message
         });
     }

@@ -75,7 +75,22 @@ const postSchema = new mongoose.Schema({
     isAvailableForWork: {
         type: Boolean,
         default: false
-    }
+    },
+    reactions: [{
+        emoji: {
+            type: String,
+            required: true
+        },
+        user: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+            required: true
+        },
+        createdAt: {
+            type: Date,
+            default: Date.now
+        }
+    }]
 }, {
     timestamps: true
 });

@@ -27,7 +27,8 @@ const notificationSchema = new mongoose.Schema({
             'PAYMENT_RELEASED',
             'CONTRACT_COMPLETED',
             'POST_LIKED',
-            'POST_COMMENTED'
+            'POST_COMMENTED',
+            'POST_REACTION'
         ],
         required: true
     },
