@@ -167,6 +167,16 @@ const ClientDashboardPage = () => {
 					navigate(`/posts/${notification.post._id}`);
 				}
 				break;
+			case 'POST_REACTION':
+				if (notification.post?._id) {
+					navigate(`/posts/${notification.post._id}`);
+				}
+				break;
+			default:
+				if (notification.post?._id) {
+					navigate(`/posts/${notification.post._id}`);
+				}
+				break;
 		}
 		setIsNotificationOpen(false);
 	};
@@ -314,6 +324,12 @@ const ClientDashboardPage = () => {
 																							return (
 																								<>
 																									<span className="font-semibold">{senderName}</span> commented on your post
+																								</>
+																						);
+																						case 'POST_REACTION':
+																							return (
+																								<>
+																									<span className="font-semibold">{senderName}</span> reacted to your post with {notification.message}
 																								</>
 																						);
 																						default:

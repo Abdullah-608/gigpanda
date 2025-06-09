@@ -166,5 +166,32 @@ export const usePostStore = create((set, get) => ({
     // Clear error
     clearError: () => {
         set({ error: null });
+    },
+
+    // Add a reaction to a post
+    addReaction: async (postId, emoji) => {
+        try {
+            const response = await axios.post(`${API_URL}/${postId}/reaction`, { emoji });
+            
+            if (response.data.success) {
+                // Update the post in the posts array
+                set((state) => ({
+                    posts: state.posts.map(post => 
+                        post.id === postId 
+                            ? { 
+                                ...post, 
+                                reactions: response.data.reactions,
+                                userReaction: emoji
+                              }
+                            : post
+                    )
+                }));
+            }
+            return response.data;
+        } catch (error) {
+            console.error('Error adding reaction:', error);
+            const errorMessage = error.response?.data?.message || "Failed to add reaction";
+            throw new Error(errorMessage);
+        }
     }
 })); 

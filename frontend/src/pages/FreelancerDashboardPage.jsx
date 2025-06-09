@@ -257,6 +257,11 @@ const FreelancerDashboardPage = () => {
 					navigate(`/posts/${notification.post._id}`);
 				}
 				break;
+			case 'POST_REACTION':
+				if (notification.post?._id) {
+					navigate(`/posts/${notification.post._id}`);
+				}
+				break;
 		}
 		setIsNotificationOpen(false);
 	};
@@ -490,6 +495,12 @@ const FreelancerDashboardPage = () => {
 																								<span className="font-semibold">{senderName}</span> commented on your post
 																							</>
 																						);
+																				case 'POST_REACTION':
+																					return (
+																						<>
+																							<span className="font-semibold">{senderName}</span> reacted to your post with {notification.message}
+																						</>
+																					);
 																				default:
 																					return notification.message || 'New notification';
 																			}

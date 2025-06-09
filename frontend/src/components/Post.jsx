@@ -1,16 +1,32 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { MessageSquare, Heart, Calendar, Eye } from 'lucide-react';
+import { MessageSquare, Calendar, Eye, Smile } from 'lucide-react';
 import { usePostStore } from '../store/postStore';
 import { useAuthStore } from '../store/authStore';
+import EmojiPicker from 'emoji-picker-react';
+import styles from './Post.module.css';
 
 const Post = ({ post, index = 0 }) => {
     const [showComments, setShowComments] = useState(false);
     const [newComment, setNewComment] = useState('');
     const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+    const emojiPickerRef = useRef(null);
     
-    const { toggleLike, addComment } = usePostStore();
+    const { addReaction, addComment } = usePostStore();
     const { user } = useAuthStore();
+
+    // Close emoji picker when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target)) {
+                setShowEmojiPicker(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     const formatTimeAgo = (dateString) => {
         const date = new Date(dateString);
@@ -47,14 +63,14 @@ const Post = ({ post, index = 0 }) => {
         return colors[type] || 'bg-gray-100 text-gray-800';
     };
 
-    const handleLike = async () => {
-        if (!user) {
-            return;
-        }
+    const handleEmojiClick = async (emojiData) => {
+        if (!user) return;
+        
         try {
-            await toggleLike(post.id);
+            await addReaction(post.id, emojiData.emoji);
+            setShowEmojiPicker(false);
         } catch (error) {
-            console.error('Failed to toggle like:', error);
+            console.error('Failed to add reaction:', error);
         }
     };
 
@@ -82,24 +98,24 @@ const Post = ({ post, index = 0 }) => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
-            className="bg-white border border-gray-100 rounded-lg hover:shadow-md transition-shadow p-4 mb-4"
+            className={styles.postContainer}
         >
             {/* Post Header */}
-            <div className="flex items-start space-x-3 mb-3">
-                <div className="flex-shrink-0">
+            <div className={styles.header}>
+                <div className={styles.avatarContainer}>
                     {post.author.avatar ? (
                         <img 
                             src={post.author.avatar} 
                             alt={post.author.name}
-                            className="h-12 w-12 rounded-full object-cover"
+                            className={styles.avatar}
                         />
                     ) : (
-                        <div className="h-12 w-12 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold">
+                        <div className={styles.avatarFallback}>
                             {getAuthorInitials(post.author.name)}
                         </div>
                     )}
                 </div>
-                <div className="flex-1 min-w-0">
+                <div className={styles.contentContainer}>
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-sm font-medium text-gray-900">
@@ -138,27 +154,27 @@ const Post = ({ post, index = 0 }) => {
             </div>
 
             {/* Post Content */}
-            <div className="mb-3">
-                <p className="text-gray-800 whitespace-pre-wrap">{post.content}</p>
+            <div className={styles.postContent}>
+                <p className={styles.postText}>{post.content}</p>
             </div>
 
             {/* Images */}
             {post.images && post.images.length > 0 && (
-                <div className="mb-3">
+                <div className={styles.imageContainer}>
                     {post.images.length === 1 ? (
                         <img 
                             src={post.images[0].data} 
                             alt={post.images[0].alt || 'Post image'}
-                            className="w-full max-h-96 object-cover rounded-md"
+                            className={styles.singleImage}
                         />
                     ) : (
-                        <div className="grid grid-cols-2 gap-2">
+                        <div className={styles.imageGrid}>
                             {post.images.slice(0, 4).map((image, idx) => (
-                                <div key={idx} className="relative">
+                                <div key={idx} className={styles.imageGridItem}>
                                     <img 
                                         src={image.data} 
                                         alt={image.alt || `Post image ${idx + 1}`}
-                                        className="w-full h-48 object-cover rounded-md"
+                                        className={styles.gridImage}
                                     />
                                     {idx === 3 && post.images.length > 4 && (
                                         <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-md">
@@ -176,9 +192,9 @@ const Post = ({ post, index = 0 }) => {
 
             {/* Tags */}
             {post.tags && post.tags.length > 0 && (
-                <div className="mb-3 flex flex-wrap gap-1">
+                <div className={styles.tagsContainer}>
                     {post.tags.map((tag, idx) => (
-                        <span key={idx} className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                        <span key={idx} className={styles.tag}>
                             #{tag}
                         </span>
                     ))}
@@ -195,22 +211,52 @@ const Post = ({ post, index = 0 }) => {
             )}
 
             {/* Action Buttons */}
-            <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-                <div className="flex items-center space-x-4">
-                    <button
-                        onClick={handleLike}
-                        className={`flex items-center space-x-1 text-sm transition-colors ${
-                            post.isLiked 
-                                ? 'text-red-600 hover:text-red-700' 
-                                : 'text-gray-500 hover:text-red-600'
-                        }`}
-                    >
-                        <Heart className={`h-4 w-4 ${post.isLiked ? 'fill-current' : ''}`} />
-                        <span>{post.likeCount}</span>
-                    </button>
+            <div className={styles.actionsContainer}>
+                <div className={styles.actionButtons}>
+                    <div className="relative" ref={emojiPickerRef}>
+                        <button
+                            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                            className={styles.emojiButton}
+                        >
+                            <Smile className="h-4 w-4" />
+                            <span>React</span>
+                        </button>
+                        {showEmojiPicker && (
+                            <div className={styles.emojiPickerContainer}>
+                                <EmojiPicker
+                                    onEmojiClick={handleEmojiClick}
+                                    disableAutoFocus={true}
+                                    searchPlaceholder="Search emojis..."
+                                    preload={true}
+                                />
+                            </div>
+                        )}
+                    </div>
+                    {post.reactions && post.reactions.length > 0 && (
+                        <div className={styles.emojiList}>
+                            {Object.entries(
+                                post.reactions.reduce((acc, reaction) => {
+                                    acc[reaction.emoji] = (acc[reaction.emoji] || 0) + 1;
+                                    return acc;
+                                }, {})
+                            ).map(([emoji, count]) => (
+                                <div
+                                    key={emoji}
+                                    className={`${styles.emojiReaction} ${
+                                        post.reactions.some(r => r.emoji === emoji && r.userId === user?._id)
+                                            ? styles.emojiReactionActive
+                                            : ''
+                                    }`}
+                                >
+                                    <span>{emoji}</span>
+                                    <span>{count}</span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                     <button
                         onClick={() => setShowComments(!showComments)}
-                        className="flex items-center space-x-1 text-sm text-gray-500 hover:text-blue-600 transition-colors"
+                        className={styles.actionButton}
                     >
                         <MessageSquare className="h-4 w-4" />
                         <span>{post.commentCount}</span>
@@ -220,31 +266,31 @@ const Post = ({ post, index = 0 }) => {
 
             {/* Comments Section */}
             {showComments && (
-                <div className="mt-4 pt-3 border-t border-gray-100">
+                <div className={styles.commentsContainer}>
                     {/* Existing Comments */}
                     {post.comments && post.comments.length > 0 && (
-                        <div className="space-y-3 mb-4">
+                        <div className={styles.commentsList}>
                             {post.comments.map((comment) => (
-                                <div key={comment.id} className="flex space-x-2">
-                                    <div className="flex-shrink-0">
+                                <div key={comment.id} className={styles.commentItem}>
+                                    <div className={styles.avatarContainer}>
                                         {comment.author.avatar ? (
                                             <img 
                                                 src={comment.author.avatar} 
                                                 alt={comment.author.name}
-                                                className="h-8 w-8 rounded-full object-cover"
+                                                className={styles.commentAvatar}
                                             />
                                         ) : (
-                                            <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center text-xs text-white font-medium">
+                                            <div className={styles.commentAvatarFallback}>
                                                 {getAuthorInitials(comment.author.name)}
                                             </div>
                                         )}
                                     </div>
-                                    <div className="flex-1">
-                                        <div className="bg-gray-50 rounded-lg px-3 py-2">
-                                            <p className="text-xs font-medium text-gray-900">{comment.author.name}</p>
-                                            <p className="text-sm text-gray-800">{comment.content}</p>
+                                    <div className={styles.commentContent}>
+                                        <div className={styles.commentBubble}>
+                                            <p className={styles.commentAuthor}>{comment.author.name}</p>
+                                            <p className={styles.commentText}>{comment.content}</p>
                                         </div>
-                                        <p className="text-xs text-gray-500 mt-1">{formatTimeAgo(comment.createdAt)}</p>
+                                        <p className={styles.commentTime}>{formatTimeAgo(comment.createdAt)}</p>
                                     </div>
                                 </div>
                             ))}
@@ -253,16 +299,16 @@ const Post = ({ post, index = 0 }) => {
 
                     {/* Add Comment Form */}
                     {user && (
-                        <form onSubmit={handleAddComment} className="flex space-x-2">
-                            <div className="flex-shrink-0">
+                        <form onSubmit={handleAddComment} className={styles.commentForm}>
+                            <div className={styles.avatarContainer}>
                                 {user.profile?.pictureUrl ? (
                                     <img 
                                         src={user.profile.pictureUrl} 
                                         alt={user.name}
-                                        className="h-8 w-8 rounded-full object-cover"
+                                        className={styles.commentAvatar}
                                     />
                                 ) : (
-                                    <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center text-xs text-white font-medium">
+                                    <div className={styles.commentAvatarFallback}>
                                         {getAuthorInitials(user.name)}
                                     </div>
                                 )}
@@ -273,14 +319,14 @@ const Post = ({ post, index = 0 }) => {
                                     value={newComment}
                                     onChange={(e) => setNewComment(e.target.value)}
                                     placeholder="Write a comment..."
-                                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className={styles.commentInput}
                                     disabled={isSubmittingComment}
                                 />
                             </div>
                             <button
                                 type="submit"
                                 disabled={!newComment.trim() || isSubmittingComment}
-                                className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className={styles.commentSubmitButton}
                             >
                                 {isSubmittingComment ? 'Posting...' : 'Post'}
                             </button>
