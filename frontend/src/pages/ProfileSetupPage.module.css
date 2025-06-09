@@ -1,0 +1,63 @@
+.container {
+  @apply w-full max-w-[65%] md:max-w-[65rem] mx-auto flex overflow-hidden rounded-2xl shadow-xl;
+}
+
+.leftPanel {
+  @apply hidden md:block w-1/3 bg-gradient-to-br from-green-600 to-green-800 relative;
+}
+
+.bambooPattern {
+  @apply absolute top-0 left-0 opacity-10;
+}
+
+.floatingBamboo {
+  @apply absolute bg-white/10 rounded-full;
+}
+
+.decorativeCircle {
+  @apply absolute rounded-full bg-white/5;
+}
+
+.decorativeCircleLarge {
+  @apply w-40 h-40;
+}
+
+.decorativeCircleExtraLarge {
+  @apply w-60 h-60;
+}
+
+.leftContent {
+  @apply absolute inset-0 flex items-center justify-center;
+}
+
+.leftContentInner {
+  @apply text-white p-8 text-center z-10;
+}
+
+.welcomeTitle {
+  @apply text-3xl font-bold mb-4;
+}
+
+.welcomeDescription {
+  @apply opacity-80;
+}
+
+.rightPanel {
+  @apply w-full md:w-2/3 bg-white p-8;
+}
+
+.formContainer {
+  @apply max-w-3xl mx-auto;
+}
+
+.formTitle {
+  @apply text-2xl font-bold mb-6 text-center;
+}
+
+.stepperContainer {
+  @apply mb-8;
+}
+
+.formSteps {
+  @apply transition-all duration-300;
+} 

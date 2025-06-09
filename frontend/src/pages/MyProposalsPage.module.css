@@ -1,0 +1,216 @@
+/* Layout */
+.container {
+  @apply mx-auto px-4 py-8;
+  max-width: 1280px; /* This is the default max-width for Tailwind's container */
+}
+
+.header {
+  @apply flex justify-between items-center mb-8;
+}
+
+.pageTitle {
+  @apply text-2xl font-bold text-gray-900;
+}
+
+.refreshButton {
+  @apply p-2 text-gray-600 hover:text-gray-900 transition-colors disabled:opacity-50;
+}
+
+.refreshIcon {
+  @apply w-5 h-5;
+}
+
+.refreshIconSpinning {
+  @apply w-5 h-5 animate-spin;
+}
+
+/* Error State */
+.errorContainer {
+  @apply bg-red-50 p-4 rounded-lg flex items-center justify-center text-red-700;
+}
+
+.errorIcon {
+  @apply w-5 h-5 mr-2;
+}
+
+/* Empty State */
+.emptyStateContainer {
+  @apply bg-white rounded-lg shadow-md p-8 text-center mt-8;
+}
+
+.emptyStateTitle {
+  @apply text-xl text-gray-600 mb-4;
+}
+
+.emptyStateText {
+  @apply text-gray-500 mb-6;
+}
+
+.browseButton {
+  @apply bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors;
+}
+
+/* Proposals Grid */
+.proposalsGrid {
+  @apply grid grid-cols-1 md:grid-cols-3 gap-6;
+}
+
+/* Proposals List */
+.proposalsList {
+  @apply md:col-span-1 bg-white rounded-lg shadow-md p-4;
+}
+
+.proposalsListTitle {
+  @apply text-xl font-semibold mb-4;
+}
+
+.proposalsLoadingContainer {
+  @apply py-8;
+}
+
+.proposalsContainer {
+  @apply space-y-4;
+}
+
+/* Proposal Card */
+.proposalCard {
+  @apply cursor-pointer p-4 rounded-lg transition-colors;
+}
+
+.proposalCardSelected {
+  @apply bg-green-50 border-2 border-green-500;
+}
+
+.proposalCardUnselected {
+  @apply bg-gray-50 hover:bg-gray-100;
+}
+
+.proposalCardContent {
+  @apply flex items-start justify-between;
+}
+
+.proposalInfo {
+  @apply flex-1;
+}
+
+.proposalTitle {
+  @apply font-medium text-gray-900;
+}
+
+.proposalStatusContainer {
+  @apply flex items-center text-sm text-gray-600 mt-1;
+}
+
+.proposalStatus {
+  @apply inline-flex items-center px-2 py-1 rounded-full text-xs font-medium;
+}
+
+.statusPending {
+  @apply bg-yellow-100 text-yellow-800;
+}
+
+.statusAccepted {
+  @apply bg-green-100 text-green-800;
+}
+
+.statusDeclined {
+  @apply bg-red-100 text-red-800;
+}
+
+.statusDefault {
+  @apply bg-blue-100 text-blue-800;
+}
+
+.proposalMeta {
+  @apply text-right;
+}
+
+.proposalAmount {
+  @apply font-medium text-gray-900;
+}
+
+.proposalDuration {
+  @apply text-sm text-gray-600;
+}
+
+/* Proposal Details */
+.detailsContainer {
+  @apply md:col-span-2;
+}
+
+.detailsCard {
+  @apply bg-white rounded-lg shadow-md p-6;
+}
+
+.detailsHeader {
+  @apply mb-6 pb-6 border-b border-gray-200;
+}
+
+.detailsTitle {
+  @apply text-xl font-bold text-gray-900 mb-2;
+}
+
+.detailsMeta {
+  @apply flex flex-wrap gap-4 text-sm text-gray-600;
+}
+
+.detailsMetaItem {
+  @apply flex items-center;
+}
+
+.detailsMetaIcon {
+  @apply w-4 h-4 mr-2;
+}
+
+/* Status Section */
+.statusSection {
+  @apply mb-6;
+}
+
+.sectionTitle {
+  @apply text-lg font-semibold mb-2;
+}
+
+/* Cover Letter Section */
+.coverLetterSection {
+  @apply mb-6;
+}
+
+.coverLetterText {
+  @apply text-gray-700 whitespace-pre-wrap;
+}
+
+/* Attachments Section */
+.attachmentsSection {
+  @apply mb-6;
+}
+
+.attachmentsList {
+  @apply space-y-2;
+}
+
+.attachmentItem {
+  @apply flex items-center p-2 bg-gray-50 rounded;
+}
+
+.attachmentName {
+  @apply text-gray-700;
+}
+
+.attachmentLink {
+  @apply ml-auto text-green-600 hover:text-green-700;
+}
+
+/* Message Button */
+.messageButton {
+  @apply w-full border-2 border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center;
+}
+
+.messageIcon {
+  @apply w-4 h-4 mr-2;
+}
+
+/* Empty Details State */
+.emptyDetails {
+  @apply bg-white rounded-lg shadow-md p-6 flex items-center justify-center text-gray-500 h-[200px];
+} 

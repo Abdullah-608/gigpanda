@@ -6,6 +6,7 @@ import { DollarSign, Plus, Trash2, Loader } from "lucide-react";
 import LoadingSpinner from "../components/LoadingSpinner";
 import toast from "react-hot-toast";
 import { motion } from "framer-motion";
+import styles from "./CreateContractPage.module.css";
 
 const CreateContractPage = () => {
     const { proposalId } = useParams();
@@ -163,70 +164,70 @@ const CreateContractPage = () => {
     if (isLoading || !currentProposal) return <LoadingSpinner />;
 
     return (
-        <div className="container mx-auto px-4 py-8">
-            <div className="max-w-4xl mx-auto">
+        <div className={styles.pageContainer}>
+            <div className={styles.contentWrapper}>
                 <motion.h1 
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="text-3xl font-bold text-gray-900 mb-8"
+                    className={styles.pageTitle}
                 >
                     Create Contract
                 </motion.h1>
 
-                <form onSubmit={handleSubmit} className="space-y-8">
+                <form onSubmit={handleSubmit} className={styles.form}>
                     {/* Contract Details */}
-                    <div className="bg-white rounded-lg shadow-md p-6">
-                        <h2 className="text-xl font-semibold mb-4">Contract Details</h2>
+                    <div className={styles.section}>
+                        <h2 className={styles.sectionTitle}>Contract Details</h2>
                         
-                        <div className="space-y-4">
+                        <div className={styles.inputGroup}>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <label className={styles.label}>
                                     Contract Title
                                 </label>
                                 <input
                                     type="text"
                                     value={formData.title}
                                     onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                    className={styles.input}
                                     placeholder="e.g., Website Development Project"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <label className={styles.label}>
                                     Project Scope
                                 </label>
                                 <textarea
                                     value={formData.scope}
                                     onChange={(e) => setFormData(prev => ({ ...prev, scope: e.target.value }))}
-                                    className="w-full h-32 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
+                                    className={styles.textarea}
                                     placeholder="Describe the project deliverables and scope..."
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <label className={styles.label}>
                                     Contract Terms
                                 </label>
                                 <textarea
                                     value={formData.terms}
                                     onChange={(e) => setFormData(prev => ({ ...prev, terms: e.target.value }))}
-                                    className="w-full h-32 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
+                                    className={styles.textarea}
                                     placeholder="Specify any additional terms and conditions..."
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <label className={styles.label}>
                                     Total Amount
                                 </label>
-                                <div className="relative">
-                                    <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+                                <div className={styles.inputWithIcon}>
+                                    <DollarSign className={styles.inputIcon} />
                                     <input
                                         type="number"
                                         value={formData.totalAmount}
                                         onChange={(e) => setFormData(prev => ({ ...prev, totalAmount: Number(e.target.value) }))}
-                                        className="w-full pl-10 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                        className={styles.iconInput}
                                     />
                                 </div>
                             </div>
@@ -234,85 +235,85 @@ const CreateContractPage = () => {
                     </div>
 
                     {/* Milestones */}
-                    <div className="bg-white rounded-lg shadow-md p-6">
-                        <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-xl font-semibold">Milestones</h2>
+                    <div className={styles.section}>
+                        <div className={styles.milestonesHeader}>
+                            <h2 className={styles.sectionTitle}>Milestones</h2>
                             <button
                                 type="button"
                                 onClick={addMilestone}
-                                className="flex items-center text-green-600 hover:text-green-700"
+                                className={styles.addMilestoneButton}
                             >
-                                <Plus className="w-4 h-4 mr-1" />
+                                <Plus className={styles.addMilestoneIcon} />
                                 Add Milestone
                             </button>
                         </div>
 
-                        <div className="space-y-6">
+                        <div className={styles.milestonesList}>
                             {formData.milestones.map((milestone, index) => (
-                                <div key={index} className="p-4 bg-gray-50 rounded-lg">
-                                    <div className="flex justify-between items-start mb-4">
-                                        <h3 className="font-medium">Milestone {index + 1}</h3>
+                                <div key={index} className={styles.milestoneCard}>
+                                    <div className={styles.milestoneHeader}>
+                                        <h3 className={styles.milestoneTitle}>Milestone {index + 1}</h3>
                                         {index > 0 && (
                                             <button
                                                 type="button"
                                                 onClick={() => removeMilestone(index)}
-                                                className="text-red-600 hover:text-red-700"
+                                                className={styles.deleteButton}
                                             >
-                                                <Trash2 className="w-4 h-4" />
+                                                <Trash2 className={styles.deleteIcon} />
                                             </button>
                                         )}
                                     </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className={styles.milestoneGrid}>
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            <label className={styles.label}>
                                                 Title
                                             </label>
                                             <input
                                                 type="text"
                                                 value={milestone.title}
                                                 onChange={(e) => updateMilestone(index, "title", e.target.value)}
-                                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                                className={styles.input}
                                                 placeholder="e.g., Initial Design"
                                             />
                                         </div>
 
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            <label className={styles.label}>
                                                 Amount
                                             </label>
-                                            <div className="relative">
-                                                <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+                                            <div className={styles.inputWithIcon}>
+                                                <DollarSign className={styles.inputIcon} />
                                                 <input
                                                     type="number"
                                                     value={milestone.amount}
                                                     onChange={(e) => updateMilestone(index, "amount", Number(e.target.value))}
-                                                    className="w-full pl-10 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                                    className={styles.iconInput}
                                                 />
                                             </div>
                                         </div>
 
-                                        <div className="md:col-span-2">
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        <div className={styles.milestoneDescription}>
+                                            <label className={styles.label}>
                                                 Description
                                             </label>
                                             <textarea
                                                 value={milestone.description}
                                                 onChange={(e) => updateMilestone(index, "description", e.target.value)}
-                                                className="w-full h-24 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
+                                                className={styles.milestoneTextarea}
                                                 placeholder="Describe the deliverables for this milestone..."
                                             />
                                         </div>
 
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            <label className={styles.label}>
                                                 Due Date
                                             </label>
                                             <input
                                                 type="date"
                                                 value={milestone.dueDate}
                                                 onChange={(e) => updateMilestone(index, "dueDate", e.target.value)}
-                                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                                className={styles.input}
                                             />
                                         </div>
                                     </div>
@@ -322,17 +323,17 @@ const CreateContractPage = () => {
                     </div>
 
                     {/* Submit Button */}
-                    <div className="flex justify-end">
+                    <div className={styles.submitWrapper}>
                         <motion.button
                             type="submit"
                             disabled={isSubmitting}
-                            className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed min-w-[160px]"
+                            className={styles.submitButton}
                             whileHover={{ scale: 1.01 }}
                             whileTap={{ scale: 0.99 }}
                         >
                             {isSubmitting ? (
                                 <>
-                                    <Loader className="w-5 h-5 animate-spin" />
+                                    <Loader className={styles.loadingIcon} />
                                     <span>Creating...</span>
                                 </>
                             ) : (

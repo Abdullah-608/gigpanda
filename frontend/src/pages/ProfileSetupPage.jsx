@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 import { useAuthStore } from "../store/authStore";
 import { useUserStore } from "../store/userStore";
 import { motion } from "framer-motion";
+import styles from './ProfileSetupPage.module.css';
 
 // Import the components from the integrate project
 // We'll create these files next
@@ -47,7 +48,7 @@ function ProfileSetupPage() {
         return Array.from({ length: 8 }).map((_, i) => (
             <motion.div
                 key={i}
-                className="absolute bg-white/10 rounded-full"
+                className={styles.floatingBamboo}
                 initial={{
                     x: Math.random() * 100 - 50,
                     y: Math.random() * 100 - 50,
@@ -211,12 +212,12 @@ function ProfileSetupPage() {
     };
 
     return (
-        <div className="w-full max-w-[65%] md:max-w-[65rem] mx-auto flex overflow-hidden rounded-2xl shadow-xl">
+        <div className={styles.container}>
             {/* Left Panel - Decorative */}
-            <div className="hidden md:block w-1/3 bg-gradient-to-br from-green-600 to-green-800 relative">
+            <div className={styles.leftPanel}>
                 <div className="absolute inset-0 overflow-hidden">
                     {/* Bamboo pattern */}
-                    <svg width="100%" height="100%" className="absolute top-0 left-0 opacity-10">
+                    <svg width="100%" height="100%" className={styles.bambooPattern}>
                         <pattern id="bamboo-pattern" width="30" height="30" patternUnits="userSpaceOnUse">
                             <line x1="15" y1="0" x2="15" y2="30" stroke="white" strokeWidth="2" strokeDasharray="1 4" />
                         </pattern>
@@ -228,7 +229,7 @@ function ProfileSetupPage() {
                     
                     {/* Animated circles */}
                     <motion.div
-                        className="absolute w-40 h-40 rounded-full bg-white/5"
+                        className={`${styles.decorativeCircle} ${styles.decorativeCircleLarge}`}
                         animate={{
                             scale: [1, 1.2, 1],
                             x: [0, 20, 0],
@@ -242,7 +243,7 @@ function ProfileSetupPage() {
                         style={{ top: '20%', left: '30%' }}
                     />
                     <motion.div
-                        className="absolute w-60 h-60 rounded-full bg-white/5"
+                        className={`${styles.decorativeCircle} ${styles.decorativeCircleExtraLarge}`}
                         animate={{
                             scale: [1, 0.8, 1],
                             x: [0, -10, 0],
@@ -256,10 +257,10 @@ function ProfileSetupPage() {
                         style={{ bottom: '10%', right: '-20%' }}
                     />
                 </div>
-                <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="text-white p-8 text-center z-10">
+                <div className={styles.leftContent}>
+                    <div className={styles.leftContentInner}>
                         <motion.h2 
-                            className="text-3xl font-bold mb-4"
+                            className={styles.welcomeTitle}
                             initial={{ opacity: 0, y: -20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.6, delay: 0.2 }}
@@ -267,7 +268,7 @@ function ProfileSetupPage() {
                             {activeStep === 1 ? "Tell Us About Yourself" : "Professional Details"}
                         </motion.h2>
                         <motion.p 
-                            className="opacity-80"
+                            className={styles.welcomeDescription}
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.6, delay: 0.4 }}
@@ -282,16 +283,16 @@ function ProfileSetupPage() {
 
             {/* Right Panel - Form */}
             <motion.div 
-                className="w-full md:w-2/3 bg-white p-8"
+                className={styles.rightPanel}
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.4 }}
             >
-                <div className="max-w-3xl mx-auto">
-                    <h1 className="text-2xl font-bold mb-6 text-center">Complete Your Profile</h1>
+                <div className={styles.formContainer}>
+                    <h1 className={styles.formTitle}>Complete Your Profile</h1>
                     
                     {/* Stepper */}
-                    <div className="mb-8">
+                    <div className={styles.stepperContainer}>
                         <ProgressStepper
                             steps={steps}
                             activeStep={activeStep - 1}
@@ -300,7 +301,7 @@ function ProfileSetupPage() {
                     </div>
 
                     {/* Form Steps */}
-                    <div className="transition-all duration-300">
+                    <div className={styles.formSteps}>
                         {activeStep === 1 && (
                             <PersonalInfoCard
                                 formData={formData.personal || {}}

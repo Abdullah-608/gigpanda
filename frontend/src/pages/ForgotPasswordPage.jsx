@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useAuthStore } from "../store/authStore";
 import { ArrowLeft, Loader, Mail, ArrowRight, CheckCircle } from "lucide-react";
 import { Link } from "react-router-dom";
+import styles from './ForgotPasswordPage.module.css';
 
 const ForgotPasswordPage = () => {
   const [email, setEmail] = useState("");
@@ -22,7 +23,7 @@ const ForgotPasswordPage = () => {
     return Array.from({ length: 6 }).map((_, i) => (
       <motion.div
         key={i}
-        className="absolute bg-white/10 rounded-full"
+        className={styles.bambooElement}
         initial={{
           x: Math.random() * 100 - 50,
           y: Math.random() * 100 - 50,
@@ -60,12 +61,12 @@ const ForgotPasswordPage = () => {
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto flex overflow-hidden rounded-2xl shadow-xl">
+    <div className={styles.container}>
       {/* Left Panel - Decorative */}
-      <div className="hidden md:block w-1/3 bg-gradient-to-br from-green-600 to-green-800 relative">
+      <div className={styles.leftPanel}>
         <div className="absolute inset-0 overflow-hidden">
           {/* Bamboo pattern */}
-          <svg width="100%" height="100%" className="absolute top-0 left-0 opacity-10">
+          <svg width="100%" height="100%" className={styles.bambooPattern}>
             <pattern id="bamboo-pattern" width="30" height="30" patternUnits="userSpaceOnUse">
               <line x1="15" y1="0" x2="15" y2="30" stroke="white" strokeWidth="2" strokeDasharray="1 4" />
             </pattern>
@@ -77,7 +78,7 @@ const ForgotPasswordPage = () => {
           
           {/* Animated circles */}
           <motion.div
-            className="absolute w-40 h-40 rounded-full bg-white/5"
+            className={styles.animatedCircle}
             animate={{
               scale: [1, 1.2, 1],
               x: [0, 20, 0],
@@ -91,7 +92,7 @@ const ForgotPasswordPage = () => {
             style={{ top: '20%', left: '30%' }}
           />
           <motion.div
-            className="absolute w-60 h-60 rounded-full bg-white/5"
+            className={styles.animatedCircle}
             animate={{
               scale: [1, 0.8, 1],
               x: [0, -10, 0],
@@ -105,10 +106,10 @@ const ForgotPasswordPage = () => {
             style={{ bottom: '10%', right: '-20%' }}
           />
         </div>
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-white p-8 text-center z-10">
+        <div className={styles.leftPanelContent}>
+          <div className={styles.leftPanelText}>
             <motion.h2 
-              className="text-3xl font-bold mb-4"
+              className={styles.leftPanelTitle}
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
@@ -116,7 +117,7 @@ const ForgotPasswordPage = () => {
               Account Recovery
             </motion.h2>
             <motion.p 
-              className="opacity-80"
+              className={styles.leftPanelDescription}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.4 }}
@@ -125,31 +126,31 @@ const ForgotPasswordPage = () => {
             </motion.p>
             
             <motion.div
-              className="mt-8 flex flex-col gap-4"
+              className={styles.stepsList}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.6 }}
             >
               {/* Process steps */}
-              <div className="flex items-start gap-3">
-                <div className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center mt-0.5">
+              <div className={styles.stepItem}>
+                <div className={styles.stepNumber}>
                   <span className="text-sm">1</span>
                 </div>
-                <span className="text-sm text-left">Enter your email address</span>
+                <span className={styles.stepText}>Enter your email address</span>
               </div>
               
-              <div className="flex items-start gap-3">
-                <div className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center mt-0.5">
+              <div className={styles.stepItem}>
+                <div className={styles.stepNumber}>
                   <span className="text-sm">2</span>
                 </div>
-                <span className="text-sm text-left">Check your inbox for a reset link</span>
+                <span className={styles.stepText}>Check your inbox for a reset link</span>
               </div>
               
-              <div className="flex items-start gap-3">
-                <div className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center mt-0.5">
+              <div className={styles.stepItem}>
+                <div className={styles.stepNumber}>
                   <span className="text-sm">3</span>
                 </div>
-                <span className="text-sm text-left">Create a new secure password</span>
+                <span className={styles.stepText}>Create a new secure password</span>
               </div>
             </motion.div>
           </div>
@@ -158,12 +159,12 @@ const ForgotPasswordPage = () => {
 
       {/* Right Panel - Form */}
       <motion.div 
-        className="w-full md:w-2/3 bg-white p-8"
+        className={styles.rightPanel}
         initial={{ opacity: 0, x: 20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.4 }}
       >
-        <div className="max-w-md mx-auto">
+        <div className={styles.formContainer}>
           <AnimatePresence mode="wait">
             {!isSubmitted ? (
               <motion.div
@@ -173,9 +174,9 @@ const ForgotPasswordPage = () => {
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.3 }}
               >
-                <div className="flex justify-between items-center mb-6">
+                <div className={styles.formHeader}>
                   <motion.h1 
-                    className="text-2xl font-bold text-gray-900"
+                    className={styles.formTitle}
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3 }}
@@ -191,14 +192,14 @@ const ForgotPasswordPage = () => {
                       damping: 20,
                       delay: 0.3
                     }}
-                    className="w-10 h-10 flex items-center justify-center rounded-full bg-green-100"
+                    className={styles.formIcon}
                   >
                     <Mail size={20} className="text-green-600" />
                   </motion.div>
                 </div>
 
                 <motion.p 
-                  className="text-gray-600 mb-6"
+                  className={styles.formDescription}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3, delay: 0.1 }}
@@ -208,16 +209,16 @@ const ForgotPasswordPage = () => {
 
                 <form onSubmit={handleSubmit}>
                   <motion.div 
-                    className="mb-6"
+                    className={styles.formGroup}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3, delay: 0.2 }}
                   >
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                    <label className={styles.inputLabel}>Email Address</label>
                     <div 
-                      className={`flex border ${activeField === 'email' ? 'border-green-500 ring-1 ring-green-500' : 'border-gray-300'} rounded-lg overflow-hidden transition-all duration-200`}
+                      className={`${styles.inputWrapper} ${activeField === 'email' ? styles.inputWrapperActive : styles.inputWrapperInactive}`}
                     >
-                      <div className={`flex items-center justify-center w-12 bg-gray-50 ${activeField === 'email' ? 'text-green-600' : 'text-gray-400'}`}>
+                      <div className={`${styles.inputIcon} ${activeField === 'email' ? styles.inputIconActive : styles.inputIconInactive}`}>
                         <Mail size={18} />
                       </div>
                       <input
@@ -227,7 +228,7 @@ const ForgotPasswordPage = () => {
                         onChange={(e) => setEmail(e.target.value)}
                         onFocus={() => setActiveField('email')}
                         onBlur={() => setActiveField(null)}
-                        className="w-full px-4 py-3 text-gray-700 outline-none"
+                        className={styles.input}
                         required
                       />
                     </div>
@@ -235,7 +236,7 @@ const ForgotPasswordPage = () => {
 
                   <motion.button
                     type="submit"
-                    className="w-full bg-green-600 text-white py-3 rounded-lg font-medium flex items-center justify-center transition duration-200 hover:bg-green-700 relative overflow-hidden"
+                    className={styles.submitButton}
                     whileHover={{ scale: 1.01, boxShadow: "0 10px 15px -5px rgba(76, 175, 80, 0.2)" }}
                     whileTap={{ scale: 0.99 }}
                     disabled={isLoading}
@@ -244,15 +245,15 @@ const ForgotPasswordPage = () => {
                     transition={{ duration: 0.3, delay: 0.3 }}
                   >
                     <motion.span 
-                      className="absolute inset-0 bg-green-700 origin-left"
+                      className={styles.buttonHoverOverlay}
                       initial={{ scaleX: 0 }}
                       whileHover={{ scaleX: 1 }}
                       transition={{ duration: 0.3 }}
                     />
-                    <span className="relative z-10 flex items-center">
+                    <span className={styles.buttonContent}>
                       {isLoading ? (
                         <div className="flex items-center">
-                          <Loader className="animate-spin mr-2" size={16} />
+                          <Loader className={styles.loadingSpinner} size={16} />
                           <span>Sending...</span>
                         </div>
                       ) : (
@@ -272,7 +273,7 @@ const ForgotPasswordPage = () => {
             ) : (
               <motion.div
                 key="success"
-                className="text-center py-8"
+                className={styles.successContainer}
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.4 }}
@@ -286,7 +287,7 @@ const ForgotPasswordPage = () => {
                     damping: 20,
                     delay: 0.2
                   }}
-                  className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6"
+                  className={styles.successIcon}
                 >
                   <CheckCircle size={40} className="text-green-600" />
                 </motion.div>
@@ -295,7 +296,7 @@ const ForgotPasswordPage = () => {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3 }}
-                  className="text-xl font-bold text-gray-800 mb-3"
+                  className={styles.successTitle}
                 >
                   Check Your Email
                 </motion.h3>
@@ -304,7 +305,7 @@ const ForgotPasswordPage = () => {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.4 }}
-                  className="text-gray-600 mb-2"
+                  className={styles.successMessage}
                 >
                   If an account exists for <span className="font-medium">{email}</span>, you'll receive a password reset link shortly.
                 </motion.p>
@@ -313,7 +314,7 @@ const ForgotPasswordPage = () => {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.5 }}
-                  className="text-gray-500 text-sm mb-8"
+                  className={styles.successSubtext}
                 >
                   Please check your spam folder if you don't see it in your inbox.
                 </motion.p>
@@ -323,8 +324,8 @@ const ForgotPasswordPage = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.6 }}
                 >
-                  <Link to="/login" className="text-green-600 hover:text-green-700 transition-colors font-medium flex items-center justify-center">
-                    <ArrowLeft size={16} className="mr-1" />
+                  <Link to="/login" className={styles.linkText}>
+                    <ArrowLeft size={16} className={styles.linkIcon} />
                     Return to Login
                   </Link>
                 </motion.div>
@@ -334,13 +335,13 @@ const ForgotPasswordPage = () => {
 
           {!isSubmitted && (
             <motion.div 
-              className="mt-8 text-center text-gray-600 text-sm"
+              className={styles.backLink}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.3, delay: 0.4 }}
             >
-              <Link to="/login" className="text-green-600 hover:text-green-700 hover:underline transition-colors font-medium flex items-center justify-center">
-                <ArrowLeft size={16} className="mr-1.5" />
+              <Link to="/login" className={styles.linkText}>
+                <ArrowLeft size={16} className={styles.linkIcon} />
                 Back to Login
               </Link>
             </motion.div>

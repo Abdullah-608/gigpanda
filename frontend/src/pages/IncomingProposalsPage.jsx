@@ -8,6 +8,7 @@ import { useAuthStore } from "../store/authStore";
 import { toast } from "react-hot-toast";
 import { motion } from "framer-motion";
 import InlineLoading from "../components/InlineLoading";
+import styles from './IncomingProposalsPage.module.css';
 
 const IncomingProposalsPage = () => {
     const { jobId } = useParams();
@@ -77,9 +78,9 @@ const IncomingProposalsPage = () => {
 
     if (error) {
         return (
-            <div className="container mx-auto px-4 py-8">
-                <div className="bg-red-50 p-4 rounded-lg flex items-center justify-center text-red-700">
-                    <AlertCircle className="w-5 h-5 mr-2" />
+            <div className={styles.container}>
+                <div className={styles.errorContainer}>
+                    <AlertCircle className={styles.errorIcon} />
                     <span>{error}</span>
                 </div>
             </div>
@@ -87,26 +88,26 @@ const IncomingProposalsPage = () => {
     }
 
     return (
-        <div className="container mx-auto px-4 py-8">
+        <div className={styles.container}>
             {/* Job Details Header */}
             {currentJob && (
                 <motion.div
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="bg-white rounded-lg shadow-md p-6 mb-8"
+                    className={styles.jobHeader}
                 >
-                    <h1 className="text-2xl font-bold text-gray-900 mb-4">{currentJob.title}</h1>
-                    <div className="flex flex-wrap gap-4 text-sm text-gray-600">
-                        <div className="flex items-center">
-                            <DollarSign className="w-4 h-4 mr-2" />
+                    <h1 className={styles.jobTitle}>{currentJob.title}</h1>
+                    <div className={styles.jobMeta}>
+                        <div className={styles.jobMetaItem}>
+                            <DollarSign className={styles.jobMetaIcon} />
                             <span>Budget: ${currentJob.budget.min} - ${currentJob.budget.max}</span>
                         </div>
-                        <div className="flex items-center">
-                            <Clock className="w-4 h-4 mr-2" />
+                        <div className={styles.jobMetaItem}>
+                            <Clock className={styles.jobMetaIcon} />
                             <span>Duration: {currentJob.timeline}</span>
                         </div>
-                        <div className="flex items-center">
-                            <Calendar className="w-4 h-4 mr-2" />
+                        <div className={styles.jobMetaItem}>
+                            <Calendar className={styles.jobMetaIcon} />
                             <span>Posted: {new Date(currentJob.createdAt).toLocaleDateString()}</span>
                         </div>
                     </div>
@@ -114,49 +115,49 @@ const IncomingProposalsPage = () => {
             )}
 
             {/* Proposals Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className={styles.proposalsGrid}>
                 {/* Proposals List */}
                 <motion.div
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    className="md:col-span-1 bg-white rounded-lg shadow-md p-4"
+                    className={styles.proposalsList}
                 >
-                    <h2 className="text-xl font-semibold mb-4">Proposals ({incomingProposals.length})</h2>
+                    <h2 className={styles.proposalsListTitle}>Proposals ({incomingProposals.length})</h2>
                     {isLoading && incomingProposals.length === 0 ? (
-                        <div className="py-8">
+                        <div className={styles.proposalsLoadingContainer}>
                             <InlineLoading text="Loading proposals..." size="medium" className="justify-center" />
                         </div>
                     ) : incomingProposals.length === 0 ? (
-                        <div className="text-center py-8 text-gray-500">
+                        <div className={styles.noProposalsMessage}>
                             No proposals received yet
                         </div>
                     ) : (
-                        <div className="space-y-4">
+                        <div className={styles.proposalsContainer}>
                             {incomingProposals.map((proposal) => (
                                 <div
                                     key={proposal._id}
-                                    className={`cursor-pointer p-4 rounded-lg transition-colors ${
+                                    className={`${styles.proposalCard} ${
                                         selectedProposal?._id === proposal._id
-                                            ? "bg-green-50 border-2 border-green-500"
-                                            : "bg-gray-50 hover:bg-gray-100"
+                                            ? styles.proposalCardSelected
+                                            : styles.proposalCardUnselected
                                     }`}
                                     onClick={() => setSelectedProposal(proposal)}
                                 >
-                                    <div className="flex items-start justify-between">
-                                        <div>
-                                            <h3 className="font-medium text-gray-900">
+                                    <div className={styles.proposalCardContent}>
+                                        <div className={styles.proposalInfo}>
+                                            <h3 className={styles.proposalFreelancerName}>
                                                 {proposal.freelancer.name}
                                             </h3>
-                                            <div className="flex items-center text-sm text-gray-600 mt-1">
-                                                <Star className="w-4 h-4 text-yellow-400 mr-1" />
+                                            <div className={styles.proposalRating}>
+                                                <Star className={styles.ratingIcon} />
                                                 <span>4.8 (120 reviews)</span>
                                             </div>
                                         </div>
-                                        <div className="text-right">
-                                            <div className="font-medium text-gray-900">
+                                        <div className={styles.proposalMeta}>
+                                            <div className={styles.proposalAmount}>
                                                 ${proposal.bidAmount.amount}
                                             </div>
-                                            <div className="text-sm text-gray-600">
+                                            <div className={styles.proposalDuration}>
                                                 {proposal.estimatedDuration}
                                             </div>
                                         </div>
@@ -171,57 +172,57 @@ const IncomingProposalsPage = () => {
                 <motion.div
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    className="md:col-span-2"
+                    className={styles.detailsContainer}
                 >
                     {selectedProposal ? (
-                        <div className="bg-white rounded-lg shadow-md p-6">
+                        <div className={styles.detailsCard}>
                             {/* Freelancer Details */}
-                            <div className="flex items-start justify-between mb-6 pb-6 border-b border-gray-200">
-                                <div>
-                                    <h2 className="text-xl font-bold text-gray-900 mb-2">
+                            <div className={styles.freelancerHeader}>
+                                <div className={styles.freelancerInfo}>
+                                    <h2 className={styles.freelancerName}>
                                         {selectedProposal.freelancer.name}
                                     </h2>
-                                    <div className="flex items-center text-sm text-gray-600">
-                                        <Star className="w-4 h-4 text-yellow-400 mr-1" />
+                                    <div className={styles.freelancerRating}>
+                                        <Star className={styles.ratingIcon} />
                                         <span>4.8 (120 reviews)</span>
                                     </div>
                                 </div>
-                                <div className="text-right">
-                                    <div className="text-2xl font-bold text-gray-900">
+                                <div className={styles.freelancerMeta}>
+                                    <div className={styles.freelancerAmount}>
                                         ${selectedProposal.bidAmount.amount}
                                     </div>
-                                    <div className="text-gray-600">
+                                    <div className={styles.freelancerDuration}>
                                         {selectedProposal.estimatedDuration}
                                     </div>
                                 </div>
                             </div>
 
                             {/* Cover Letter */}
-                            <div className="mb-6">
-                                <h3 className="text-lg font-semibold mb-2">Cover Letter</h3>
-                                <p className="text-gray-700 whitespace-pre-wrap">
+                            <div className={styles.coverLetterSection}>
+                                <h3 className={styles.sectionTitle}>Cover Letter</h3>
+                                <p className={styles.coverLetterText}>
                                     {selectedProposal.coverLetter}
                                 </p>
                             </div>
 
                             {/* Attachments */}
                             {selectedProposal.attachments?.length > 0 && (
-                                <div className="mb-6">
-                                    <h3 className="text-lg font-semibold mb-2">Attachments</h3>
-                                    <div className="space-y-2">
+                                <div className={styles.attachmentsSection}>
+                                    <h3 className={styles.sectionTitle}>Attachments</h3>
+                                    <div className={styles.attachmentsList}>
                                         {selectedProposal.attachments.map((attachment, index) => (
                                             <div
                                                 key={index}
-                                                className="flex items-center p-2 bg-gray-50 rounded"
+                                                className={styles.attachmentItem}
                                             >
-                                                <span className="text-gray-700">
+                                                <span className={styles.attachmentName}>
                                                     {attachment.filename}
                                                 </span>
                                                 <a
                                                     href={attachment.url}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className="ml-auto text-green-600 hover:text-green-700"
+                                                    className={styles.attachmentLink}
                                                 >
                                                     Download
                                                 </a>
@@ -233,11 +234,11 @@ const IncomingProposalsPage = () => {
 
                             {/* Action Buttons */}
                             {selectedProposal.status === "pending" && (
-                                <div className="flex gap-4 mb-4">
+                                <div className={styles.actionButtons}>
                                     <button
                                         onClick={() => handleProposalAction(selectedProposal._id, "accepted")}
                                         disabled={actionLoading.id === selectedProposal._id}
-                                        className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className={`${styles.actionButton} ${styles.acceptButton}`}
                                     >
                                         {actionLoading.id === selectedProposal._id && actionLoading.action === "accepted" ? (
                                             <InlineLoading 
@@ -248,7 +249,7 @@ const IncomingProposalsPage = () => {
                                             />
                                         ) : (
                                             <>
-                                                <ThumbsUp className="w-4 h-4 mr-2" />
+                                                <ThumbsUp className={styles.buttonIcon} />
                                                 Accept Proposal
                                             </>
                                         )}
@@ -256,7 +257,7 @@ const IncomingProposalsPage = () => {
                                     <button
                                         onClick={() => handleProposalAction(selectedProposal._id, "interviewing")}
                                         disabled={actionLoading.id === selectedProposal._id}
-                                        className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className={`${styles.actionButton} ${styles.interviewButton}`}
                                     >
                                         {actionLoading.id === selectedProposal._id && actionLoading.action === "interviewing" ? (
                                             <InlineLoading 
@@ -267,7 +268,7 @@ const IncomingProposalsPage = () => {
                                             />
                                         ) : (
                                             <>
-                                                <PhoneCall className="w-4 h-4 mr-2" />
+                                                <PhoneCall className={styles.buttonIcon} />
                                                 Request Interview
                                             </>
                                         )}
@@ -275,7 +276,7 @@ const IncomingProposalsPage = () => {
                                     <button
                                         onClick={() => handleProposalAction(selectedProposal._id, "declined")}
                                         disabled={actionLoading.id === selectedProposal._id}
-                                        className="flex-1 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className={`${styles.actionButton} ${styles.declineButton}`}
                                     >
                                         {actionLoading.id === selectedProposal._id && actionLoading.action === "declined" ? (
                                             <InlineLoading 
@@ -286,7 +287,7 @@ const IncomingProposalsPage = () => {
                                             />
                                         ) : (
                                             <>
-                                                <ThumbsDown className="w-4 h-4 mr-2" />
+                                                <ThumbsDown className={styles.buttonIcon} />
                                                 Decline
                                             </>
                                         )}
@@ -298,7 +299,7 @@ const IncomingProposalsPage = () => {
                             <button
                                 onClick={() => handleDeleteProposal(selectedProposal._id)}
                                 disabled={actionLoading.id === selectedProposal._id}
-                                className="w-full border-2 border-red-300 text-red-600 px-4 py-2 rounded-lg hover:bg-red-50 transition-colors flex items-center justify-center mb-4 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className={styles.deleteButton}
                             >
                                 {actionLoading.id === selectedProposal._id && actionLoading.action === "delete" ? (
                                     <InlineLoading 
@@ -309,7 +310,7 @@ const IncomingProposalsPage = () => {
                                     />
                                 ) : (
                                     <>
-                                        <Trash2 className="w-4 h-4 mr-2" />
+                                        <Trash2 className={styles.buttonIcon} />
                                         Delete Proposal
                                     </>
                                 )}
@@ -330,14 +331,14 @@ const IncomingProposalsPage = () => {
                                     }
                                 }}
                                 disabled={actionLoading.id === selectedProposal._id}
-                                className="w-full border-2 border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                                className={styles.messageButton}
                             >
-                                <MessageCircle className="w-4 h-4 mr-2" />
+                                <MessageCircle className={styles.buttonIcon} />
                                 Send Message
                             </button>
                         </div>
                     ) : (
-                        <div className="bg-white rounded-lg shadow-md p-6 flex items-center justify-center text-gray-500 h-[200px]">
+                        <div className={styles.emptyDetails}>
                             Select a proposal to view details
                         </div>
                     )}

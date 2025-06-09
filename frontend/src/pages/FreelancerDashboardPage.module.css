@@ -1,0 +1,557 @@
+.container {
+  @apply min-h-screen bg-gray-50;
+}
+
+/* Header Styles */
+.header {
+  @apply bg-white border-b border-gray-200 sticky top-0 z-10;
+}
+
+.headerContainer {
+  @apply w-full px-4 sm:px-6 lg:px-8;
+}
+
+.headerContent {
+  @apply flex justify-between h-16;
+}
+
+.logo {
+  @apply flex-shrink-0 flex items-center;
+}
+
+.logoText {
+  @apply text-2xl font-bold text-gray-800;
+}
+
+.logoEmoji {
+  @apply ml-2 text-2xl;
+}
+
+.navigation {
+  @apply hidden md:ml-6 md:flex md:space-x-8;
+}
+
+.navLink {
+  @apply border-b-2 px-1 pt-5 pb-4 text-sm font-medium;
+}
+
+.navLinkActive {
+  @apply border-gray-800 text-gray-900;
+}
+
+.navLinkInactive {
+  @apply border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300;
+}
+
+/* Header Actions */
+.headerActions {
+  @apply flex items-center;
+}
+
+.actionButtons {
+  @apply flex-shrink-0 flex items-center space-x-4;
+}
+
+.iconButton {
+  @apply p-2 text-gray-500 hover:text-gray-700 focus:outline-none;
+}
+
+/* Notification Styles */
+.notificationBadge {
+  @apply absolute top-0 right-0 block h-5 w-5 rounded-full bg-red-500 ring-2 ring-white text-white text-xs flex items-center justify-center;
+}
+
+.notificationPanel {
+  @apply absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-lg border border-gray-200 max-h-[80vh] overflow-hidden z-50;
+}
+
+.notificationHeader {
+  @apply p-4 border-b border-gray-200;
+}
+
+.notificationTitle {
+  @apply text-lg font-semibold;
+}
+
+.notificationList {
+  @apply divide-y divide-gray-200 overflow-y-auto max-h-[calc(80vh-4rem)];
+  scrollbar-width: thin;
+  scrollbar-color: #c1c1c1 #f1f1f1;
+  scroll-behavior: smooth;
+}
+
+.notificationList::-webkit-scrollbar {
+  width: 6px;
+}
+
+.notificationList::-webkit-scrollbar-track {
+  @apply bg-gray-100 rounded-lg;
+}
+
+.notificationList::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 rounded-lg transition-colors duration-200;
+}
+
+.notificationList::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-400;
+}
+
+.notificationLoading {
+  @apply flex flex-col items-center justify-center py-8;
+}
+
+.loadingSpinner {
+  @apply animate-spin rounded-full h-8 w-8 border-2 border-gray-200;
+  border-top-color: theme('colors.green.600');
+}
+
+.notificationEmpty {
+  @apply p-4 text-center text-gray-500;
+}
+
+.notificationItem {
+  @apply block p-4 hover:bg-gray-50 transition-colors cursor-pointer;
+}
+
+.notificationItemUnread {
+  @apply bg-blue-50;
+}
+
+.notificationContent {
+  @apply flex items-start gap-3;
+}
+
+.notificationAvatar {
+  @apply w-10 h-10 rounded-full object-cover;
+}
+
+.notificationMessage {
+  @apply flex-1;
+}
+
+.notificationText {
+  @apply text-sm text-gray-800;
+}
+
+.notificationTime {
+  @apply text-xs text-gray-500 mt-1;
+}
+
+.notificationDot {
+  @apply w-2 h-2 bg-blue-500 rounded-full mt-2;
+}
+
+/* User Menu Styles */
+.userMenu {
+  @apply ml-3 relative;
+}
+
+.userButton {
+  @apply bg-gray-100 flex items-center text-sm rounded-full focus:outline-none hover:bg-gray-200 transition-colors duration-200 px-2 py-1;
+}
+
+.userAvatar {
+  @apply h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center text-white mr-2;
+}
+
+.userName {
+  @apply text-sm text-gray-700 hidden md:block mr-1;
+}
+
+.dropdownIcon {
+  @apply h-4 w-4 text-gray-500 transition-transform duration-200;
+}
+
+.dropdownMenu {
+  @apply absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-50;
+}
+
+.dropdownHeader {
+  @apply px-4 py-2 text-sm text-gray-700 border-b border-gray-100;
+}
+
+.dropdownName {
+  @apply font-medium;
+}
+
+.dropdownEmail {
+  @apply text-gray-500;
+}
+
+.dropdownItem {
+  @apply block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-150;
+}
+
+.dropdownLogout {
+  @apply w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors duration-150 flex items-center;
+}
+
+/* Mobile Menu */
+.mobileMenu {
+  @apply flex md:hidden ml-3;
+}
+
+.mobileMenuButton {
+  @apply p-2 text-gray-500 hover:text-gray-700 focus:outline-none;
+}
+
+/* Stats Section */
+.statsSection {
+  @apply grid grid-cols-1 md:grid-cols-3 gap-6 mb-8;
+}
+
+.statCard {
+  @apply bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300 relative overflow-hidden;
+}
+
+.statCard::before {
+  content: '';
+  @apply absolute inset-0 bg-gradient-to-br from-transparent to-gray-50/50 pointer-events-none;
+}
+
+.statIcon {
+  @apply w-12 h-12 rounded-full bg-gradient-to-br from-green-50 to-green-100 text-green-600 flex items-center justify-center mb-4 transform transition-transform duration-300 hover:scale-110;
+}
+
+.statValue {
+  @apply text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600 mb-2;
+}
+
+.statLabel {
+  @apply text-sm font-medium text-gray-500;
+}
+
+/* Main Content */
+.mainContent {
+  @apply w-full px-4 sm:px-6 lg:px-8 py-6;
+}
+
+/* Grid Layout */
+.gridContainer {
+  @apply grid grid-cols-1 lg:grid-cols-3 gap-8;
+}
+
+.mainColumn {
+  @apply lg:col-span-2;
+}
+
+.sideColumn {
+  @apply space-y-6;
+}
+
+/* Job Listings */
+.jobsContainer {
+  @apply bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow duration-300;
+}
+
+.jobsHeader {
+  @apply p-6 border-b border-gray-100 bg-gradient-to-r from-white to-gray-50;
+}
+
+.jobsHeaderContent {
+  @apply flex items-center justify-between;
+}
+
+.jobsTitle {
+  @apply text-xl font-bold text-gray-800;
+}
+
+.jobsActions {
+  @apply flex items-center space-x-2;
+}
+
+.filterButton {
+  @apply p-2 text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-100;
+}
+
+.viewAllButton {
+  @apply text-sm text-green-600 hover:text-green-800 font-medium;
+}
+
+.jobsList {
+  @apply h-[600px] overflow-y-auto;
+}
+
+.jobsContent {
+  @apply space-y-4 p-6;
+}
+
+.loadingContainer {
+  @apply flex items-center justify-center py-12;
+}
+
+.errorContainer {
+  @apply text-center py-12;
+}
+
+.errorMessage {
+  @apply text-red-600 mb-2;
+}
+
+.retryButton {
+  @apply text-sm text-green-600 hover:text-green-700;
+}
+
+.emptyContainer {
+  @apply text-center py-12 px-4 rounded-xl bg-gray-50/50;
+}
+
+.emptyIcon {
+  @apply h-12 w-12 text-gray-400 mx-auto mb-4 animate-bounce;
+}
+
+.emptyText {
+  @apply text-gray-500;
+}
+
+.emptySubtext {
+  @apply text-sm text-gray-400;
+}
+
+/* Job Card */
+.jobCard {
+  @apply p-6 border border-gray-100 rounded-xl hover:shadow-lg transition-all duration-300 bg-white relative overflow-hidden;
+}
+
+.jobCard::before {
+  content: '';
+  @apply absolute inset-0 bg-gradient-to-br from-transparent to-gray-50/30 pointer-events-none opacity-0 transition-opacity duration-300;
+}
+
+.jobCard:hover::before {
+  @apply opacity-100;
+}
+
+.jobHeader {
+  @apply flex items-start justify-between;
+}
+
+.jobContent {
+  @apply flex-1;
+}
+
+.jobTitle {
+  @apply text-lg font-semibold text-gray-900 mb-3 hover:text-green-600 transition-colors;
+}
+
+.jobMeta {
+  @apply flex items-center space-x-4 text-sm text-gray-500 mb-3;
+}
+
+.jobMetaItem {
+  @apply flex items-center;
+}
+
+.jobMetaIcon {
+  @apply h-4 w-4 mr-1;
+}
+
+.jobDescription {
+  @apply text-sm text-gray-600 mb-3 line-clamp-2;
+}
+
+.skillsList {
+  @apply flex flex-wrap gap-2 mb-4;
+}
+
+.skillTag {
+  @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-blue-50 to-blue-100 text-blue-700 transition-transform duration-300 hover:scale-105;
+}
+
+.jobDetails {
+  @apply flex items-center space-x-4 text-xs text-gray-500 mb-4;
+}
+
+.jobDetailTag {
+  @apply px-3 py-1 bg-gradient-to-r from-gray-50 to-gray-100 rounded-full text-gray-600 font-medium transition-transform duration-300 hover:scale-105;
+}
+
+.jobFooter {
+  @apply flex items-center justify-between;
+}
+
+.jobStats {
+  @apply flex items-center space-x-4 text-sm text-gray-500;
+}
+
+.jobActions {
+  @apply flex items-center space-x-2;
+}
+
+.bookmarkButton {
+  @apply p-2 rounded-lg transition-colors text-gray-400 hover:text-gray-600 hover:bg-gray-50;
+}
+
+.proposalButton {
+  @apply px-4 py-2 bg-gradient-to-r from-green-600 to-green-500 text-white text-sm font-medium rounded-lg hover:from-green-700 hover:to-green-600 transition-all duration-300 shadow-sm hover:shadow transform hover:-translate-y-0.5;
+}
+
+.loadMoreContainer {
+  @apply text-center pt-4;
+}
+
+.loadMoreButton {
+  @apply px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2 mx-auto;
+}
+
+/* Active Projects */
+.projectsContainer {
+  @apply bg-white rounded-2xl shadow-sm p-6 border border-gray-100 hover:shadow-md transition-all duration-300;
+}
+
+.projectsHeader {
+  @apply flex items-center justify-between mb-6;
+}
+
+.projectsTitle {
+  @apply text-lg font-bold text-gray-800;
+}
+
+.projectsList {
+  @apply space-y-4;
+}
+
+.projectCard {
+  @apply p-5 border border-gray-100 rounded-xl bg-white hover:shadow-lg transition-all duration-300 relative overflow-hidden;
+}
+
+.projectCard::before {
+  content: '';
+  @apply absolute inset-0 bg-gradient-to-br from-transparent to-gray-50/30 pointer-events-none opacity-0 transition-opacity duration-300;
+}
+
+.projectCard:hover::before {
+  @apply opacity-100;
+}
+
+.projectTitle {
+  @apply font-semibold text-gray-900 mb-2 hover:text-green-600 transition-colors;
+}
+
+.projectClient {
+  @apply text-sm text-gray-500 mb-3;
+}
+
+.progressContainer {
+  @apply flex items-center justify-between mb-2;
+}
+
+.progressLabel {
+  @apply text-sm text-gray-500;
+}
+
+.progressValue {
+  @apply text-sm font-medium text-gray-900;
+}
+
+.progressBar {
+  @apply w-full bg-gray-100 rounded-full h-2.5 mb-3 overflow-hidden;
+}
+
+.progressFill {
+  @apply h-full rounded-full transition-all duration-700 ease-out bg-gradient-to-r from-green-500 to-green-400;
+}
+
+.projectFooter {
+  @apply flex items-center justify-between text-sm;
+}
+
+.projectDueDate {
+  @apply text-gray-500;
+}
+
+.projectBudget {
+  @apply font-medium text-green-600;
+}
+
+/* Recent Activity */
+.activityContainer {
+  @apply bg-white rounded-2xl shadow-sm p-6 border border-gray-100 hover:shadow-md transition-all duration-300;
+}
+
+.activityHeader {
+  @apply flex items-center justify-between mb-6;
+}
+
+.activityTitle {
+  @apply text-lg font-bold text-gray-800;
+}
+
+.activityList {
+  @apply space-y-4;
+}
+
+.activityItem {
+  @apply flex items-start space-x-3 p-3 rounded-xl hover:bg-gray-50 transition-all duration-300;
+}
+
+.activityIcon {
+  @apply flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center shadow-sm transition-transform duration-300 hover:scale-110;
+}
+
+.activityIconProposal {
+  @apply bg-gradient-to-br from-blue-100 to-blue-50 text-blue-600;
+}
+
+.activityIconMessage {
+  @apply bg-gradient-to-br from-green-100 to-green-50 text-green-600;
+}
+
+.activityIconMilestone {
+  @apply bg-gradient-to-br from-purple-100 to-purple-50 text-purple-600;
+}
+
+.activityIconPayment {
+  @apply bg-gradient-to-br from-yellow-100 to-yellow-50 text-yellow-600;
+}
+
+.activityContent {
+  @apply flex-1 min-w-0;
+}
+
+.activityMessage {
+  @apply text-sm font-medium text-gray-900;
+}
+
+.activityTime {
+  @apply text-xs text-gray-500 mt-1;
+}
+
+/* Floating Action Button */
+.createButton {
+  @apply fixed bottom-6 right-6 w-14 h-14 bg-green-600 text-white rounded-full shadow-lg hover:bg-green-700 transition-colors flex items-center justify-center z-40;
+}
+
+/* Common Card Styles */
+.cardTitle {
+  @apply text-lg font-bold text-gray-800 mb-1;
+}
+
+.cardSubtitle {
+  @apply text-sm text-gray-500 mb-4;
+}
+
+/* Hover Effects */
+.hoverScale {
+  @apply transition-transform duration-300 hover:scale-105;
+}
+
+.hoverShadow {
+  @apply transition-shadow duration-300 hover:shadow-lg;
+}
+
+/* Animations */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.loadingShimmer {
+  animation: shimmer 2s infinite linear;
+  background: linear-gradient(to right, #f6f7f8 0%, #edeef1 20%, #f6f7f8 40%, #f6f7f8 100%);
+  background-size: 1000px 100%;
+} 

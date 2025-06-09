@@ -1,0 +1,155 @@
+.container {
+  @apply w-full max-w-4xl mx-auto flex overflow-hidden rounded-2xl shadow-xl;
+}
+
+.leftPanel {
+  @apply hidden md:block w-1/3 bg-gradient-to-br from-green-600 to-green-800 relative;
+}
+
+.bambooPattern {
+  @apply absolute top-0 left-0 opacity-10;
+}
+
+.floatingBamboo {
+  @apply absolute bg-white/10 rounded-full;
+}
+
+.decorativeCircle {
+  @apply absolute rounded-full bg-white/5;
+}
+
+.decorativeCircleLarge {
+  @apply w-40 h-40;
+}
+
+.decorativeCircleExtraLarge {
+  @apply w-60 h-60;
+}
+
+.leftContent {
+  @apply absolute inset-0 flex items-center justify-center;
+}
+
+.leftContentInner {
+  @apply text-white p-8 text-center z-10;
+}
+
+.welcomeTitle {
+  @apply text-3xl font-bold mb-4;
+}
+
+.welcomeDescription {
+  @apply opacity-80;
+}
+
+.featureList {
+  @apply mt-8 flex flex-col gap-4;
+}
+
+.featureItem {
+  @apply flex items-center gap-3;
+}
+
+.featureIcon {
+  @apply w-8 h-8 bg-white/20 rounded-full flex items-center justify-center;
+}
+
+.featureText {
+  @apply text-sm;
+}
+
+.rightPanel {
+  @apply w-full md:w-2/3 bg-white p-8;
+}
+
+.formContainer {
+  @apply max-w-md mx-auto;
+}
+
+.formHeader {
+  @apply flex justify-center items-center mb-6;
+}
+
+.formTitle {
+  @apply text-2xl font-bold text-gray-900;
+}
+
+.formDescription {
+  @apply text-gray-600 mb-8 text-center;
+}
+
+.form {
+  @apply space-y-8;
+}
+
+.codeInputContainer {
+  @apply flex justify-between gap-2;
+}
+
+.codeInputWrapper {
+  @apply relative;
+}
+
+.codeInput {
+  @apply w-11 h-14 text-center text-xl font-bold bg-gray-50 border-2 rounded-lg focus:outline-none transition-colors duration-200;
+}
+
+.codeInputActive {
+  @apply border-green-500 ring-1 ring-green-500;
+}
+
+.codeInputInactive {
+  @apply border-gray-200;
+}
+
+.codeInputDot {
+  @apply absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 bg-green-100 rounded-full w-4 h-4 flex items-center justify-center;
+}
+
+.codeInputDotInner {
+  @apply w-2 h-2 bg-green-500 rounded-full;
+}
+
+.errorMessage {
+  @apply bg-red-50 border-l-4 border-red-500 p-3 rounded-md;
+}
+
+.errorText {
+  @apply text-red-700 text-sm;
+}
+
+.submitButton {
+  @apply w-full bg-green-600 text-white py-3 rounded-lg font-medium flex items-center justify-center transition duration-200 hover:bg-green-700 relative overflow-hidden;
+}
+
+.submitButtonHover {
+  @apply absolute inset-0 bg-green-700 origin-left;
+}
+
+.submitButtonContent {
+  @apply relative z-10;
+}
+
+.loadingIndicator {
+  @apply flex items-center;
+}
+
+.loadingIcon {
+  @apply animate-spin mr-2;
+}
+
+.resendContainer {
+  @apply text-center;
+}
+
+.resendText {
+  @apply text-sm text-gray-500;
+}
+
+.resendButton {
+  @apply text-green-600 font-medium hover:underline inline-flex items-center;
+}
+
+.resendingIcon {
+  @apply mr-1 animate-spin;
+} 

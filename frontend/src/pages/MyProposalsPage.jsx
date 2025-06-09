@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 import { useAuthStore } from "../store/authStore";
 import { motion } from "framer-motion";
 import InlineLoading from "../components/InlineLoading";
+import styles from './MyProposalsPage.module.css';
 
 const MyProposalsPage = () => {
     const navigate = useNavigate();
@@ -51,9 +52,9 @@ const MyProposalsPage = () => {
 
     if (error) {
         return (
-            <div className="container mx-auto px-4 py-8">
-                <div className="bg-red-50 p-4 rounded-lg flex items-center justify-center text-red-700">
-                    <AlertCircle className="w-5 h-5 mr-2" />
+            <div className={styles.container}>
+                <div className={styles.errorContainer}>
+                    <AlertCircle className={styles.errorIcon} />
                     <span>{error}</span>
                 </div>
             </div>
@@ -62,33 +63,33 @@ const MyProposalsPage = () => {
 
     if (!proposals.length) {
         return (
-            <div className="container mx-auto px-4 py-8">
-                <div className="flex justify-between items-center">
+            <div className={styles.container}>
+                <div className={styles.header}>
                     <motion.h1 
                         initial={{ opacity: 0, y: -20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="text-2xl font-bold text-gray-900"
+                        className={styles.pageTitle}
                     >
                         My Proposals
                     </motion.h1>
                     <button
                         onClick={handleRefresh}
                         disabled={isLoading || isRefreshing}
-                        className="p-2 text-gray-600 hover:text-gray-900 transition-colors disabled:opacity-50"
+                        className={styles.refreshButton}
                     >
-                        <RefreshCw className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
+                        <RefreshCw className={isRefreshing ? styles.refreshIconSpinning : styles.refreshIcon} />
                     </button>
                 </div>
                 <motion.div 
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="bg-white rounded-lg shadow-md p-8 text-center mt-8"
+                    className={styles.emptyStateContainer}
                 >
-                    <h2 className="text-xl text-gray-600 mb-4">No proposals yet</h2>
-                    <p className="text-gray-500 mb-6">You haven't submitted any proposals yet. Browse jobs and start applying!</p>
+                    <h2 className={styles.emptyStateTitle}>No proposals yet</h2>
+                    <p className={styles.emptyStateText}>You haven't submitted any proposals yet. Browse jobs and start applying!</p>
                     <button
                         onClick={() => navigate("/freelancer-dashboard")}
-                        className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors"
+                        className={styles.browseButton}
                     >
                         Browse Jobs
                     </button>
@@ -98,70 +99,70 @@ const MyProposalsPage = () => {
     }
 
     return (
-        <div className="container mx-auto px-4 py-8">
-            <div className="flex justify-between items-center mb-8">
+        <div className={styles.container}>
+            <div className={styles.header}>
                 <motion.h1 
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="text-2xl font-bold text-gray-900"
+                    className={styles.pageTitle}
                 >
                     My Proposals
                 </motion.h1>
                 <button
                     onClick={handleRefresh}
                     disabled={isLoading || isRefreshing}
-                    className="p-2 text-gray-600 hover:text-gray-900 transition-colors disabled:opacity-50"
+                    className={styles.refreshButton}
                 >
-                    <RefreshCw className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
+                    <RefreshCw className={isRefreshing ? styles.refreshIconSpinning : styles.refreshIcon} />
                 </button>
             </div>
 
             {/* Proposals Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className={styles.proposalsGrid}>
                 {/* Proposals List */}
                 <motion.div 
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    className="md:col-span-1 bg-white rounded-lg shadow-md p-4"
+                    className={styles.proposalsList}
                 >
-                    <h2 className="text-xl font-semibold mb-4">All Proposals ({proposals.length})</h2>
+                    <h2 className={styles.proposalsListTitle}>All Proposals ({proposals.length})</h2>
                     {isLoading ? (
-                        <div className="py-8">
+                        <div className={styles.proposalsLoadingContainer}>
                             <InlineLoading text="Loading proposals..." size="medium" className="justify-center" />
                         </div>
                     ) : (
-                        <div className="space-y-4">
+                        <div className={styles.proposalsContainer}>
                             {proposals.map((proposal) => (
                                 <div
                                     key={proposal._id}
-                                    className={`cursor-pointer p-4 rounded-lg transition-colors ${
+                                    className={`${styles.proposalCard} ${
                                         selectedProposal?._id === proposal._id
-                                            ? "bg-green-50 border-2 border-green-500"
-                                            : "bg-gray-50 hover:bg-gray-100"
+                                            ? styles.proposalCardSelected
+                                            : styles.proposalCardUnselected
                                     }`}
                                     onClick={() => setSelectedProposal(proposal)}
                                 >
-                                    <div className="flex items-start justify-between">
-                                        <div>
-                                            <h3 className="font-medium text-gray-900">
+                                    <div className={styles.proposalCardContent}>
+                                        <div className={styles.proposalInfo}>
+                                            <h3 className={styles.proposalTitle}>
                                                 {proposal.job.title}
                                             </h3>
-                                            <div className="flex items-center text-sm text-gray-600 mt-1">
-                                                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                                                    proposal.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                                                    proposal.status === 'accepted' ? 'bg-green-100 text-green-800' :
-                                                    proposal.status === 'declined' ? 'bg-red-100 text-red-800' :
-                                                    'bg-blue-100 text-blue-800'
+                                            <div className={styles.proposalStatusContainer}>
+                                                <span className={`${styles.proposalStatus} ${
+                                                    proposal.status === 'pending' ? styles.statusPending :
+                                                    proposal.status === 'accepted' ? styles.statusAccepted :
+                                                    proposal.status === 'declined' ? styles.statusDeclined :
+                                                    styles.statusDefault
                                                 }`}>
                                                     {proposal.status.charAt(0).toUpperCase() + proposal.status.slice(1)}
                                                 </span>
                                             </div>
                                         </div>
-                                        <div className="text-right">
-                                            <div className="font-medium text-gray-900">
+                                        <div className={styles.proposalMeta}>
+                                            <div className={styles.proposalAmount}>
                                                 ${proposal.bidAmount.amount}
                                             </div>
-                                            <div className="text-sm text-gray-600">
+                                            <div className={styles.proposalDuration}>
                                                 {proposal.estimatedDuration}
                                             </div>
                                         </div>
@@ -176,70 +177,70 @@ const MyProposalsPage = () => {
                 <motion.div 
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    className="md:col-span-2"
+                    className={styles.detailsContainer}
                 >
                     {selectedProposal ? (
-                        <div className="bg-white rounded-lg shadow-md p-6">
+                        <div className={styles.detailsCard}>
                             {/* Job Details Header */}
-                            <div className="mb-6 pb-6 border-b border-gray-200">
-                                <h2 className="text-xl font-bold text-gray-900 mb-2">
+                            <div className={styles.detailsHeader}>
+                                <h2 className={styles.detailsTitle}>
                                     {selectedProposal.job.title}
                                 </h2>
-                                <div className="flex flex-wrap gap-4 text-sm text-gray-600">
-                                    <div className="flex items-center">
-                                        <DollarSign className="w-4 h-4 mr-2" />
+                                <div className={styles.detailsMeta}>
+                                    <div className={styles.detailsMetaItem}>
+                                        <DollarSign className={styles.detailsMetaIcon} />
                                         <span>Your Bid: ${selectedProposal.bidAmount.amount}</span>
                                     </div>
-                                    <div className="flex items-center">
-                                        <Clock className="w-4 h-4 mr-2" />
+                                    <div className={styles.detailsMetaItem}>
+                                        <Clock className={styles.detailsMetaIcon} />
                                         <span>Duration: {selectedProposal.estimatedDuration}</span>
                                     </div>
-                                    <div className="flex items-center">
-                                        <Calendar className="w-4 h-4 mr-2" />
+                                    <div className={styles.detailsMetaItem}>
+                                        <Calendar className={styles.detailsMetaIcon} />
                                         <span>Submitted: {new Date(selectedProposal.createdAt).toLocaleDateString()}</span>
                                     </div>
                                 </div>
                             </div>
 
                             {/* Status */}
-                            <div className="mb-6">
-                                <h3 className="text-lg font-semibold mb-2">Status</h3>
-                                <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                                    selectedProposal.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                                    selectedProposal.status === 'accepted' ? 'bg-green-100 text-green-800' :
-                                    selectedProposal.status === 'declined' ? 'bg-red-100 text-red-800' :
-                                    'bg-blue-100 text-blue-800'
+                            <div className={styles.statusSection}>
+                                <h3 className={styles.sectionTitle}>Status</h3>
+                                <div className={`${styles.proposalStatus} ${
+                                    selectedProposal.status === 'pending' ? styles.statusPending :
+                                    selectedProposal.status === 'accepted' ? styles.statusAccepted :
+                                    selectedProposal.status === 'declined' ? styles.statusDeclined :
+                                    styles.statusDefault
                                 }`}>
                                     {selectedProposal.status.charAt(0).toUpperCase() + selectedProposal.status.slice(1)}
                                 </div>
                             </div>
 
                             {/* Cover Letter */}
-                            <div className="mb-6">
-                                <h3 className="text-lg font-semibold mb-2">Cover Letter</h3>
-                                <p className="text-gray-700 whitespace-pre-wrap">
+                            <div className={styles.coverLetterSection}>
+                                <h3 className={styles.sectionTitle}>Cover Letter</h3>
+                                <p className={styles.coverLetterText}>
                                     {selectedProposal.coverLetter}
                                 </p>
                             </div>
 
                             {/* Attachments */}
                             {selectedProposal.attachments?.length > 0 && (
-                                <div className="mb-6">
-                                    <h3 className="text-lg font-semibold mb-2">Attachments</h3>
-                                    <div className="space-y-2">
+                                <div className={styles.attachmentsSection}>
+                                    <h3 className={styles.sectionTitle}>Attachments</h3>
+                                    <div className={styles.attachmentsList}>
                                         {selectedProposal.attachments.map((attachment, index) => (
                                             <div
                                                 key={index}
-                                                className="flex items-center p-2 bg-gray-50 rounded"
+                                                className={styles.attachmentItem}
                                             >
-                                                <span className="text-gray-700">
+                                                <span className={styles.attachmentName}>
                                                     {attachment.filename}
                                                 </span>
                                                 <a
                                                     href={attachment.url}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className="ml-auto text-green-600 hover:text-green-700"
+                                                    className={styles.attachmentLink}
                                                 >
                                                     Download
                                                 </a>
@@ -261,14 +262,14 @@ const MyProposalsPage = () => {
                                         }
                                     });
                                 }}
-                                className="w-full border-2 border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center"
+                                className={styles.messageButton}
                             >
-                                <MessageCircle className="w-4 h-4 mr-2" />
+                                <MessageCircle className={styles.messageIcon} />
                                 Message Client
                             </button>
                         </div>
                     ) : (
-                        <div className="bg-white rounded-lg shadow-md p-6 flex items-center justify-center text-gray-500 h-[200px]">
+                        <div className={styles.emptyDetails}>
                             Select a proposal to view details
                         </div>
                     )}

@@ -1,0 +1,218 @@
+/* Layout */
+.container {
+  @apply mx-auto px-4 py-8;
+  max-width: 1280px; /* This is the default max-width for Tailwind's container */
+}
+
+/* Error State */
+.errorContainer {
+  @apply bg-red-50 p-4 rounded-lg flex items-center justify-center text-red-700;
+}
+
+.errorIcon {
+  @apply w-5 h-5 mr-2;
+}
+
+/* Job Details Header */
+.jobHeader {
+  @apply bg-white rounded-lg shadow-md p-6 mb-8;
+}
+
+.jobTitle {
+  @apply text-2xl font-bold text-gray-900 mb-4;
+}
+
+.jobMeta {
+  @apply flex flex-wrap gap-4 text-sm text-gray-600;
+}
+
+.jobMetaItem {
+  @apply flex items-center;
+}
+
+.jobMetaIcon {
+  @apply w-4 h-4 mr-2;
+}
+
+/* Proposals Grid */
+.proposalsGrid {
+  @apply grid grid-cols-1 md:grid-cols-3 gap-6;
+}
+
+/* Proposals List */
+.proposalsList {
+  @apply md:col-span-1 bg-white rounded-lg shadow-md p-4;
+}
+
+.proposalsListTitle {
+  @apply text-xl font-semibold mb-4;
+}
+
+.proposalsLoadingContainer {
+  @apply py-8;
+}
+
+.noProposalsMessage {
+  @apply text-center py-8 text-gray-500;
+}
+
+.proposalsContainer {
+  @apply space-y-4;
+}
+
+/* Proposal Card */
+.proposalCard {
+  @apply cursor-pointer p-4 rounded-lg transition-colors;
+}
+
+.proposalCardSelected {
+  @apply bg-green-50 border-2 border-green-500;
+}
+
+.proposalCardUnselected {
+  @apply bg-gray-50 hover:bg-gray-100;
+}
+
+.proposalCardContent {
+  @apply flex items-start justify-between;
+}
+
+.proposalInfo {
+  @apply flex-1;
+}
+
+.proposalFreelancerName {
+  @apply font-medium text-gray-900;
+}
+
+.proposalRating {
+  @apply flex items-center text-sm text-gray-600 mt-1;
+}
+
+.ratingIcon {
+  @apply w-4 h-4 text-yellow-400 mr-1;
+}
+
+.proposalMeta {
+  @apply text-right;
+}
+
+.proposalAmount {
+  @apply font-medium text-gray-900;
+}
+
+.proposalDuration {
+  @apply text-sm text-gray-600;
+}
+
+/* Proposal Details */
+.detailsContainer {
+  @apply md:col-span-2;
+}
+
+.detailsCard {
+  @apply bg-white rounded-lg shadow-md p-6;
+}
+
+/* Freelancer Details */
+.freelancerHeader {
+  @apply flex items-start justify-between mb-6 pb-6 border-b border-gray-200;
+}
+
+.freelancerInfo {
+  @apply flex-1;
+}
+
+.freelancerName {
+  @apply text-xl font-bold text-gray-900 mb-2;
+}
+
+.freelancerRating {
+  @apply flex items-center text-sm text-gray-600;
+}
+
+.freelancerMeta {
+  @apply text-right;
+}
+
+.freelancerAmount {
+  @apply text-2xl font-bold text-gray-900;
+}
+
+.freelancerDuration {
+  @apply text-gray-600;
+}
+
+/* Cover Letter Section */
+.coverLetterSection {
+  @apply mb-6;
+}
+
+.sectionTitle {
+  @apply text-lg font-semibold mb-2;
+}
+
+.coverLetterText {
+  @apply text-gray-700 whitespace-pre-wrap;
+}
+
+/* Attachments Section */
+.attachmentsSection {
+  @apply mb-6;
+}
+
+.attachmentsList {
+  @apply space-y-2;
+}
+
+.attachmentItem {
+  @apply flex items-center p-2 bg-gray-50 rounded;
+}
+
+.attachmentName {
+  @apply text-gray-700;
+}
+
+.attachmentLink {
+  @apply ml-auto text-green-600 hover:text-green-700;
+}
+
+/* Action Buttons */
+.actionButtons {
+  @apply flex gap-4 mb-4;
+}
+
+.actionButton {
+  @apply flex-1 px-4 py-2 rounded-lg transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.acceptButton {
+  @apply bg-green-600 text-white hover:bg-green-700;
+}
+
+.interviewButton {
+  @apply bg-blue-600 text-white hover:bg-blue-700;
+}
+
+.declineButton {
+  @apply bg-red-600 text-white hover:bg-red-700;
+}
+
+.buttonIcon {
+  @apply w-4 h-4 mr-2;
+}
+
+/* Delete Button */
+.deleteButton {
+  @apply w-full border-2 border-red-300 text-red-600 px-4 py-2 rounded-lg hover:bg-red-50 transition-colors flex items-center justify-center mb-4 disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+/* Message Button */
+.messageButton {
+  @apply w-full border-2 border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+/* Empty Details State */
+.emptyDetails {
+  @apply bg-white rounded-lg shadow-md p-6 flex items-center justify-center text-gray-500 h-[200px];
+} 
