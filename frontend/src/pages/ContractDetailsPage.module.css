@@ -1,0 +1,231 @@
+/* Layout */
+.pageContainer {
+    @apply mx-auto px-4 py-8 container;
+}
+
+.contentWrapper {
+    @apply max-w-4xl mx-auto space-y-8;
+}
+
+/* Contract Header */
+.headerCard {
+    @apply bg-white rounded-lg shadow-md p-6 mb-8;
+}
+
+.headerContent {
+    @apply flex justify-between items-start mb-4;
+}
+
+.titleSection {
+    @apply text-2xl font-bold text-gray-900;
+}
+
+.statusWrapper {
+    @apply mt-2;
+}
+
+.statusBadge {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium;
+}
+
+.amountSection {
+    @apply text-right;
+}
+
+.totalAmount {
+    @apply text-2xl font-bold text-gray-900;
+}
+
+.escrowBalance {
+    @apply text-sm text-gray-600;
+}
+
+.scopeSection {
+    @apply border-t border-gray-200 pt-4 mt-4;
+}
+
+.scopeTitle {
+    @apply text-lg font-semibold mb-2;
+}
+
+.scopeText {
+    @apply text-gray-700 whitespace-pre-wrap;
+}
+
+.buttonWrapper {
+    @apply mt-6;
+}
+
+/* Status Colors */
+.statusDraft {
+    @apply bg-gray-100 text-gray-800;
+}
+
+.statusFunded {
+    @apply bg-blue-100 text-blue-800;
+}
+
+.statusActive {
+    @apply bg-green-100 text-green-800;
+}
+
+.statusCompleted {
+    @apply bg-purple-100 text-purple-800;
+}
+
+.statusClosed {
+    @apply bg-gray-100 text-gray-800;
+}
+
+.statusCancelled {
+    @apply bg-red-100 text-red-800;
+}
+
+/* Milestone Status Colors */
+.milestonePending {
+    @apply bg-gray-100 text-gray-800;
+}
+
+.milestoneFunded {
+    @apply bg-blue-100 text-blue-800;
+}
+
+.milestoneInProgress {
+    @apply bg-yellow-100 text-yellow-800;
+}
+
+.milestoneSubmitted {
+    @apply bg-purple-100 text-purple-800;
+}
+
+.milestoneCompleted {
+    @apply bg-green-100 text-green-800;
+}
+
+/* Buttons */
+.primaryButton {
+    @apply w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center;
+}
+
+.secondaryButton {
+    @apply flex-1 bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors;
+}
+
+.warningButton {
+    @apply flex-1 bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition-colors flex items-center justify-center;
+}
+
+.buttonIcon {
+    @apply w-4 h-4 mr-2;
+}
+
+/* Milestones Section */
+.milestonesCard {
+    @apply bg-white rounded-lg shadow-md p-6;
+}
+
+.milestonesTitle {
+    @apply text-xl font-semibold mb-6;
+}
+
+.milestonesList {
+    @apply space-y-4;
+}
+
+.milestoneItem {
+    @apply border border-gray-200 rounded-lg;
+}
+
+.milestoneHeader {
+    @apply p-4 cursor-pointer hover:bg-gray-50 flex items-center justify-between;
+}
+
+.milestoneInfo {
+    @apply flex-1;
+}
+
+.milestoneHeaderContent {
+    @apply flex items-center justify-between;
+}
+
+.milestoneTitle {
+    @apply font-medium text-gray-900;
+}
+
+.milestoneBadge {
+    @apply ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+}
+
+.milestoneDueDate {
+    @apply mt-1 text-sm text-gray-600;
+}
+
+.milestoneAmount {
+    @apply mt-1 text-sm font-medium text-gray-900;
+}
+
+.chevronIcon {
+    @apply w-5 h-5 text-gray-500;
+}
+
+.milestoneDetails {
+    @apply border-t border-gray-200 p-4;
+}
+
+.milestoneDescription {
+    @apply text-gray-700 mb-4;
+}
+
+/* Form Elements */
+.formGroup {
+    @apply space-y-4;
+}
+
+.label {
+    @apply block text-sm font-medium text-gray-700 mb-2;
+}
+
+.fileInput {
+    @apply w-full;
+}
+
+.textarea {
+    @apply w-full h-24 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none;
+}
+
+.buttonGroup {
+    @apply flex gap-2;
+}
+
+/* Modal */
+.modalOverlay {
+    @apply fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50;
+}
+
+.modalContent {
+    @apply bg-white rounded-lg p-6 max-w-md w-full;
+}
+
+.modalTitle {
+    @apply text-lg font-semibold mb-4;
+}
+
+.modalForm {
+    @apply mb-4;
+}
+
+.inputWithIcon {
+    @apply relative;
+}
+
+.inputIcon {
+    @apply absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500;
+}
+
+.iconInput {
+    @apply w-full pl-10 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent;
+}
+
+.modalActions {
+    @apply flex gap-4;
+} 

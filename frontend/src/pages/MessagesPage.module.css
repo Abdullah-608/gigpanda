@@ -1,0 +1,209 @@
+/* Message Component */
+.messageWrapper {
+  @apply flex;
+}
+
+.messageWrapperSent {
+  @apply justify-end;
+}
+
+.messageWrapperReceived {
+  @apply justify-start;
+}
+
+.messageContent {
+  @apply max-w-[70%] rounded-lg p-3;
+}
+
+.messageSent {
+  @apply bg-green-500 text-white;
+}
+
+.messageReceived {
+  @apply bg-gray-200 text-gray-900;
+}
+
+.messageFooter {
+  @apply flex items-center justify-between text-xs mt-1;
+}
+
+.messageTime {
+  @apply opacity-75;
+}
+
+.messageStatus {
+  @apply ml-2;
+}
+
+.messageStatusSpinner {
+  @apply w-3 h-3 border-2 border-t-2 border-t-white border-white rounded-full inline-block;
+}
+
+.messageStatusRead {
+  @apply text-white;
+}
+
+.messageStatusSent {
+  @apply text-green-200;
+}
+
+/* Message Container */
+.emptyMessages {
+  @apply flex-1 flex items-center justify-center text-gray-500;
+}
+
+.messagesContainer {
+  @apply flex-1 overflow-y-auto p-4 space-y-4;
+}
+
+/* Loading Spinner */
+.loadingContainer {
+  @apply h-full flex items-center justify-center;
+}
+
+.loadingSpinner {
+  @apply w-10 h-10 border-4 border-t-4 border-t-green-500 border-green-200 rounded-full;
+}
+
+/* Message Input */
+.inputContainer {
+  @apply p-4 bg-white border-t border-gray-200;
+}
+
+.inputForm {
+  @apply flex items-center space-x-4;
+}
+
+.textInput {
+  @apply flex-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent;
+}
+
+.sendButton {
+  @apply p-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+/* Conversation List */
+.searchContainer {
+  @apply p-4 border-b;
+}
+
+.searchInputWrapper {
+  @apply relative;
+}
+
+.searchInput {
+  @apply w-full p-2 pl-8 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500;
+}
+
+.searchIcon {
+  @apply absolute left-2 top-2.5 h-5 w-5 text-gray-400;
+}
+
+.conversationsList {
+  @apply overflow-y-auto h-[calc(100vh-5rem)];
+}
+
+.conversationItem {
+  @apply p-4 border-b hover:bg-gray-50 cursor-pointer;
+}
+
+.conversationItemSelected {
+  @apply bg-gray-50;
+}
+
+.conversationContent {
+  @apply flex items-center space-x-3;
+}
+
+.avatarContainer {
+  @apply flex-shrink-0;
+}
+
+.avatar {
+  @apply h-10 w-10 rounded-full;
+}
+
+.defaultAvatar {
+  @apply h-10 w-10 rounded-full bg-green-500 flex items-center justify-center text-white;
+}
+
+.conversationDetails {
+  @apply flex-1 min-w-0;
+}
+
+.conversationName {
+  @apply text-sm font-medium text-gray-900 truncate;
+}
+
+.lastMessage {
+  @apply text-sm text-gray-500 truncate;
+}
+
+.unreadBadge {
+  @apply inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-green-500 rounded-full;
+}
+
+/* Error State */
+.errorContainer {
+  @apply flex items-center justify-center h-screen;
+}
+
+.errorMessage {
+  @apply text-red-500;
+}
+
+/* Main Layout */
+.mainContainer {
+  @apply flex h-screen bg-gray-100;
+}
+
+.conversationsListContainer {
+  @apply bg-white w-full md:w-1/3 border-r;
+}
+
+.conversationsListContainerHidden {
+  @apply hidden;
+}
+
+.messagesSection {
+  @apply flex-1 flex flex-col;
+}
+
+.messagesSectionHidden {
+  @apply hidden;
+}
+
+/* Conversation Header */
+.conversationHeader {
+  @apply p-4 bg-white border-b border-gray-200 flex items-center;
+}
+
+.backButton {
+  @apply mr-4 text-gray-600 hover:text-gray-900;
+}
+
+.headerContent {
+  @apply flex items-center space-x-3;
+}
+
+.headerAvatar {
+  @apply h-10 w-10 rounded-full;
+}
+
+.headerDefaultAvatar {
+  @apply h-10 w-10 rounded-full bg-green-500 flex items-center justify-center text-white;
+}
+
+.headerName {
+  @apply text-lg font-semibold;
+}
+
+/* Empty State */
+.emptyState {
+  @apply flex-1 flex items-center justify-center text-gray-500;
+}
+
+/* Icon Sizes */
+.icon {
+  @apply h-6 w-6;
+} 

@@ -14,6 +14,7 @@ import { useNotificationStore } from "../store/notificationStore";
 import { format } from 'date-fns';
 import AcceptedWorkTab from "../components/AcceptedWorkTab";
 import { useContractStore } from "../store/contractStore";
+import styles from "./FreelancerDashboardPage.module.css";
 
 const FreelancerDashboardPage = () => {
 	const { user, logout, activeTab, setActiveTab } = useAuthStore();
@@ -601,94 +602,62 @@ const FreelancerDashboardPage = () => {
 				</div>
 			</header>
 			
-			<main className="w-full px-4 sm:px-6 lg:px-8 py-6">
+			<main className={styles.mainContent}>
 				{activeTab === "dashboard" ? (
 					<>
-				{/* Stats Cards */}
-				<div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-					<motion.div
-						initial={{ opacity: 0, y: 20 }}
-						animate={{ opacity: 1, y: 0 }}
-						className="bg-white rounded-xl shadow-sm p-6 border border-gray-100"
-					>
-						<div className="flex items-center">
-							<div className="flex-shrink-0">
-								<DollarSign className="h-8 w-8 text-green-600" />
+						{/* Stats Section */}
+						<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+							<div className={styles.statsSection}>
+								<div className={styles.statCard}>
+									<div className={styles.statIcon}>
+										<DollarSign className="h-6 w-6" />
 							</div>
-							<div className="ml-5 w-0 flex-1">
-								<dl>
-									<dt className="text-sm font-medium text-gray-500 truncate">Total Earnings</dt>
-									<dd className="text-lg font-semibold text-gray-900">${stats.totalEarnings.toLocaleString()}</dd>
-								</dl>
+									<div className={styles.statValue}>${stats.totalEarnings.toFixed(2)}</div>
+									<div className={styles.statLabel}>Total Earnings</div>
 							</div>
+								<div className={styles.statCard}>
+									<div className={styles.statIcon}>
+										<Briefcase className="h-6 w-6" />
 						</div>
-					</motion.div>
-
-					<motion.div
-						initial={{ opacity: 0, y: 20 }}
-						animate={{ opacity: 1, y: 0 }}
-						transition={{ delay: 0.1 }}
-						className="bg-white rounded-xl shadow-sm p-6 border border-gray-100"
-					>
-						<div className="flex items-center">
-							<div className="flex-shrink-0">
-								<Briefcase className="h-8 w-8 text-purple-600" />
+									<div className={styles.statValue}>{stats.activeProjects}</div>
+									<div className={styles.statLabel}>Active Projects</div>
 							</div>
-							<div className="ml-5 w-0 flex-1">
-								<dl>
-									<dt className="text-sm font-medium text-gray-500 truncate">Active Projects</dt>
-									<dd className="text-lg font-semibold text-gray-900">{stats.activeProjects}</dd>
-								</dl>
+								<div className={styles.statCard}>
+									<div className={styles.statIcon}>
+										<Award className="h-6 w-6" />
 							</div>
+									<div className={styles.statValue}>{stats.totalOrders}</div>
+									<div className={styles.statLabel}>Completed Orders</div>
 						</div>
-					</motion.div>
-
-					<motion.div
-						initial={{ opacity: 0, y: 20 }}
-						animate={{ opacity: 1, y: 0 }}
-						transition={{ delay: 0.2 }}
-						className="bg-white rounded-xl shadow-sm p-6 border border-gray-100"
-					>
-						<div className="flex items-center">
-							<div className="flex-shrink-0">
-								<Award className="h-8 w-8 text-blue-600" />
 							</div>
-							<div className="ml-5 w-0 flex-1">
-								<dl>
-									<dt className="text-sm font-medium text-gray-500 truncate">Total Orders</dt>
-									<dd className="text-lg font-semibold text-gray-900">{stats.totalOrders}</dd>
-								</dl>
-							</div>
-						</div>
-					</motion.div>
 				</div>
 
-				<div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+						<div className={styles.gridContainer}>
 					{/* Left Column - Job Postings */}
-					<div className="lg:col-span-2">
+							<div className={styles.mainColumn}>
 						<motion.div
 							initial={{ opacity: 0, y: 20 }}
 							animate={{ opacity: 1, y: 0 }}
 							transition={{ delay: 0.4 }}
-							className="bg-white rounded-xl shadow-sm border border-gray-100"
-						>
-							<div className="p-6 border-b border-gray-100">
-								<div className="flex items-center justify-between">
-									<h2 className="text-xl font-bold text-gray-800">Recommended Jobs</h2>
-									<div className="flex items-center space-x-2">
-										<button className="p-2 text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-100">
+									className={styles.jobsContainer}
+								>
+									<div className={styles.jobsHeader}>
+										<div className={styles.jobsHeaderContent}>
+											<h2 className={styles.jobsTitle}>Recommended Jobs</h2>
+											<div className={styles.jobsActions}>
+												<button className={styles.filterButton}>
 											<Filter className="h-4 w-4" />
 										</button>
-										<button className="text-sm text-green-600 hover:text-green-800 font-medium">View All</button>
+												<button className={styles.viewAllButton}>View All</button>
 									</div>
 								</div>
 							</div>
 							
-							<div className="h-[600px] overflow-y-auto custom-scrollbar">
-								<div className="space-y-4 p-6">
+									<div className={`${styles.jobsList} custom-scrollbar`}>
+										<div className={styles.jobsContent}>
 									{/* Loading state */}
 									{isLoading && jobs.length === 0 && (
-										<div className="flex items-center justify-center py-12">
+												<div className={styles.loadingContainer}>
 											<Loader className="h-6 w-6 animate-spin text-gray-500" />
 											<span className="ml-2 text-gray-500">Loading jobs...</span>
 										</div>
@@ -696,11 +665,11 @@ const FreelancerDashboardPage = () => {
 
 									{/* Error state */}
 									{error && (
-										<div className="text-center py-12">
-											<p className="text-red-600 mb-2">Failed to load jobs</p>
+												<div className={styles.errorContainer}>
+													<p className={styles.errorMessage}>Failed to load jobs</p>
 											<button 
 												onClick={() => fetchJobs()}
-												className="text-sm text-green-600 hover:text-green-700"
+														className={styles.retryButton}
 											>
 												Try again
 											</button>
@@ -709,10 +678,10 @@ const FreelancerDashboardPage = () => {
 
 									{/* Empty state */}
 									{!isLoading && !error && jobs.length === 0 && (
-										<div className="text-center py-12">
-											<Briefcase className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-											<p className="text-gray-500">No jobs available at the moment</p>
-											<p className="text-sm text-gray-400">Check back later for new opportunities</p>
+												<div className={styles.emptyContainer}>
+													<Briefcase className={styles.emptyIcon} />
+													<p className={styles.emptyText}>No jobs available at the moment</p>
+													<p className={styles.emptySubtext}>Check back later for new opportunities</p>
 										</div>
 									)}
 
@@ -723,68 +692,65 @@ const FreelancerDashboardPage = () => {
 											initial={{ opacity: 0 }}
 											animate={{ opacity: 1 }}
 											transition={{ delay: 0.1 * index }}
-											className="p-5 border border-gray-100 rounded-lg hover:shadow-md transition-shadow"
-										>
-											<div className="flex items-start justify-between">
-												<div className="flex-1">
-													<h3 className="text-lg font-semibold text-gray-900 mb-2">{job.title}</h3>
-													<div className="flex items-center space-x-4 text-sm text-gray-500 mb-3">
-														<span className="flex items-center">
-															<User className="h-4 w-4 mr-1" />
+													className={styles.jobCard}
+												>
+													<div className={styles.jobHeader}>
+														<div className={styles.jobContent}>
+															<h3 className={styles.jobTitle}>{job.title}</h3>
+															<div className={styles.jobMeta}>
+																<span className={styles.jobMetaItem}>
+																	<User className={styles.jobMetaIcon} />
 															{job.client?.name || 'Anonymous Client'}
 														</span>
-														<span className="flex items-center">
-															<DollarSign className="h-4 w-4 mr-1" />
+																<span className={styles.jobMetaItem}>
+																	<DollarSign className={styles.jobMetaIcon} />
 															{formatBudget(job.budget, job.budgetType)}
 														</span>
-														<span className="flex items-center">
-															<Clock className="h-4 w-4 mr-1" />
+																<span className={styles.jobMetaItem}>
+																	<Clock className={styles.jobMetaIcon} />
 															{job.timeline}
 														</span>
 													</div>
 
-													{/* Job description (truncated) */}
-													<p className="text-sm text-gray-600 mb-3 line-clamp-2">
+															<p className={styles.jobDescription}>
 														{job.description}
 													</p>
 
-													{/* Skills required */}
-													<div className="flex flex-wrap gap-2 mb-4">
+															<div className={styles.skillsList}>
 														{job.skillsRequired?.map((skill, skillIndex) => (
 															<span
 																key={skillIndex}
-																className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+																		className={styles.skillTag}
 															>
 																{skill}
 															</span>
 														))}
 													</div>
 
-													{/* Category and experience level */}
-													<div className="flex items-center space-x-4 text-xs text-gray-500 mb-4">
-														<span className="px-2 py-1 bg-gray-100 rounded">
+															<div className={styles.jobDetails}>
+																<span className={styles.jobDetailTag}>
 															{job.category.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
 														</span>
-														<span className="px-2 py-1 bg-gray-100 rounded">
+																<span className={styles.jobDetailTag}>
 															{job.experienceLevel.charAt(0).toUpperCase() + job.experienceLevel.slice(1)}
 														</span>
-														<span className="px-2 py-1 bg-gray-100 rounded">
+																<span className={styles.jobDetailTag}>
 															{job.location.charAt(0).toUpperCase() + job.location.slice(1)}
 														</span>
 													</div>
 
-													<div className="flex items-center justify-between">
-														<div className="flex items-center space-x-4 text-sm text-gray-500">
+															<div className={styles.jobFooter}>
+																<div className={styles.jobStats}>
 															<span>{getTimeAgo(job.createdAt)}</span>
 															<span>{job.proposalCount || 0} proposals</span>
 														</div>
-														<div className="flex items-center space-x-2">
-															<button className="p-2 rounded-lg transition-colors text-gray-400 hover:text-gray-600 hover:bg-gray-50">
+																<div className={styles.jobActions}>
+																	<button className={styles.bookmarkButton}>
 																<BookmarkIcon className="h-4 w-4" />
 															</button>
 															<button 
 																onClick={() => handleApplyToJob(job)}
-																className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors"
+																		className={styles.proposalButton}
 															>
 																Send Proposal
 															</button>
@@ -797,11 +763,11 @@ const FreelancerDashboardPage = () => {
 
 									{/* Load more button */}
 									{pagination.hasNextPage && (
-										<div className="text-center pt-4">
+												<div className={styles.loadMoreContainer}>
 											<button
 												onClick={handleLoadMore}
 												disabled={isLoading}
-												className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2 mx-auto"
+														className={styles.loadMoreButton}
 											>
 												{isLoading ? (
 													<>
@@ -820,43 +786,43 @@ const FreelancerDashboardPage = () => {
 					</div>
 
 					{/* Right Column */}
-					<div className="space-y-6">
+							<div className={styles.sideColumn}>
 						{/* Active Projects */}
 						<motion.div
 							initial={{ opacity: 0, y: 20 }}
 							animate={{ opacity: 1, y: 0 }}
 							transition={{ delay: 0.5 }}
-							className="bg-white rounded-xl shadow-sm p-6 border border-gray-100"
-						>
-							<div className="flex items-center justify-between mb-6">
-								<h2 className="text-lg font-bold text-gray-800">Active Projects</h2>
-								<button className="text-sm text-green-600 hover:text-green-800 font-medium">View All</button>
+									className={styles.projectsContainer}
+								>
+									<div className={styles.projectsHeader}>
+										<h2 className={styles.projectsTitle}>Active Projects</h2>
+										<button className={styles.viewAllButton}>View All</button>
 							</div>
 							
-							<div className="space-y-4">
+									<div className={styles.projectsList}>
 								{mockActiveProjects.map((project, index) => (
 									<motion.div
 										key={project.id}
 										initial={{ opacity: 0 }}
 										animate={{ opacity: 1 }}
 										transition={{ delay: 0.1 * index }}
-										className="p-4 border border-gray-100 rounded-lg"
-									>
-										<h3 className="font-medium text-gray-900 mb-2">{project.title}</h3>
-										<p className="text-sm text-gray-500 mb-3">{project.client}</p>
-										<div className="flex items-center justify-between mb-2">
-											<span className="text-sm text-gray-500">Progress</span>
-											<span className="text-sm font-medium text-gray-900">{project.progress}%</span>
+												className={styles.projectCard}
+											>
+												<h3 className={styles.projectTitle}>{project.title}</h3>
+												<p className={styles.projectClient}>{project.client}</p>
+												<div className={styles.progressContainer}>
+													<span className={styles.progressLabel}>Progress</span>
+													<span className={styles.progressValue}>{project.progress}%</span>
 										</div>
-										<div className="w-full bg-gray-200 rounded-full h-2 mb-3">
+												<div className={styles.progressBar}>
 											<div 
-												className="bg-green-600 h-2 rounded-full transition-all duration-300" 
+														className={styles.progressFill}
 												style={{ width: `${project.progress}%` }}
 											></div>
 										</div>
-										<div className="flex items-center justify-between text-sm">
-											<span className="text-gray-500">Due: {new Date(project.deadline).toLocaleDateString()}</span>
-											<span className="font-medium text-green-600">${project.budget}</span>
+												<div className={styles.projectFooter}>
+													<span className={styles.projectDueDate}>Due: {new Date(project.deadline).toLocaleDateString()}</span>
+													<span className={styles.projectBudget}>${project.budget}</span>
 										</div>
 									</motion.div>
 								))}
@@ -868,36 +834,36 @@ const FreelancerDashboardPage = () => {
 							initial={{ opacity: 0, y: 20 }}
 							animate={{ opacity: 1, y: 0 }}
 							transition={{ delay: 0.6 }}
-							className="bg-white rounded-xl shadow-sm p-6 border border-gray-100"
-						>
-							<div className="flex items-center justify-between mb-6">
-								<h2 className="text-lg font-bold text-gray-800">Recent Activity</h2>
-								<button className="text-sm text-green-600 hover:text-green-800 font-medium">View All</button>
+									className={styles.activityContainer}
+								>
+									<div className={styles.activityHeader}>
+										<h2 className={styles.activityTitle}>Recent Activity</h2>
+										<button className={styles.viewAllButton}>View All</button>
 							</div>
 							
-							<div className="space-y-4">
+									<div className={styles.activityList}>
 								{mockRecentActivity.map((activity, index) => (
 									<motion.div
 										key={activity.id}
 										initial={{ opacity: 0 }}
 										animate={{ opacity: 1 }}
 										transition={{ delay: 0.1 * index }}
-										className="flex items-start space-x-3"
-									>
-										<div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
-											activity.type === 'proposal' ? 'bg-blue-100 text-blue-600' :
-											activity.type === 'message' ? 'bg-green-100 text-green-600' :
-											activity.type === 'milestone' ? 'bg-purple-100 text-purple-600' :
-											'bg-yellow-100 text-yellow-600'
+												className={styles.activityItem}
+											>
+												<div className={`${styles.activityIcon} ${
+													activity.type === 'proposal' ? styles.activityIconProposal :
+													activity.type === 'message' ? styles.activityIconMessage :
+													activity.type === 'milestone' ? styles.activityIconMilestone :
+													styles.activityIconPayment
 										}`}>
 											{activity.type === 'proposal' && <Briefcase className="h-4 w-4" />}
 											{activity.type === 'message' && <MessageSquare className="h-4 w-4" />}
 											{activity.type === 'milestone' && <Award className="h-4 w-4" />}
 											{activity.type === 'payment' && <DollarSign className="h-4 w-4" />}
 										</div>
-										<div className="flex-1 min-w-0">
-											<p className="text-sm text-gray-900">{activity.message}</p>
-											<p className="text-xs text-gray-500">{activity.time}</p>
+												<div className={styles.activityContent}>
+													<p className={styles.activityMessage}>{activity.message}</p>
+													<p className={styles.activityTime}>{activity.time}</p>
 										</div>
 									</motion.div>
 								))}
@@ -943,7 +909,7 @@ const FreelancerDashboardPage = () => {
 				whileHover={{ scale: 1.1 }}
 				whileTap={{ scale: 0.9 }}
 				onClick={() => setIsCreatePostModalOpen(true)}
-				className="fixed bottom-6 right-6 w-14 h-14 bg-green-600 text-white rounded-full shadow-lg hover:bg-green-700 transition-colors flex items-center justify-center z-40"
+				className={styles.createButton}
 			>
 				<Plus className="h-6 w-6" />
 			</motion.button>

@@ -6,36 +6,29 @@ import { Send, Search, ArrowLeft, Loader } from "lucide-react";
 import LoadingSpinner from "../components/LoadingSpinner";
 import toast from "react-hot-toast";
 import { motion } from "framer-motion";
+import styles from "./MessagesPage.module.css";
 
 // Memoized message component
 const Message = memo(({ message, isOwnMessage }) => (
-    <div
-        className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}
-    >
-        <div
-            className={`max-w-[70%] rounded-lg p-3 ${
-                isOwnMessage
-                    ? 'bg-green-500 text-white'
-                    : 'bg-gray-200 text-gray-900'
-            }`}
-        >
+    <div className={`${styles.messageWrapper} ${isOwnMessage ? styles.messageWrapperSent : styles.messageWrapperReceived}`}>
+        <div className={`${styles.messageContent} ${isOwnMessage ? styles.messageSent : styles.messageReceived}`}>
             <p>{message.content}</p>
-            <div className="flex items-center justify-between text-xs mt-1">
-                <span className="opacity-75">
+            <div className={styles.messageFooter}>
+                <span className={styles.messageTime}>
                     {new Date(message.createdAt).toLocaleTimeString()}
                 </span>
                 {isOwnMessage && (
-                    <span className="ml-2">
+                    <span className={styles.messageStatus}>
                         {message.isPending ? (
                             <motion.div
-                                className="w-3 h-3 border-2 border-t-2 border-t-white border-white rounded-full inline-block"
+                                className={styles.messageStatusSpinner}
                                 animate={{ rotate: 360 }}
                                 transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                             />
                         ) : message.isRead ? (
-                            <span className="text-white">✓✓</span>
+                            <span className={styles.messageStatusRead}>✓✓</span>
                         ) : (
-                            <span className="text-green-200">✓</span>
+                            <span className={styles.messageStatusSent}>✓</span>
                         )}
                     </span>
                 )}
@@ -67,14 +60,14 @@ const MessageContainer = memo(({ conversationId, userId }) => {
 
     if (!currentConversation.messages.length) {
         return (
-            <div className="flex-1 flex items-center justify-center text-gray-500">
+            <div className={styles.emptyMessages}>
                 No messages yet. Start the conversation!
             </div>
         );
-        }
+    }
 
     return (
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <div className={styles.messagesContainer}>
             {currentConversation.messages.map((msg) => (
                 <Message
                     key={msg._id}
@@ -83,62 +76,35 @@ const MessageContainer = memo(({ conversationId, userId }) => {
                 />
             ))}
             <div ref={messagesEndRef} />
-                        </div>
+        </div>
     );
 });
 MessageContainer.displayName = 'MessageContainer';
 
-// Memoized message list component
-const MessageList = memo(({ messages, userId, messagesEndRef, isLoading }) => (
-    <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {isLoading ? (
-            <div className="h-full flex items-center justify-center">
-                <motion.div
-                    className='w-10 h-10 border-4 border-t-4 border-t-green-500 border-green-200 rounded-full'
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                />
-                                </div>
-        ) : (
-                        <>
-                {messages.map((msg) => (
-                    <Message
-                                            key={msg._id}
-                        message={msg}
-                        isOwnMessage={msg.sender._id === userId}
-                    />
-                                    ))}
-                                    <div ref={messagesEndRef} />
-            </>
-        )}
-                                </div>
-));
-MessageList.displayName = 'MessageList';
-
 // Memoized message input component
 const MessageInput = memo(({ message, setMessage, handleSendMessage, isLoading }) => (
-                            <div className="p-4 bg-white border-t border-gray-200">
-                                <form onSubmit={handleSendMessage} className="flex items-center space-x-4">
-                                    <input
-                                        type="text"
-                                        value={message}
-                                        onChange={(e) => setMessage(e.target.value)}
-                                        placeholder="Type your message..."
-                                        className="flex-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                                    />
-                                    <button
-                                        type="submit"
-                                        disabled={!message.trim()}
-                                        className="p-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                                    >
-                                        {isLoading ? (
-                                            <Loader className="h-5 w-5 animate-spin" />
-                                        ) : (
-                                            <Send className="h-5 w-5" />
-                                        )}
-                                    </button>
-                                </form>
-                            </div>
+    <div className={styles.inputContainer}>
+        <form onSubmit={handleSendMessage} className={styles.inputForm}>
+            <input
+                type="text"
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder="Type your message..."
+                className={styles.textInput}
+            />
+            <button
+                type="submit"
+                disabled={!message.trim()}
+                className={styles.sendButton}
+            >
+                {isLoading ? (
+                    <Loader className={styles.icon} />
+                ) : (
+                    <Send className={styles.icon} />
+                )}
+            </button>
+        </form>
+    </div>
 ));
 MessageInput.displayName = 'MessageInput';
 
@@ -160,53 +126,53 @@ const ConversationList = memo(({
 
     return (
         <>
-            <div className="p-4 border-b">
-                <div className="relative">
+            <div className={styles.searchContainer}>
+                <div className={styles.searchInputWrapper}>
                     <input
                         type="text"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         placeholder="Search conversations..."
-                        className="w-full p-2 pl-8 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                        className={styles.searchInput}
                     />
-                    <Search className="absolute left-2 top-2.5 h-5 w-5 text-gray-400" />
+                    <Search className={styles.searchIcon} />
                 </div>
             </div>
-            <div className="overflow-y-auto h-[calc(100vh-5rem)]">
+            <div className={styles.conversationsList}>
                 {filteredConversations.map((conversation) => (
                     <div
                         key={conversation._id}
                         onClick={() => onSelect(conversation)}
-                        className={`p-4 border-b hover:bg-gray-50 cursor-pointer ${
-                            selectedId === conversation._id ? 'bg-gray-50' : ''
+                        className={`${styles.conversationItem} ${
+                            selectedId === conversation._id ? styles.conversationItemSelected : ''
                         }`}
                     >
-                        <div className="flex items-center space-x-3">
-                            <div className="flex-shrink-0">
+                        <div className={styles.conversationContent}>
+                            <div className={styles.avatarContainer}>
                                 {conversation.profile?.pictureUrl ? (
                                     <img
                                         src={conversation.profile.pictureUrl}
                                         alt={conversation.name}
-                                        className="h-10 w-10 rounded-full"
+                                        className={styles.avatar}
                                     />
                                 ) : (
-                                    <div className="h-10 w-10 rounded-full bg-green-500 flex items-center justify-center text-white">
+                                    <div className={styles.defaultAvatar}>
                                         {conversation.name?.charAt(0).toUpperCase()}
                                     </div>
                                 )}
                             </div>
-                            <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-gray-900 truncate">
+                            <div className={styles.conversationDetails}>
+                                <p className={styles.conversationName}>
                                     {conversation.name}
                                 </p>
                                 {conversation.lastMessage && (
-                                    <p className="text-sm text-gray-500 truncate">
+                                    <p className={styles.lastMessage}>
                                         {conversation.lastMessage.content}
                                     </p>
                                 )}
                             </div>
                             {conversation.unreadCount > 0 && (
-                                <div className="inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-green-500 rounded-full">
+                                <div className={styles.unreadBadge}>
                                     {conversation.unreadCount}
                                 </div>
                             )}
@@ -342,8 +308,8 @@ const MessagesPage = () => {
 
     if (error) {
         return (
-            <div className="flex items-center justify-center h-screen">
-                <div className="text-red-500">
+            <div className={styles.errorContainer}>
+                <div className={styles.errorMessage}>
                     Error: {error}. Please try refreshing the page.
                 </div>
             </div>
@@ -355,9 +321,9 @@ const MessagesPage = () => {
     }
 
     return (
-        <div className="flex h-screen bg-gray-100">
+        <div className={styles.mainContainer}>
             {/* Conversations List */}
-            <div className={`bg-white w-full md:w-1/3 border-r ${isMobileView && showConversation ? 'hidden' : ''}`}>
+            <div className={`${styles.conversationsListContainer} ${isMobileView && showConversation ? styles.conversationsListContainerHidden : ''}`}>
                 <ConversationList 
                     conversations={conversations}
                     selectedId={selectedConversation?._id}
@@ -368,32 +334,32 @@ const MessagesPage = () => {
             </div>
 
             {/* Conversation/Messages */}
-            <div className={`flex-1 flex flex-col ${isMobileView && !showConversation ? 'hidden' : ''}`}>
+            <div className={`${styles.messagesSection} ${isMobileView && !showConversation ? styles.messagesSectionHidden : ''}`}>
                 {selectedConversation ? (
                     <>
-                        <div className="p-4 bg-white border-b border-gray-200 flex items-center">
+                        <div className={styles.conversationHeader}>
                             {isMobileView && (
                                 <button
                                     onClick={handleBack}
-                                    className="mr-4 text-gray-600 hover:text-gray-900"
+                                    className={styles.backButton}
                                 >
-                                    <ArrowLeft className="h-6 w-6" />
+                                    <ArrowLeft className={styles.icon} />
                                 </button>
                             )}
-                            <div className="flex items-center space-x-3">
+                            <div className={styles.headerContent}>
                                 {currentConversation.user?.profile?.pictureUrl ? (
                                     <img
                                         src={currentConversation.user.profile.pictureUrl}
                                         alt={currentConversation.user.name}
-                                        className="h-10 w-10 rounded-full"
+                                        className={styles.headerAvatar}
                                     />
                                 ) : (
-                                    <div className="h-10 w-10 rounded-full bg-green-500 flex items-center justify-center text-white">
+                                    <div className={styles.headerDefaultAvatar}>
                                         {currentConversation.user?.name?.charAt(0).toUpperCase()}
                                     </div>
                                 )}
                                 <div>
-                                    <h2 className="text-lg font-semibold">
+                                    <h2 className={styles.headerName}>
                                         {currentConversation.user?.name}
                                     </h2>
                                 </div>
@@ -413,12 +379,12 @@ const MessagesPage = () => {
                             handleSendMessage={handleSendMessage}
                             isLoading={isSending}
                         />
-                        </>
-                    ) : (
-                        <div className="flex-1 flex items-center justify-center text-gray-500">
-                            Select a conversation to start messaging
-                        </div>
-                    )}
+                    </>
+                ) : (
+                    <div className={styles.emptyState}>
+                        Select a conversation to start messaging
+                    </div>
+                )}
             </div>
         </div>
     );

@@ -1,0 +1,99 @@
+.testimonials {
+  @apply text-center mb-28;
+}
+
+.testimonialsTitle {
+  @apply text-3xl md:text-4xl font-bold mb-16 text-gray-800;
+}
+
+.testimonialsHighlight {
+  @apply text-green-600;
+}
+
+.testimonialCard {
+  @apply bg-white border border-gray-100 p-8 rounded-2xl shadow-md relative overflow-hidden group;
+}
+
+.testimonialContent {
+  @apply relative z-10;
+}
+
+.testimonialText {
+  @apply text-5xl md:text-6xl font-bold text-gray-800 mb-2;
+}
+
+.testimonialSubtext {
+  @apply text-xl text-gray-500 font-light;
+}
+
+.cta {
+  @apply mb-12;
+}
+
+.ctaContent {
+  @apply rounded-3xl overflow-hidden relative;
+}
+
+.ctaTitle {
+  @apply text-3xl md:text-4xl font-bold mb-6 text-gray-800;
+}
+
+.ctaHighlight {
+  @apply text-green-600;
+}
+
+.ctaDescription {
+  @apply text-xl text-gray-700 mb-10 max-w-3xl mx-auto;
+}
+
+.ctaButtons {
+  @apply flex flex-col sm:flex-row gap-5 justify-center;
+}
+
+.ctaButtonPrimary {
+  @apply px-10 py-4 bg-green-600 text-white font-bold rounded-full shadow-lg;
+}
+
+.ctaButtonSecondary {
+  @apply px-10 py-4 bg-white text-gray-800 border border-gray-300 font-bold rounded-full flex items-center justify-center gap-2 group;
+}
+
+.footer {
+  @apply w-full bg-gray-100 pt-12 pb-8 mt-12;
+}
+
+.footerContent {
+  @apply w-full max-w-7xl mx-auto px-4;
+}
+
+.footerLogo {
+  @apply flex justify-between items-center mb-8;
+}
+
+.footerText {
+  @apply text-xl font-bold text-gray-800;
+}
+
+.footerHighlight {
+  @apply text-green-600;
+}
+
+.footerLinks {
+  @apply flex gap-4;
+}
+
+.footerLink {
+  @apply w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-sm;
+}
+
+.footerBottom {
+  @apply border-t border-gray-200 pt-8 flex flex-col md:flex-row justify-between items-center;
+}
+
+.footerBottomLinks {
+  @apply flex gap-6 mt-4 md:mt-0;
+}
+
+.footerBottomLink {
+  @apply text-sm text-gray-500 hover:text-green-600;
+}

@@ -1,0 +1,120 @@
+/* Layout */
+.pageContainer {
+    @apply mx-auto px-4 py-8 container;
+}
+
+.contentWrapper {
+    @apply max-w-4xl mx-auto;
+}
+
+.pageTitle {
+    @apply text-3xl font-bold text-gray-900 mb-8;
+}
+
+/* Form */
+.form {
+    @apply space-y-8;
+}
+
+/* Contract Details Section */
+.section {
+    @apply bg-white rounded-lg shadow-md p-6;
+}
+
+.sectionTitle {
+    @apply text-xl font-semibold mb-4;
+}
+
+.inputGroup {
+    @apply space-y-4;
+}
+
+.formGroup {
+    @apply space-y-4;
+}
+
+.label {
+    @apply block text-sm font-medium text-gray-700 mb-2;
+}
+
+.input {
+    @apply w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent;
+}
+
+.textarea {
+    @apply w-full h-32 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none;
+}
+
+.inputWithIcon {
+    @apply relative;
+}
+
+.iconInput {
+    @apply w-full pl-10 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent;
+}
+
+.inputIcon {
+    @apply absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500;
+}
+
+/* Milestones Section */
+.milestonesHeader {
+    @apply flex items-center justify-between mb-4;
+}
+
+.addMilestoneButton {
+    @apply flex items-center text-green-600 hover:text-green-700;
+}
+
+.addMilestoneIcon {
+    @apply w-4 h-4 mr-1;
+}
+
+.milestonesList {
+    @apply space-y-6;
+}
+
+.milestoneCard {
+    @apply p-4 bg-gray-50 rounded-lg;
+}
+
+.milestoneHeader {
+    @apply flex justify-between items-start mb-4;
+}
+
+.milestoneTitle {
+    @apply font-medium;
+}
+
+.deleteButton {
+    @apply text-red-600 hover:text-red-700;
+}
+
+.deleteIcon {
+    @apply w-4 h-4;
+}
+
+.milestoneGrid {
+    @apply grid grid-cols-1 md:grid-cols-2 gap-4;
+}
+
+.milestoneDescription {
+    @apply md:col-span-2;
+}
+
+.milestoneTextarea {
+    @apply w-full h-24 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none;
+}
+
+/* Submit Button */
+.submitWrapper {
+    @apply flex justify-end;
+}
+
+.submitButton {
+    @apply bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed min-w-[160px];
+}
+
+.loadingIcon {
+    @apply w-5 h-5 animate-spin;
+} 

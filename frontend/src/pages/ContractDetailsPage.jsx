@@ -6,6 +6,7 @@ import { DollarSign, CheckCircle, FileUp, AlertCircle, ChevronDown, ChevronUp, C
 import LoadingSpinner from "../components/LoadingSpinner";
 import ContractMessaging from "../components/ContractMessaging";
 import toast from "react-hot-toast";
+import styles from "./ContractDetailsPage.module.css";
 
 const ContractDetailsPage = () => {
     const { contractId } = useParams();
@@ -105,25 +106,25 @@ const ContractDetailsPage = () => {
 
     const getStatusColor = (status) => {
         const colors = {
-            draft: "bg-gray-100 text-gray-800",
-            funded: "bg-blue-100 text-blue-800",
-            active: "bg-green-100 text-green-800",
-            completed: "bg-purple-100 text-purple-800",
-            closed: "bg-gray-100 text-gray-800",
-            cancelled: "bg-red-100 text-red-800"
+            draft: styles.statusDraft,
+            funded: styles.statusFunded,
+            active: styles.statusActive,
+            completed: styles.statusCompleted,
+            closed: styles.statusClosed,
+            cancelled: styles.statusCancelled
         };
-        return colors[status] || "bg-gray-100 text-gray-800";
+        return colors[status] || styles.statusDraft;
     };
 
     const getMilestoneStatusColor = (status) => {
         const colors = {
-            pending: "bg-gray-100 text-gray-800",
-            funded: "bg-blue-100 text-blue-800",
-            in_progress: "bg-yellow-100 text-yellow-800",
-            submitted: "bg-purple-100 text-purple-800",
-            completed: "bg-green-100 text-green-800"
+            pending: styles.milestonePending,
+            funded: styles.milestoneFunded,
+            in_progress: styles.milestoneInProgress,
+            submitted: styles.milestoneSubmitted,
+            completed: styles.milestoneCompleted
         };
-        return colors[status] || "bg-gray-100 text-gray-800";
+        return colors[status] || styles.milestonePending;
     };
 
     if (isLoading || !currentContract) return <LoadingSpinner />;
@@ -136,42 +137,42 @@ const ContractDetailsPage = () => {
     };
 
     return (
-        <div className="container mx-auto px-4 py-8">
-            <div className="max-w-4xl mx-auto space-y-8">
+        <div className={styles.pageContainer}>
+            <div className={styles.contentWrapper}>
                 {/* Contract Header */}
-                <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-                    <div className="flex justify-between items-start mb-4">
+                <div className={styles.headerCard}>
+                    <div className={styles.headerContent}>
                         <div>
-                            <h1 className="text-2xl font-bold text-gray-900">{currentContract.title}</h1>
-                            <div className="mt-2">
-                                <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(currentContract.status)}`}>
+                            <h1 className={styles.titleSection}>{currentContract.title}</h1>
+                            <div className={styles.statusWrapper}>
+                                <span className={`${styles.statusBadge} ${getStatusColor(currentContract.status)}`}>
                                     {currentContract.status.charAt(0).toUpperCase() + currentContract.status.slice(1)}
                                 </span>
                             </div>
                         </div>
-                        <div className="text-right">
-                            <div className="text-2xl font-bold text-gray-900">
+                        <div className={styles.amountSection}>
+                            <div className={styles.totalAmount}>
                                 ${currentContract.totalAmount}
                             </div>
-                            <div className="text-sm text-gray-600">
+                            <div className={styles.escrowBalance}>
                                 Escrow Balance: ${currentContract.escrowBalance}
                             </div>
                         </div>
                     </div>
 
-                    <div className="border-t border-gray-200 pt-4 mt-4">
-                        <h3 className="text-lg font-semibold mb-2">Project Scope</h3>
-                        <p className="text-gray-700 whitespace-pre-wrap">{currentContract.scope}</p>
+                    <div className={styles.scopeSection}>
+                        <h3 className={styles.scopeTitle}>Project Scope</h3>
+                        <p className={styles.scopeText}>{currentContract.scope}</p>
                     </div>
 
                     {/* Complete Contract Button */}
                     {isClient && areAllMilestonesPaid() && currentContract.status !== "completed" && (
-                        <div className="mt-6">
+                        <div className={styles.buttonWrapper}>
                             <button
                                 onClick={handleCompleteContract}
-                                className="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center"
+                                className={styles.primaryButton}
                             >
-                                <Check className="w-4 h-4 mr-2" />
+                                <Check className={styles.buttonIcon} />
                                 Complete Contract
                             </button>
                         </div>
@@ -179,12 +180,12 @@ const ContractDetailsPage = () => {
 
                     {/* Fund Escrow Button (Client Only) */}
                     {isClient && currentContract.status === "draft" && (
-                        <div className="mt-6">
+                        <div className={styles.buttonWrapper}>
                             <button
                                 onClick={() => setShowFundModal(true)}
-                                className="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center"
+                                className={styles.primaryButton}
                             >
-                                <DollarSign className="w-4 h-4 mr-2" />
+                                <DollarSign className={styles.buttonIcon} />
                                 Fund Escrow
                             </button>
                         </div>
@@ -192,76 +193,76 @@ const ContractDetailsPage = () => {
                 </div>
 
                 {/* Milestones */}
-                <div className="bg-white rounded-lg shadow-md p-6">
-                    <h2 className="text-xl font-semibold mb-6">Milestones</h2>
-                    <div className="space-y-4">
+                <div className={styles.milestonesCard}>
+                    <h2 className={styles.milestonesTitle}>Milestones</h2>
+                    <div className={styles.milestonesList}>
                         {currentContract.milestones.map((milestone, index) => (
-                            <div key={index} className="border border-gray-200 rounded-lg">
+                            <div key={index} className={styles.milestoneItem}>
                                 {/* Milestone Header */}
                                 <div 
-                                    className="p-4 cursor-pointer hover:bg-gray-50 flex items-center justify-between"
+                                    className={styles.milestoneHeader}
                                     onClick={() => setExpandedMilestone(expandedMilestone === index ? null : index)}
                                 >
-                                    <div className="flex-1">
-                                        <div className="flex items-center justify-between">
-                                            <h3 className="font-medium text-gray-900">
+                                    <div className={styles.milestoneInfo}>
+                                        <div className={styles.milestoneHeaderContent}>
+                                            <h3 className={styles.milestoneTitle}>
                                                 {milestone.title}
                                             </h3>
-                                            <span className={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getMilestoneStatusColor(milestone.status)}`}>
+                                            <span className={`${styles.milestoneBadge} ${getMilestoneStatusColor(milestone.status)}`}>
                                                 {milestone.status.replace("_", " ").charAt(0).toUpperCase() + milestone.status.slice(1)}
                                             </span>
                                         </div>
-                                        <div className="mt-1 text-sm text-gray-600">
+                                        <div className={styles.milestoneDueDate}>
                                             Due: {new Date(milestone.dueDate).toLocaleDateString()}
                                         </div>
-                                        <div className="mt-1 text-sm font-medium text-gray-900">
+                                        <div className={styles.milestoneAmount}>
                                             ${milestone.amount}
                                         </div>
                                     </div>
                                     {expandedMilestone === index ? (
-                                        <ChevronUp className="w-5 h-5 text-gray-500" />
+                                        <ChevronUp className={styles.chevronIcon} />
                                     ) : (
-                                        <ChevronDown className="w-5 h-5 text-gray-500" />
+                                        <ChevronDown className={styles.chevronIcon} />
                                     )}
                                 </div>
 
                                 {/* Milestone Details */}
                                 {expandedMilestone === index && (
-                                    <div className="border-t border-gray-200 p-4">
-                                        <p className="text-gray-700 mb-4">
+                                    <div className={styles.milestoneDetails}>
+                                        <p className={styles.milestoneDescription}>
                                             {milestone.description}
                                         </p>
 
                                         {/* Work Submission (Freelancer Only) */}
                                         {!isClient && milestone.status === "in_progress" && (
-                                            <div className="space-y-4">
+                                            <div className={styles.formGroup}>
                                                 <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                    <label className={styles.label}>
                                                         Upload Files
                                                     </label>
                                                     <input
                                                         type="file"
                                                         multiple
                                                         onChange={handleFileChange}
-                                                        className="w-full"
+                                                        className={styles.fileInput}
                                                     />
                                                 </div>
                                                 <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                    <label className={styles.label}>
                                                         Comments
                                                     </label>
                                                     <textarea
                                                         value={submissionComment}
                                                         onChange={(e) => setSubmissionComment(e.target.value)}
-                                                        className="w-full h-24 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
+                                                        className={styles.textarea}
                                                         placeholder="Add any comments about your submission..."
                                                     />
                                                 </div>
                                                 <button
                                                     onClick={() => handleSubmitWork(milestone._id)}
-                                                    className="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center"
+                                                    className={styles.primaryButton}
                                                 >
-                                                    <FileUp className="w-4 h-4 mr-2" />
+                                                    <FileUp className={styles.buttonIcon} />
                                                     Submit Work
                                                 </button>
                                             </div>
@@ -269,20 +270,20 @@ const ContractDetailsPage = () => {
 
                                         {/* Work Review (Client Only) */}
                                         {isClient && milestone.status === "submitted" && (
-                                            <div className="space-y-4">
-                                                <div className="flex gap-2">
+                                            <div className={styles.formGroup}>
+                                                <div className={styles.buttonGroup}>
                                                     <button
                                                         onClick={() => handleReviewSubmission(milestone._id, "approved")}
-                                                        className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center"
+                                                        className={styles.primaryButton}
                                                     >
-                                                        <CheckCircle className="w-4 h-4 mr-2" />
+                                                        <CheckCircle className={styles.buttonIcon} />
                                                         Approve
                                                     </button>
                                                     <button
                                                         onClick={() => handleReviewSubmission(milestone._id, "changes_requested")}
-                                                        className="flex-1 bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition-colors flex items-center justify-center"
+                                                        className={styles.warningButton}
                                                     >
-                                                        <AlertCircle className="w-4 h-4 mr-2" />
+                                                        <AlertCircle className={styles.buttonIcon} />
                                                         Request Changes
                                                     </button>
                                                 </div>
@@ -293,9 +294,9 @@ const ContractDetailsPage = () => {
                                         {isClient && milestone.status === "completed" && (
                                             <button
                                                 onClick={() => handleReleasePayment(milestone._id)}
-                                                className="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center mt-4"
+                                                className={styles.primaryButton}
                                             >
-                                                <DollarSign className="w-4 h-4 mr-2" />
+                                                <DollarSign className={styles.buttonIcon} />
                                                 Release Payment
                                             </button>
                                         )}
@@ -312,33 +313,33 @@ const ContractDetailsPage = () => {
 
             {/* Fund Escrow Modal */}
             {showFundModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg p-6 max-w-md w-full">
-                        <h3 className="text-lg font-semibold mb-4">Fund Escrow</h3>
-                        <div className="mb-4">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                <div className={styles.modalOverlay}>
+                    <div className={styles.modalContent}>
+                        <h3 className={styles.modalTitle}>Fund Escrow</h3>
+                        <div className={styles.modalForm}>
+                            <label className={styles.label}>
                                 Amount to Fund
                             </label>
-                            <div className="relative">
-                                <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+                            <div className={styles.inputWithIcon}>
+                                <DollarSign className={styles.inputIcon} />
                                 <input
                                     type="number"
                                     value={fundAmount}
                                     onChange={(e) => setFundAmount(Number(e.target.value))}
-                                    className="w-full pl-10 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                    className={styles.iconInput}
                                 />
                             </div>
                         </div>
-                        <div className="flex gap-4">
+                        <div className={styles.modalActions}>
                             <button
                                 onClick={handleFundEscrow}
-                                className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+                                className={styles.primaryButton}
                             >
                                 Fund
                             </button>
                             <button
                                 onClick={() => setShowFundModal(false)}
-                                className="flex-1 bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors"
+                                className={styles.secondaryButton}
                             >
                                 Cancel
                             </button>

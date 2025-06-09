@@ -13,6 +13,7 @@ import MessagesPage from "../pages/MessagesPage";
 import ClientJobsTab from "../components/ClientJobsTab";
 import { useNotificationStore } from "../store/notificationStore";
 import { format } from 'date-fns';
+import styles from './ClientDashboardPage.module.css';
 
 const ClientDashboardPage = () => {
 	const { user, logout, activeTab, setActiveTab } = useAuthStore();
@@ -181,86 +182,53 @@ const ClientDashboardPage = () => {
 	};
 
 	return (
-		<div className="min-h-screen bg-gray-50">
-			{/* Custom scrollbar styles */}
-			<style>
-				{`
-				.custom-scrollbar::-webkit-scrollbar {
-					width: 6px;
-				}
-				.custom-scrollbar::-webkit-scrollbar-track {
-					background: #f1f1f1;
-					border-radius: 10px;
-				}
-				.custom-scrollbar::-webkit-scrollbar-thumb {
-					background: #c1c1c1;
-					border-radius: 10px;
-					transition: background 0.2s ease;
-				}
-				.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-					background: #a1a1a1;
-				}
-				.custom-scrollbar {
-					scrollbar-width: thin;
-					scrollbar-color: #c1c1c1 #f1f1f1;
-					scroll-behavior: smooth;
-				}
-				`}
-			</style>
-			
+		<div className={styles.container}>
 			{/* Top navigation bar */}
-			<header className="bg-white border-b border-gray-200 sticky top-0 z-10">
-				<div className="w-full px-4 sm:px-6 lg:px-8">
-					<div className="flex justify-between h-16">
+			<header className={styles.header}>
+				<div className={styles.headerContainer}>
+					<div className={styles.headerContent}>
 						<div className="flex items-center">
-							<div className="flex-shrink-0 flex items-center">
-								<span className="text-2xl font-bold text-gray-800">GigPanda</span>
-								<span className="ml-2 text-2xl">🐼</span>
+							<div className={styles.logo}>
+								<span className={styles.logoText}>GigPanda</span>
+								<span className={styles.logoEmoji}>🐼</span>
 							</div>
-							<div className="hidden md:ml-6 md:flex md:space-x-8">
+							<div className={styles.navigation}>
 								<button
 									onClick={() => setActiveTab("dashboard")}
-									className={`border-b-2 px-1 pt-5 pb-4 text-sm font-medium ${
-										activeTab === "dashboard"
-											? "border-gray-800 text-gray-900"
-											: "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+									className={`${styles.navLink} ${
+										activeTab === "dashboard" ? styles.navLinkActive : styles.navLinkInactive
 									}`}
 								>
 									Dashboard
 								</button>
 								<button
 									onClick={() => setActiveTab("myjobs")}
-									className={`border-b-2 px-1 pt-5 pb-4 text-sm font-medium ${
-										activeTab === "myjobs"
-											? "border-gray-800 text-gray-900"
-											: "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+									className={`${styles.navLink} ${
+										activeTab === "myjobs" ? styles.navLinkActive : styles.navLinkInactive
 									}`}
 								>
 									My Jobs
 								</button>
 								<button
 									onClick={() => setActiveTab("messages")}
-									className={`border-b-2 px-1 pt-5 pb-4 text-sm font-medium ${
-										activeTab === "messages"
-											? "border-gray-800 text-gray-900"
-											: "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+									className={`${styles.navLink} ${
+										activeTab === "messages" ? styles.navLinkActive : styles.navLinkInactive
 									}`}
 								>
 									Messages
 								</button>
 							</div>
 						</div>
-						<div className="flex items-center">
-							<div className="flex-shrink-0 flex items-center space-x-4">
-								{/* Search component */}
+						<div className={styles.headerActions}>
+							<div className={styles.actionButtons}>
 								<SearchBar />
-								<button type="button" className="p-2 text-gray-500 hover:text-gray-700 focus:outline-none">
+								<button type="button" className={styles.iconButton}>
 									<BookmarkIcon className="h-5 w-5" />
 								</button>
 								<div className="relative" ref={notificationRef}>
 									<button 
 										type="button" 
-										className="p-2 text-gray-500 hover:text-gray-700 focus:outline-none relative"
+										className={styles.iconButton}
 										onClick={() => {
 											setIsNotificationOpen(!isNotificationOpen);
 											if (!isNotificationOpen && unreadCount > 0) {
@@ -270,54 +238,50 @@ const ClientDashboardPage = () => {
 									>
 										<BellIcon className="h-5 w-5" />
 										{unreadCount > 0 && (
-											<span className="absolute top-0 right-0 block h-5 w-5 rounded-full bg-red-500 ring-2 ring-white text-white text-xs flex items-center justify-center">
+											<span className={styles.notificationBadge}>
 												{unreadCount}
 											</span>
 										)}
 									</button>
 
 									{isNotificationOpen && (
-										<div className="absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-lg border border-gray-200 max-h-[80vh] overflow-hidden z-50">
-											<div className="p-4 border-b border-gray-200">
-												<h3 className="text-lg font-semibold">Notifications</h3>
+										<div className={styles.notificationPanel}>
+											<div className={styles.notificationHeader}>
+												<h3 className={styles.notificationTitle}>Notifications</h3>
 											</div>
 											
 											<div 
 												ref={notificationListRef}
 												onScroll={handleNotificationScroll}
-												className="divide-y divide-gray-200 overflow-y-auto max-h-[calc(80vh-4rem)]"
+												className={styles.notificationList}
 											>
 												{notificationLoading && notifications.length === 0 ? (
-													<div className="flex flex-col items-center justify-center py-8">
-														<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
-														<p className="mt-2 text-sm text-gray-500">Loading notifications...</p>
+													<div className={styles.notificationLoading}>
+														<div className={styles.loadingSpinner}></div>
+														<p className={styles.loadingText}>Loading notifications...</p>
 													</div>
 												) : notifications.length === 0 ? (
-													<div className="p-4 text-center text-gray-500">
+													<div className={styles.notificationEmpty}>
 														No notifications
 													</div>
 												) : (
 													<>
-														{notifications.map((notification) => {
-															const senderName = notification.sender?.name || 'Someone';
-															const jobTitle = notification.job?.title || 'a job';
-															
 															return (
 																<div
 																	key={notification._id}
 																	onClick={() => handleNotificationClick(notification)}
-																	className={`block p-4 hover:bg-gray-50 transition-colors cursor-pointer ${
-																		!notification.read ? 'bg-blue-50' : ''
+																	className={`${styles.notificationItem} ${
+																		!notification.read ? styles.notificationItemUnread : ''
 																	}`}
 																>
-																	<div className="flex items-start gap-3">
+																	<div className={styles.notificationContent}>
 																		<img
 																			src={notification.sender?.profile?.pictureUrl || '/default-avatar.png'}
 																			alt={senderName}
-																			className="w-10 h-10 rounded-full object-cover"
+																			className={styles.notificationAvatar}
 																		/>
-																		<div className="flex-1">
-																			<p className="text-sm text-gray-800">
+																		<div className={styles.notificationMessage}>
+																			<p className={styles.notificationText}>
 																				{(() => {
 																					switch (notification.type) {
 																						case 'NEW_PROPOSAL':
@@ -357,12 +321,12 @@ const ClientDashboardPage = () => {
 																					}
 																				})()}
 																			</p>
-																			<p className="text-xs text-gray-500 mt-1">
+																			<p className={styles.notificationTime}>
 																				{format(new Date(notification.createdAt), 'MMM d, yyyy h:mm a')}
 																			</p>
 																		</div>
 																		{!notification.read && (
-																			<div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+																			<div className={styles.notificationDot}></div>
 																		)}
 																	</div>
 																</div>
@@ -372,7 +336,7 @@ const ClientDashboardPage = () => {
 															<div className="p-4 text-center">
 																{notificationLoading ? (
 																	<div className="flex items-center justify-center">
-																		<div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-900"></div>
+																		<div className={styles.loadingSpinner}></div>
 																	</div>
 																) : (
 																	<button
@@ -390,17 +354,17 @@ const ClientDashboardPage = () => {
 										</div>
 									)}
 								</div>
-								<div className="ml-3 relative">
+								<div className={styles.userMenu}>
 									<div className="flex items-center">
 										<button 
-											className="bg-gray-100 flex items-center text-sm rounded-full focus:outline-none hover:bg-gray-200 transition-colors duration-200 px-2 py-1"
+											className={styles.userButton}
 											onClick={(e) => {
 												e.stopPropagation();
 												toggleDropdown();
 											}}
 										>
 											<span className="sr-only">Open user menu</span>
-											<div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center text-white mr-2">
+											<div className={styles.userAvatar}>
 												{user?.profile?.pictureUrl ? (
 													<img 
 														src={user.profile.pictureUrl} 
@@ -411,7 +375,7 @@ const ClientDashboardPage = () => {
 													user?.name?.charAt(0)?.toUpperCase() || <User className="h-5 w-5" />
 												)}
 											</div>
-											<span className="text-sm text-gray-700 hidden md:block mr-1">
+											<span className={styles.userName}>
 												{user?.name || "User"}
 											</span>
 											<ChevronDown className={`h-4 w-4 text-gray-500 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
