@@ -52,9 +52,15 @@ export const getBookmarks = async (req, res) => {
   try {
     const user_id = req.userId;
 
-    // Get bookmarked jobs with full job data
+    // Get bookmarked jobs with full job data and client data
     const bookmarks = await Bookmark.find({ user: user_id })
-      .populate('job')  // Changed from post to job
+      .populate({
+        path: 'job',
+        populate: {
+          path: 'client',
+          select: 'name email' // Only select necessary client fields
+        }
+      })
       .sort({ createdAt: -1 });
 
     // Transform the data to match the expected format

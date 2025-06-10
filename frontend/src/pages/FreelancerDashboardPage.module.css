@@ -379,7 +379,19 @@
 }
 
 .bookmarkButton {
-  @apply p-2 rounded-lg transition-colors text-gray-400 hover:text-gray-600 hover:bg-gray-50;
+  @apply p-2 text-gray-400 hover:text-gray-600 transition-colors duration-200 rounded-full hover:bg-gray-100;
+}
+
+.bookmarkButton.active {
+  @apply text-green-600;
+}
+
+.bookmarkButton svg {
+  @apply w-5 h-5;
+}
+
+.bookmarkButton.active svg {
+  @apply fill-current;
 }
 
 .proposalButton {
