@@ -328,34 +328,36 @@ const loadInitialData = useCallback(async (force = false) => {
 							</div>
 							<div className="hidden md:ml-6 md:flex md:space-x-8">
 								<button
-									onClick={() => setActiveTab('dashboard')}
-									className={`inline-flex items-center px-1 pt-1 text-sm font-medium border-b-2 ${
-										activeTab === 'dashboard'
-											? 'border-green-500 text-gray-900'
-											: 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+									onClick={() => setActiveTab("dashboard")}
+									className={`${styles.navLink} ${
+										activeTab === "dashboard" ? styles.navLinkActive : styles.navLinkInactive
 									}`}
 								>
 									Dashboard
 								</button>
 								<button
-									onClick={() => setActiveTab('proposals')}
-									className={`inline-flex items-center px-1 pt-1 text-sm font-medium border-b-2 ${
-										activeTab === 'proposals'
-											? 'border-green-500 text-gray-900'
-											: 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+									onClick={() => setActiveTab("myjobs")}
+									className={`${styles.navLink} ${
+										activeTab === "myjobs" ? styles.navLinkActive : styles.navLinkInactive
 									}`}
 								>
-									My Proposals
+									My Jobs
 								</button>
 								<button
-									onClick={() => setActiveTab('messages')}
-									className={`inline-flex items-center px-1 pt-1 text-sm font-medium border-b-2 ${
-										activeTab === 'messages'
-											? 'border-green-500 text-gray-900'
-											: 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+									onClick={() => setActiveTab("messages")}
+									className={`${styles.navLink} ${
+										activeTab === "messages" ? styles.navLinkActive : styles.navLinkInactive
 									}`}
 								>
 									Messages
+								</button>
+								<button
+									onClick={() => setActiveTab("bookmarks")}
+									className={`${styles.navLink} ${
+										activeTab === "bookmarks" ? styles.navLinkActive : styles.navLinkInactive
+									}`}
+								>
+									Bookmarks
 								</button>
 								<button
 									onClick={() => setActiveTab('accepted-work')}
@@ -373,7 +375,11 @@ const loadInitialData = useCallback(async (force = false) => {
 							<div className="flex-shrink-0 flex items-center space-x-4">
 								{/* Search component */}
 								<SearchBar />
-								<button type="button" className="p-2 text-gray-500 hover:text-gray-700 focus:outline-none">
+								<button 
+									type="button" 
+									onClick={() => setActiveTab("bookmarks")}
+									className="p-2 text-gray-500 hover:text-gray-700 focus:outline-none"
+								>
 									<BookmarkIcon className="h-5 w-5" />
 								</button>
 								<div className="relative" ref={notificationRef}>
@@ -765,20 +771,20 @@ const loadInitialData = useCallback(async (force = false) => {
 															<span>{job.proposalCount || 0} proposals</span>
 														</div>
 																<div className={styles.jobActions}>
-																	  <button 
-    onClick={(e) => handleToggleBookmark(e, job._id)}
-    className={`${styles.bookmarkButton} ${isJobBookmarked(job._id) ? 'text-green-600' : ''}`}
-    title={isJobBookmarked(job._id) ? "Remove bookmark" : "Add to bookmarks"}
-  >
-    <BookmarkIcon className={`h-4 w-4 ${isJobBookmarked(job._id) ? 'fill-current' : ''}`} />
-  </button>
-															<button 
-																onClick={() => handleApplyToJob(job)}
+																	<button 
+																		onClick={(e) => handleToggleBookmark(e, job._id)}
+																		className={`${styles.bookmarkButton} ${isJobBookmarked(job._id) ? styles.active : ''}`}
+																		title={isJobBookmarked(job._id) ? "Remove from bookmarks" : "Add to bookmarks"}
+																	>
+																		<BookmarkIcon className="h-5 w-5" />
+																	</button>
+																	<button 
+																		onClick={() => handleApplyToJob(job)}
 																		className={styles.proposalButton}
-															>
-																Send Proposal
-															</button>
-														</div>
+																	>
+																		Send Proposal
+																	</button>
+																</div>
 													</div>
 												</div>
 											</div>
@@ -922,6 +928,15 @@ const loadInitialData = useCallback(async (force = false) => {
 						className="bg-white rounded-xl shadow-sm"
 					>
 						<AcceptedWorkTab />
+					</motion.div>
+				) : activeTab === "bookmarks" ? (
+					<motion.div
+						initial={{ opacity: 0, y: 20 }}
+						animate={{ opacity: 1, y: 0 }}
+						transition={{ delay: 0.2 }}
+						className="bg-white rounded-xl shadow-sm"
+					>
+						<BookmarksPage />
 					</motion.div>
 				) : null}
 			</main>

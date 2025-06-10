@@ -198,5 +198,6 @@ export const useAuthStore = create((set, get) => ({
 	// Helper method to get current user
 	getCurrentUser: () => get().user,
 
+	// Set active tab
 	setActiveTab: (tab) => set({ activeTab: tab })
 }));

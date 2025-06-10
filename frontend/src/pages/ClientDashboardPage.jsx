@@ -276,6 +276,9 @@ const ClientDashboardPage = () => {
 													</div>
 												) : (
 													<>
+														{notifications.map((notification) => {
+															const senderName = notification.sender?.name || 'Someone';
+															const jobTitle = notification.job?.title || 'a job';
 															return (
 																<div
 																	key={notification._id}
