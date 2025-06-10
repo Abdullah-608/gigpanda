@@ -15,6 +15,8 @@ import { format } from 'date-fns';
 import AcceptedWorkTab from "../components/AcceptedWorkTab";
 import { useContractStore } from "../store/contractStore";
 import styles from "./FreelancerDashboardPage.module.css";
+import { useBookmarkStore } from "../store/bookmarkStore";
+import BookmarksPage from "./BookmarkPage";
 
 const FreelancerDashboardPage = () => {
 	const { user, logout, activeTab, setActiveTab } = useAuthStore();
@@ -26,6 +28,8 @@ const FreelancerDashboardPage = () => {
 	const [isProposalModalOpen, setIsProposalModalOpen] = useState(false);
 	const [isCreatePostModalOpen, setIsCreatePostModalOpen] = useState(false);
 	const [selectedJob, setSelectedJob] = useState(null);
+	const { isJobBookmarked, toggleBookmark, fetchBookmarks } = useBookmarkStore();
+	
 	const { 
 		notifications, 
 		unreadCount, 
@@ -86,21 +90,23 @@ const FreelancerDashboardPage = () => {
 	};
 
 	// Function to load initial data
-	const loadInitialData = useCallback(async (force = false) => {
-		if (force || shouldFetchData()) {
-			try {
-				await Promise.all([
-					fetchJobs(),
-					fetchPosts(),
-					fetchNotifications(),
-					getMyContracts()
-				]);
-				setLastFetchTime(Date.now());
-			} catch (error) {
-				console.error('Error loading initial data:', error);
-			}
-		}
-	}, [fetchJobs, fetchPosts, fetchNotifications, getMyContracts, shouldFetchData]);
+const loadInitialData = useCallback(async (force = false) => {
+    if (force || shouldFetchData()) {
+      try {
+        await Promise.all([
+          fetchJobs(),
+          fetchPosts(),
+          fetchNotifications(),
+          getMyContracts(),
+          fetchBookmarks() // Add this line
+        ]);
+        setLastFetchTime(Date.now());
+      } catch (error) {
+        console.error('Error loading initial data:', error);
+      }
+    }
+  }, [fetchJobs, fetchPosts, fetchNotifications, getMyContracts, fetchBookmarks, shouldFetchData]);
+  
 	
 	useEffect(() => {
 		loadInitialData();
@@ -137,7 +143,10 @@ const FreelancerDashboardPage = () => {
 			console.error("Logout failed:", error);
 		}
 	};
-
+ const handleToggleBookmark = async (e, jobId) => {
+    e.stopPropagation(); // Prevent job card click
+    await toggleBookmark(jobId);
+  };
 	const toggleDropdown = () => {
 		setIsDropdownOpen(!isDropdownOpen);
 	};
@@ -756,9 +765,13 @@ const FreelancerDashboardPage = () => {
 															<span>{job.proposalCount || 0} proposals</span>
 														</div>
 																<div className={styles.jobActions}>
-																	<button className={styles.bookmarkButton}>
-																<BookmarkIcon className="h-4 w-4" />
-															</button>
+																	  <button 
+    onClick={(e) => handleToggleBookmark(e, job._id)}
+    className={`${styles.bookmarkButton} ${isJobBookmarked(job._id) ? 'text-green-600' : ''}`}
+    title={isJobBookmarked(job._id) ? "Remove bookmark" : "Add to bookmarks"}
+  >
+    <BookmarkIcon className={`h-4 w-4 ${isJobBookmarked(job._id) ? 'fill-current' : ''}`} />
+  </button>
 															<button 
 																onClick={() => handleApplyToJob(job)}
 																		className={styles.proposalButton}

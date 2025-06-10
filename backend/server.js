@@ -15,6 +15,7 @@ import proposalRoutes from "./routes/proposal.route.js";
 import messageRoutes from "./routes/message.routes.js";
 import contractRoutes from "./routes/contract.route.js";
 import { router as notificationRoutes } from "./routes/notifications.js";
+import bookmarkRoutes from "./routes/bookmark.route.js"
 
 dotenv.config();
 
@@ -40,6 +41,7 @@ app.use("/api/proposals", proposalRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/contracts", contractRoutes);
+app.use('/api/bookmarks', bookmarkRoutes);
 
 if (process.env.NODE_ENV === "production") {
 	app.use(express.static(path.join(__dirname, "/frontend/dist")));
