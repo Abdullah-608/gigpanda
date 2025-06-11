@@ -112,13 +112,19 @@ export const getJobs = async (req, res) => {
         if (timeline && timeline !== 'all') {
             filter.timeline = timeline;
         }
+        // Budget filtering - include jobs whose budget range overlaps with filter range
         if (budgetMin || budgetMax) {
+            const budgetFilter = {};
             if (budgetMin) {
-                filter['budget.min'] = { $gte: parseInt(budgetMin) };
+                // Job's max budget should be >= filter's min (job is not too cheap)
+                budgetFilter['budget.max'] = { $gte: parseInt(budgetMin) };
             }
             if (budgetMax) {
-                filter['budget.max'] = { $lte: parseInt(budgetMax) };
+                // Job's min budget should be <= filter's max (job is not too expensive)
+                budgetFilter['budget.min'] = { $lte: parseInt(budgetMax) };
             }
+            // Combine budget filters with AND
+            Object.assign(filter, budgetFilter);
         }
 
         // Get jobs where the freelancer's proposal hasn't been accepted
