@@ -16,6 +16,7 @@ import MyProposalsPage from "./pages/MyProposalsPage";
 import MessagesPage from "./pages/MessagesPage";
 import CreateContractPage from "./pages/CreateContractPage";
 import SettingsPage from "./pages/SettingsPage"; // Add this import
+import SearchPage from "./pages/SearchPage"; // Add this import
 
 import LoadingSpinner from "./components/LoadingSpinner";
 
@@ -60,7 +61,7 @@ function App() {
 	if (isCheckingAuth) return <LoadingSpinner />;
 
 	// Check if current route is a dashboard route
-	const isDashboardRoute = ['/dashboard', '/client-dashboard', '/freelancer-dashboard', '/profile-setup', '/settings'].includes(location.pathname);
+	const isDashboardRoute = ['/dashboard', '/client-dashboard', '/freelancer-dashboard', '/profile-setup', '/settings', '/search'].includes(location.pathname);
 
 	// For dashboard routes, render without background
 	if (isDashboardRoute) {
@@ -112,6 +113,16 @@ function App() {
 						element={
 							<ProtectedRoute>
 								<SettingsPage />
+							</ProtectedRoute>
+						}
+					/>
+
+					{/* Search Page */}
+					<Route
+						path='/search'
+						element={
+							<ProtectedRoute>
+								<SearchPage />
 							</ProtectedRoute>
 						}
 					/>

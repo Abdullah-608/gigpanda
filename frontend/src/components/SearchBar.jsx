@@ -41,7 +41,7 @@ const SearchBar = () => {
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      navigate(`/search?s=${encodeURIComponent(searchQuery.trim())}`);
       setShowSearch(false);
     }
   };

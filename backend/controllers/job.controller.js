@@ -74,14 +74,27 @@ export const createJob = async (req, res) => {
 // Get all jobs (with filters)
 export const getJobs = async (req, res) => {
     try {
-        const { page = 1, limit = 10, search, category, experienceLevel, budgetMin, budgetMax, location } = req.query;
+        const { 
+            page = 1, 
+            limit = 10, 
+            search, 
+            category, 
+            experienceLevel, 
+            budgetMin, 
+            budgetMax, 
+            budgetType,
+            timeline,
+            location,
+            sortBy = 'newest'
+        } = req.query;
 
         // Build filter
         const filter = { status: 'open' }; // Only show open jobs
         if (search) {
             filter.$or = [
                 { title: { $regex: search, $options: 'i' } },
-                { description: { $regex: search, $options: 'i' } }
+                { description: { $regex: search, $options: 'i' } },
+                { skillsRequired: { $in: [new RegExp(search, 'i')] } }
             ];
         }
         if (category && category !== 'all') {
@@ -93,10 +106,19 @@ export const getJobs = async (req, res) => {
         if (location && location !== 'all') {
             filter.location = location;
         }
+        if (budgetType && budgetType !== 'all') {
+            filter.budgetType = budgetType;
+        }
+        if (timeline && timeline !== 'all') {
+            filter.timeline = timeline;
+        }
         if (budgetMin || budgetMax) {
-            filter.budget = {};
-            if (budgetMin) filter.budget.$gte = parseInt(budgetMin);
-            if (budgetMax) filter.budget.$lte = parseInt(budgetMax);
+            if (budgetMin) {
+                filter['budget.min'] = { $gte: parseInt(budgetMin) };
+            }
+            if (budgetMax) {
+                filter['budget.max'] = { $lte: parseInt(budgetMax) };
+            }
         }
 
         // Get jobs where the freelancer's proposal hasn't been accepted
@@ -108,13 +130,36 @@ export const getJobs = async (req, res) => {
         const acceptedJobIds = acceptedProposals.map(p => p.job);
         filter._id = { $nin: acceptedJobIds };
 
+        // Build sort object
+        let sortObject = {};
+        switch (sortBy) {
+            case 'newest':
+                sortObject = { createdAt: -1 };
+                break;
+            case 'oldest':
+                sortObject = { createdAt: 1 };
+                break;
+            case 'budget-high':
+                sortObject = { 'budget.max': -1 };
+                break;
+            case 'budget-low':
+                sortObject = { 'budget.min': 1 };
+                break;
+            case 'deadline':
+                // Sort by timeline priority (urgent first)
+                sortObject = { timeline: 1, createdAt: -1 };
+                break;
+            default:
+                sortObject = { createdAt: -1 };
+        }
+
         // Calculate pagination
         const skip = (parseInt(page) - 1) * parseInt(limit);
         
         // Get jobs
         const jobs = await Job.find(filter)
             .populate('client', 'name email profilePicture')
-            .sort({ createdAt: -1 })
+            .sort(sortObject)
             .skip(skip)
             .limit(parseInt(limit));
 

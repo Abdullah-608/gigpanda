@@ -259,8 +259,46 @@ export const useJobStore = create((set, get) => ({
     },
 
     // Search jobs
-    searchJobs: async (searchTerm, filters = {}) => {
-        return get().fetchJobs(1, 10, { ...filters, search: searchTerm });
+    searchJobs: async (searchParams = {}) => {
+        set({ isLoading: true, error: null });
+        try {
+            const { query, page = 1, limit = 10, ...filters } = searchParams;
+            
+            // Build the query parameters
+            const params = new URLSearchParams({
+                page: page.toString(),
+                limit: limit.toString()
+            });
+
+            // Add search query if provided
+            if (query && query.trim()) {
+                params.append('search', query.trim());
+            }
+
+            // Add filters
+            Object.keys(filters).forEach(key => {
+                if (filters[key] !== '' && filters[key] !== null && filters[key] !== undefined) {
+                    params.append(key, filters[key]);
+                }
+            });
+
+            const response = await axios.get(`${API_URL}?${params}`);
+            
+            if (response.data.success) {
+                set((state) => ({
+                    jobs: page === 1 ? response.data.jobs : [...state.jobs, ...response.data.jobs],
+                    pagination: response.data.pagination,
+                    isLoading: false,
+                    error: null
+                }));
+            }
+            return response.data;
+        } catch (error) {
+            console.error('Error searching jobs:', error);
+            const errorMessage = error.response?.data?.message || "Failed to search jobs";
+            set({ error: errorMessage, isLoading: false });
+            throw new Error(errorMessage);
+        }
     },
 
     // Filter jobs
