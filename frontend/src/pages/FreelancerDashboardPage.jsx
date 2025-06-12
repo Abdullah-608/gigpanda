@@ -17,6 +17,7 @@ import { useContractStore } from "../store/contractStore";
 import styles from "./FreelancerDashboardPage.module.css";
 import { useBookmarkStore } from "../store/bookmarkStore";
 import BookmarksPage from "./BookmarkPage";
+import ChatBot from '../components/ChatBot'
 
 const FreelancerDashboardPage = () => {
 	const { user, logout, activeTab, setActiveTab } = useAuthStore();
@@ -287,6 +288,7 @@ const loadInitialData = useCallback(async (force = false) => {
 
 	return (
 		<div className="min-h-screen bg-white w-full" onClick={closeDropdown}>
+			<ChatBot/>
 			{/* Custom scrollbar styles */}
 			<style>{`
 				.custom-scrollbar::-webkit-scrollbar {

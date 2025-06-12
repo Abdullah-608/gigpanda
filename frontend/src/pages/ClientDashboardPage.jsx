@@ -14,6 +14,7 @@ import ClientJobsTab from "../components/ClientJobsTab";
 import { useNotificationStore } from "../store/notificationStore";
 import { format } from 'date-fns';
 import styles from './ClientDashboardPage.module.css';
+import ChatBot from '../components/ChatBot'
 
 const ClientDashboardPage = () => {
 	const { user, logout, activeTab, setActiveTab } = useAuthStore();
@@ -192,7 +193,9 @@ const ClientDashboardPage = () => {
 	};
 
 	return (
+		
 		<div className={styles.container}>
+			<ChatBot/>
 			{/* Top navigation bar */}
 			<header className={styles.header}>
 				<div className={styles.headerContainer}>

@@ -16,6 +16,7 @@ import messageRoutes from "./routes/message.routes.js";
 import contractRoutes from "./routes/contract.route.js";
 import { router as notificationRoutes } from "./routes/notifications.js";
 import bookmarkRoutes from "./routes/bookmark.route.js"
+import geminiRoutes from './routes/gemini.route.js'
 
 dotenv.config();
 
@@ -42,7 +43,18 @@ app.use("/api/messages", messageRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/contracts", contractRoutes);
 app.use('/api/bookmarks', bookmarkRoutes);
+app.use('/api/gemini', geminiRoutes);
 
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({
+    success: false,
+    message: 'Something went wrong on the server',
+    error: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error'
+  });
+});
 if (process.env.NODE_ENV === "production") {
 	app.use(express.static(path.join(__dirname, "/frontend/dist")));
 
