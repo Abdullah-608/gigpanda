@@ -338,12 +338,12 @@ const loadInitialData = useCallback(async (force = false) => {
 									Dashboard
 								</button>
 								<button
-									onClick={() => setActiveTab("myjobs")}
+									onClick={() => setActiveTab("proposals")}
 									className={`${styles.navLink} ${
-										activeTab === "myjobs" ? styles.navLinkActive : styles.navLinkInactive
+										activeTab === "proposals" ? styles.navLinkActive : styles.navLinkInactive
 									}`}
 								>
-									My Jobs
+									Proposals
 								</button>
 								<button
 									onClick={() => setActiveTab("messages")}
