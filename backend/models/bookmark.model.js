@@ -1,25 +1,22 @@
 import mongoose from 'mongoose';
-const { Schema } = mongoose;
 
-const BookmarkSchema = new Schema({
+const bookmarkSchema = new mongoose.Schema({
   user: {
-    type: Schema.Types.ObjectId,
+    type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true
   },
-  job: {  // Changed from post to job
-    type: Schema.Types.ObjectId,
-    ref: 'Job',  // Changed to reference Job model
+  job: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Job',
     required: true
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
   }
-});
+}, { timestamps: true });
 
-// Compound index to ensure a user can only bookmark a job once
-BookmarkSchema.index({ user: 1, job: 1 }, { unique: true });
+// Create a compound index that allows a user to have multiple bookmarks
+// as long as each one is for a different job
+bookmarkSchema.index({ user: 1, job: 1 }, { unique: true });
 
-const Bookmark = mongoose.model('Bookmark', BookmarkSchema);
+const Bookmark = mongoose.model('Bookmark', bookmarkSchema);
+
 export default Bookmark;
