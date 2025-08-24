@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
+import { API_URLS } from "../config/api.js";
 
 export const useBookmarkStore = create((set, get) => ({
   bookmarks: [],
@@ -12,7 +13,7 @@ export const useBookmarkStore = create((set, get) => ({
   fetchBookmarks: async () => {
     try {
       set({ isLoading: true, error: null });
-      const response = await axios.get('/api/bookmarks');
+      const response = await axios.get(API_URLS.bookmarks);
       
       // Create a set of bookmarked job IDs for quick lookups
       const bookmarkedIds = new Set(response.data.data.map(job => job._id));
@@ -39,7 +40,7 @@ export const useBookmarkStore = create((set, get) => ({
   addBookmark: async (jobId) => {
     try {
       set({ isLoading: true, error: null });
-      const response = await axios.post('/api/bookmarks', { job_id: jobId });
+      const response = await axios.post(API_URLS.bookmarks, { job_id: jobId });
       
       // Update the bookmarked jobs set
       const newBookmarkedIds = new Set(get().bookmarkedJobIds);
@@ -60,7 +61,7 @@ export const useBookmarkStore = create((set, get) => ({
   removeBookmark: async (jobId) => {
     try {
       set({ isLoading: true, error: null });
-      const response = await axios.delete(`/api/bookmarks/${jobId}`);
+      const response = await axios.delete(`${API_URLS.bookmarks}/${jobId}`);
       
       // Update the bookmarked jobs set
       const newBookmarkedIds = new Set(get().bookmarkedJobIds);

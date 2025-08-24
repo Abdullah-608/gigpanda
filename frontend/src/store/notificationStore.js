@@ -1,8 +1,9 @@
 import { create } from 'zustand';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
+import { API_URLS } from "../config/api.js";
 
-const API_URL = import.meta.env.MODE === "development" ? "http://localhost:5000/api/notifications" : "/api/notifications";
+const API_URL = API_URLS.notifications;
 
 axios.defaults.withCredentials = true;
 

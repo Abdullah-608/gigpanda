@@ -2,6 +2,40 @@
 
 GigPanda is a modern freelancing platform that connects talented freelancers with clients looking for professional services. Built with React, Node.js, and MongoDB, it provides a seamless experience for both freelancers and clients.
 
+## 🚀 Quick Setup
+```
+## Manual Setup
+1. Copy environment files:
+```bash
+cp .env.example .env
+cp frontend/.env.example frontend/.env
+```
+
+2. Edit the `.env` files with your configuration
+3. Install dependencies: `npm run install-all`
+4. For development: `npm run dev`
+5. For production: `npm run build && npm start`
+
+## 🌐 Environment Configuration
+
+This project uses centralized environment variables for easy deployment and URL management:
+
+### Backend (.env)
+- `CLIENT_URL` - Frontend application URL
+- `BACKEND_URL` - Backend API URL  
+- `DOMAIN` - Your domain for cookies
+- `MONGO_URI` - MongoDB connection string
+- `JWT_SECRET` - JWT signing secret
+- See `.env.example` for complete list
+
+### Frontend (frontend/.env)
+- `VITE_API_BASE_URL` - Backend API base URL
+- `VITE_BACKEND_URL` - Backend server URL
+- `VITE_WS_URL` - WebSocket URL
+- See `frontend/.env.example` for complete list
+
+**🔧 To change your domain:** Simply update the URLs in both `.env` files and rebuild!
+
 ## Features
 
 ### For Freelancers

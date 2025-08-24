@@ -26,7 +26,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 app.use(cors({
-	origin: process.env.NODE_ENV === "development" ? "http://localhost:5173" : "https://gigpanda.com",
+	origin: process.env.NODE_ENV === "development" ? 
+		process.env.DEV_CLIENT_URL || "http://localhost:5173" : 
+		process.env.CLIENT_URL || process.env.FRONTEND_URL,
 	credentials: true
 }));
 

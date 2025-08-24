@@ -1,13 +1,14 @@
 // API Configuration
 const config = {
     development: {
-        baseURL: 'http://localhost:5000/api',
-        wsURL: 'ws://localhost:5000',
+        baseURL: import.meta.env.VITE_DEV_API_BASE_URL || 'http://localhost:5000/api',
+        wsURL: import.meta.env.VITE_DEV_WS_URL || 'ws://localhost:5000',
+        backendURL: import.meta.env.VITE_DEV_BACKEND_URL || 'http://localhost:5000',
     },
     production: {
-        // These will be replaced with your actual production URLs
-        baseURL: '/api', // This will be relative to your domain
-        wsURL: window.location.origin.replace(/^http/, 'ws'),
+        baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
+        wsURL: import.meta.env.VITE_WS_URL || window.location.origin.replace(/^http/, 'ws'),
+        backendURL: import.meta.env.VITE_BACKEND_URL || window.location.origin,
     }
 };
 
@@ -29,4 +30,7 @@ export const API_URLS = {
     contracts: getServiceURL('contracts'),
     messages: getServiceURL('messages'),
     notifications: getServiceURL('notifications'),
+    posts: getServiceURL('posts'),
+    bookmarks: getServiceURL('bookmarks'),
+    gemini: getServiceURL('gemini'),
 }; 

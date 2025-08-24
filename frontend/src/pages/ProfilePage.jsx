@@ -177,7 +177,7 @@ const ProfilePage = () => {
             <div className="absolute inset-0 bg-gradient-to-r from-green-400 to-green-600 rounded-full blur opacity-75 group-hover:opacity-100 transition-opacity duration-300 animate-pulse-slow"></div>
             <div className="w-40 h-40 rounded-full relative overflow-hidden border-4 border-white shadow-2xl">
               <img 
-                src={profileData?.pictureUrl || 'https://via.placeholder.com/150'} 
+                src={profileData?.pictureUrl || import.meta.env.VITE_DEFAULT_PROFILE_IMAGE || 'https://via.placeholder.com/150'} 
                 alt={`${profileData.name}'s profile`}
                 className="w-full h-full object-cover" 
               />

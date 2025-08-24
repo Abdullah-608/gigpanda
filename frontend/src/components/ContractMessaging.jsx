@@ -6,7 +6,7 @@ import toast from "react-hot-toast";
 import axios from "axios";
 import FileUploadProgress from "./FileUploadProgress";
 
-const API_URL = import.meta.env.MODE === "development" ? "http://localhost:5000/api/messages" : "/api/messages";
+const API_URL = import.meta.env.MODE === "development" ? "https://gigpanda-q4ah.onrender.com/api/messages" : "/api/messages";
 
 const ContractMessaging = () => {
     const { contractId } = useParams();

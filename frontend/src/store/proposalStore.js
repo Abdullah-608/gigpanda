@@ -1,8 +1,9 @@
 import { create } from "zustand";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { API_URLS } from "../config/api.js";
 
-const API_URL = import.meta.env.MODE === "development" ? "http://localhost:5000/api/proposals" : "/api/proposals";
+const API_URL = API_URLS.proposals;
 
 // Configure axios to send credentials
 axios.defaults.withCredentials = true;

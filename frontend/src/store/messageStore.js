@@ -2,8 +2,9 @@ import { create } from "zustand";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { useAuthStore } from "./authStore";
+import { API_URLS } from "../config/api.js";
 
-const API_URL = import.meta.env.MODE === "development" ? "http://localhost:5000/api/messages" : "/api/messages";
+const API_URL = API_URLS.messages;
 
 // Configure axios to send credentials
 axios.defaults.withCredentials = true;

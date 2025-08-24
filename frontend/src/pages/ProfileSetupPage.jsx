@@ -163,7 +163,7 @@ function ProfileSetupPage() {
                 structuredData.professional = {
                     companyName: professionalData?.companyName || 'Not Specified',
                     companyInfo: professionalData?.companyInfo || 'Not Specified',
-                    companyLink: professionalData?.companyLink || 'https://example.com',
+                    companyLink: professionalData?.companyLink || import.meta.env.VITE_DEFAULT_COMPANY_URL || 'https://example.com',
                     pastProjects: professionalData?.pastProjects || ['None']
                 };
             }

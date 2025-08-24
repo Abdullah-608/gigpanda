@@ -1,10 +1,17 @@
 {
-  "name": "Freelancing_website",
+  "name": "freelancing-website",
   "version": "1.0.0",
   "description": "",
   "main": "backend/server.js",
   "scripts": {
-    "dev": "nodemon backend/server.js"
+    "dev": "nodemon backend/server.js",
+    "start": "node backend/server.js",
+    "build": "cd frontend && npm run build",
+    "install-frontend": "cd frontend && npm install",
+    "install-all": "npm install && cd frontend && npm install",
+    "dev-frontend": "cd frontend && npm run dev",
+    "preview": "cd frontend && npm run preview",
+    "deploy": "npm run build && npm start"
   },
   "keywords": [],
   "type": "module",

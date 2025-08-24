@@ -1,8 +1,9 @@
 import { create } from "zustand";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { API_URLS } from "../config/api.js";
 
-const API_URL = import.meta.env.MODE === "development" ? "http://localhost:5000/api/auth" : "/api/auth";
+const API_URL = API_URLS.auth;
 
 axios.defaults.withCredentials = true;
 
@@ -180,8 +181,7 @@ export const useAuthStore = create((set, get) => ({
 	fetchTopFreelancers: async (limit = 2) => {
 		set({ isLoadingFreelancers: true, error: null });
 		try {
-			const USER_API_URL = import.meta.env.MODE === "development" ? "http://localhost:5000/api/users" : "/api/users";
-			const response = await axios.get(`${USER_API_URL}/top-freelancers?limit=${limit}`);
+			const response = await axios.get(`${API_URLS.users}/top-freelancers?limit=${limit}`);
 			set({ 
 				topFreelancers: response.data.freelancers, 
 				isLoadingFreelancers: false 
