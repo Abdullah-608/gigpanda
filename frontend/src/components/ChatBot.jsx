@@ -1,9 +1,10 @@
 import  { useState, useEffect, useRef } from 'react';
 import './ChatBot.css';
-import { toast } from 'react-toastify'; 
+import { toast } from 'react-toastify';
+import { API_CONFIG } from '../config/api';
 
 // Use environment variable for API URL with fallback
-const API_URL = 'https://gigpanda-q4ah.onrender.com/';
+const API_URL = API_CONFIG.backendURL;
 
 const FloatingChatbot = () => {
   const [isOpen, setIsOpen] = useState(false);
