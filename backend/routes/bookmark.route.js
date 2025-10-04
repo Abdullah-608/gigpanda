@@ -7,12 +7,12 @@ const router = express.Router();
 router.post('/', verifyToken, addBookmark);
 
 // Remove a bookmark
-router.delete('/:job_id', verifyToken, removeBookmark);  // Changed from post_id to job_id
+router.delete('/:jobId', verifyToken, removeBookmark);
 
 // Get all bookmarks for current user
 router.get('/', verifyToken, getBookmarks);
 
 // Check if a job is bookmarked
-router.get('/check/:job_id', verifyToken, checkBookmark);  // Changed from post_id to job_id
+router.get('/check/:jobId', verifyToken, checkBookmark);
 
 export default router;

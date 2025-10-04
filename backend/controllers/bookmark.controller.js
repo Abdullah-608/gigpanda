@@ -87,7 +87,7 @@ export const getBookmarks = async (req, res) => {
 // Remove a bookmark
 export const removeBookmark = async (req, res) => {
   try {
-    const job_id = req.params.job_id;
+    const job_id = req.params.jobId;
     const user_id = req.userId;
 
     // Convert to ObjectId if string
@@ -114,7 +114,7 @@ export const removeBookmark = async (req, res) => {
 // Check if a job is bookmarked
 export const checkBookmark = async (req, res) => {
   try {
-    const job_id = req.params.job_id;
+    const job_id = req.params.jobId;
     const user_id = req.userId;
 
     // Convert to ObjectId if string
