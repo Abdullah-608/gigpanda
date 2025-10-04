@@ -29,7 +29,10 @@ app.use(cors({
 	origin: process.env.NODE_ENV === "development" ? 
 		process.env.DEV_CLIENT_URL || "http://localhost:5173" : 
 		process.env.CLIENT_URL || process.env.FRONTEND_URL,
-	credentials: true
+	credentials: true,
+	methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+	allowedHeaders: ['Content-Type', 'Authorization'],
+	exposedHeaders: ['set-cookie']
 }));
 
 app.use(express.json({ limit: '50mb' })); // Increased limit for base64 images
