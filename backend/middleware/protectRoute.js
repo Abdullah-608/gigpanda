@@ -55,10 +55,9 @@ export const protectRoute = async (req, res, next) => {
     res.cookie("token", newToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       path: "/",
-      domain: process.env.NODE_ENV === "production" ? process.env.DOMAIN : undefined
     });
 
     next();
@@ -68,9 +67,8 @@ export const protectRoute = async (req, res, next) => {
       res.clearCookie('token', {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
         path: "/",
-        domain: process.env.NODE_ENV === "production" ? process.env.DOMAIN : undefined
       });
       
       return res.status(401).json({ 
