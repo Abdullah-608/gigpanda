@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Panda head -->
+  <circle cx="50" cy="50" r="45" fill="#000"/>
+  <circle cx="50" cy="50" r="40" fill="#fff"/>
+  
+  <!-- Left ear -->
+  <circle cx="25" cy="25" r="15" fill="#000"/>
+  <circle cx="25" cy="25" r="12" fill="#fff"/>
+  
+  <!-- Right ear -->
+  <circle cx="75" cy="25" r="15" fill="#000"/>
+  <circle cx="75" cy="25" r="12" fill="#fff"/>
+  
+  <!-- Left eye -->
+  <ellipse cx="38" cy="45" rx="8" ry="10" fill="#000"/>
+  <ellipse cx="38" cy="48" rx="5" ry="6" fill="#fff"/>
+  <circle cx="36" cy="46" r="2" fill="#000"/>
+  
+  <!-- Right eye -->
+  <ellipse cx="62" cy="45" rx="8" ry="10" fill="#000"/>
+  <ellipse cx="62" cy="48" rx="5" ry="6" fill="#fff"/>
+  <circle cx="64" cy="46" r="2" fill="#000"/>
+  
+  <!-- Nose -->
+  <ellipse cx="50" cy="58" rx="4" ry="3" fill="#000"/>
+  
+  <!-- Mouth -->
+  <path d="M 50 58 Q 45 65 40 62" stroke="#000" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <path d="M 50 58 Q 55 65 60 62" stroke="#000" stroke-width="2" fill="none" stroke-linecap="round"/>
+</svg>
+

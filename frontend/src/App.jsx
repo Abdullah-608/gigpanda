@@ -23,6 +23,7 @@ import LoadingSpinner from "./components/LoadingSpinner";
 import { Toaster } from "react-hot-toast";
 import { useAuthStore } from "./store/authStore";
 import { useEffect } from "react";
+import { usePageTitle } from "./utils/usePageTitle";
 
 // protect routes that require authentication
 const ProtectedRoute = ({ children }) => {
@@ -53,6 +54,9 @@ const RedirectAuthenticatedUser = ({ children }) => {
 function App() {
 	const { isCheckingAuth, checkAuth } = useAuthStore();
 	const location = useLocation();
+	
+	// Update page title and metadata based on current route
+	usePageTitle();
 
 	useEffect(() => {
 		checkAuth();
