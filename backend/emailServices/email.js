@@ -6,6 +6,31 @@ import {
 } from "./emailTemplates.js";
 
 /**
+ * Send email with timeout protection
+ * @param {Object} mailOptions - Nodemailer mail options
+ * @param {number} timeoutMs - Timeout in milliseconds (default 15000)
+ * @returns {Promise} - Resolves with send info or rejects with error
+ */
+const sendEmailWithTimeout = async (mailOptions, timeoutMs = 15000) => {
+  const sendPromise = transporter.sendMail(mailOptions);
+  const timeoutPromise = new Promise((_, reject) => 
+    setTimeout(() => reject(new Error(`Email send timeout after ${timeoutMs / 1000} seconds`)), timeoutMs)
+  );
+
+  try {
+    const info = await Promise.race([sendPromise, timeoutPromise]);
+    return info;
+  } catch (error) {
+    // If timeout occurs, check if email was actually sent
+    // Note: This is a best-effort check since we can't easily verify after timeout
+    if (error.message.includes('timeout')) {
+      console.warn('⚠ Email send timed out - email may have been sent but confirmation timed out');
+    }
+    throw error;
+  }
+};
+
+/**
  * Send verification email
  * @param {string} email - Recipient email address
  * @param {string} verificationToken - Token to be sent
@@ -13,6 +38,13 @@ import {
  */
 export const sendVerificationEmail = async (email, verificationToken) => {
   try {
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      console.error(`Invalid email format: ${email}`);
+      return null;
+    }
+
     const mailOptions = {
       from: sender,
       to: email,
@@ -20,18 +52,43 @@ export const sendVerificationEmail = async (email, verificationToken) => {
       html: VERIFICATION_EMAIL_TEMPLATE.replace("{verificationCode}", verificationToken),
       headers: {
         'X-Priority': '1',
-        'Precedence': 'bulk',
         'X-Category': 'Email Verification'
+        // Removed 'Precedence: bulk' as it can cause emails to be marked as spam
       }
     };
 
-    const info = await transporter.sendMail(mailOptions);
-    console.log("Email sent successfully", info.messageId);
+    console.log(`Attempting to send verification email to: ${email}`);
+    console.log(`From: ${sender}`);
+
+    // Send email with timeout protection
+    const info = await sendEmailWithTimeout(mailOptions, 15000);
+    
+    // Log detailed response
+    console.log("=== Email Send Response ===");
+    console.log("Message ID:", info.messageId);
+    console.log("Response:", info.response);
+    console.log("Accepted:", info.accepted);
+    console.log("Rejected:", info.rejected);
+    console.log("Pending:", info.pending);
+    console.log("===========================");
+    
+    // Check if email was actually accepted
+    if (info.rejected && info.rejected.length > 0) {
+      console.error(`Email was rejected by server:`, info.rejected);
+      return null;
+    }
+    
+    if (!info.messageId) {
+      console.warn("Email sent but no message ID returned - may not have been delivered");
+    }
+
     return info;
 
   } catch (error) {
-    console.error(`Error sending verification email:`, error);
-    throw new Error(`Error sending verification email: ${error.message}`);
+    console.error(`Error sending verification email to ${email}:`, error.message);
+    console.error("Full error:", error);
+    // Don't throw - log and return null so the app can continue
+    return null;
   }
 };
 
@@ -60,17 +117,17 @@ export const sendWelcomeEmail = async (email, name) => {
       <body>
         <div class="container">
           <div class="header">
-            <h2>Welcome to Auth Company!</h2>
+            <h2>Welcome to GigPanda!</h2>
           </div>
           <div class="content">
             <p>Hello ${name},</p>
             <p>Thank you for joining us! We're excited to have you as a member of our community.</p>
             <p>Your account is now active and you can start using our services right away.</p>
             <p>If you have any questions, please don't hesitate to contact our support team.</p>
-            <p>Best regards,<br>The Team</p>
+            <p>Best regards,<br>The GigPanda Team</p>
           </div>
           <div class="footer">
-            <p>&copy; ${new Date().getFullYear()} Auth Company. All rights reserved.</p>
+            <p>&copy; ${new Date().getFullYear()} GigPanda. All rights reserved.</p>
           </div>
         </div>
       </body>
@@ -80,20 +137,22 @@ export const sendWelcomeEmail = async (email, name) => {
     const mailOptions = {
       from: sender,
       to: email,
-      subject: "Welcome to Auth Company!",
+      subject: "Welcome to GigPanda!",
       html: welcomeTemplate,
       headers: {
         'X-Category': 'Welcome Email'
       }
     };
 
-    const info = await transporter.sendMail(mailOptions);
+    // Send email with timeout protection
+    const info = await sendEmailWithTimeout(mailOptions, 15000);
     console.log("Welcome email sent successfully", info.messageId);
     return info;
 
   } catch (error) {
-    console.error(`Error sending welcome email:`, error);
-    throw new Error(`Error sending welcome email: ${error.message}`);
+    console.error(`Error sending welcome email to ${email}:`, error.message);
+    // Don't throw - log and return null so the app can continue
+    return null;
   }
 };
 
@@ -105,6 +164,13 @@ export const sendWelcomeEmail = async (email, name) => {
  */
 export const sendPasswordResetEmail = async (email, resetURL) => {
   try {
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      console.error(`Invalid email format: ${email}`);
+      return null;
+    }
+
     const mailOptions = {
       from: sender,
       to: email,
@@ -116,13 +182,31 @@ export const sendPasswordResetEmail = async (email, resetURL) => {
       }
     };
 
-    const info = await transporter.sendMail(mailOptions);
-    console.log("Password reset email sent successfully", info.messageId);
+    console.log(`Attempting to send password reset email to: ${email}`);
+
+    // Send email with timeout protection
+    const info = await sendEmailWithTimeout(mailOptions, 15000);
+    
+    // Log detailed response
+    console.log("=== Password Reset Email Response ===");
+    console.log("Message ID:", info.messageId);
+    console.log("Response:", info.response);
+    console.log("Accepted:", info.accepted);
+    console.log("Rejected:", info.rejected);
+    console.log("====================================");
+    
+    // Check if email was actually accepted
+    if (info.rejected && info.rejected.length > 0) {
+      console.error(`Email was rejected by server:`, info.rejected);
+      return null;
+    }
+
     return info;
 
   } catch (error) {
-    console.error(`Error sending password reset email:`, error);
-    throw new Error(`Error sending password reset email: ${error.message}`);
+    console.error(`Error sending password reset email to ${email}:`, error.message);
+    console.error("Full error:", error);
+    return null;
   }
 };
 
@@ -143,12 +227,14 @@ export const sendResetSuccessEmail = async (email) => {
       }
     };
 
-    const info = await transporter.sendMail(mailOptions);
+    // Send email with timeout protection
+    const info = await sendEmailWithTimeout(mailOptions, 15000);
     console.log("Password reset success email sent successfully", info.messageId);
     return info;
 
   } catch (error) {
-    console.error(`Error sending password reset success email:`, error);
-    throw new Error(`Error sending password reset success email: ${error.message}`);
+    console.error(`Error sending password reset success email to ${email}:`, error.message);
+    // Don't throw - log and return null so the app can continue
+    return null;
   }
 };

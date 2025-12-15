@@ -62,7 +62,10 @@ export const Signup = async (req, res) => {
     // Generate JWT token and set it in cookies
     generateTokenAndSetCookies(res, user._id);
 
-    sendVerificationEmail(user.email,verificationToken);
+    // Send verification email (fire-and-forget, don't block response)
+    sendVerificationEmail(user.email, verificationToken).catch(err => {
+      console.warn('Failed to send verification email (non-critical):', err);
+    });
 
     // Send success response with user data (excluding password)
     return res.status(201).json({
@@ -145,7 +148,11 @@ export const verifyEmail = async(req,res)=>{
     // Generate new JWT token and set cookies after successful verification
     generateTokenAndSetCookies(res, user._id);
 
-    await sendWelcomeEmail(user.email,user.name);
+    // Send welcome email (non-blocking)
+    const emailResult = await sendWelcomeEmail(user.email, user.name);
+    if (!emailResult) {
+      console.warn('Welcome email failed to send, but verification was successful');
+    }
 
     res.status(200).json({
       success:true,
@@ -205,7 +212,13 @@ export const resendVerification = async(req, res) => {
     await user.save();
     
     // Send new verification email
-    await sendVerificationEmail(user.email, verificationToken);
+    const emailResult = await sendVerificationEmail(user.email, verificationToken);
+    if (!emailResult) {
+      return res.status(500).json({
+        success: false,
+        message: "Failed to send verification email. Please check your email configuration or try again later."
+      });
+    }
     
     res.status(200).json({
       success: true,
@@ -245,7 +258,14 @@ export const forgotPassword = async (req, res) => {
 
     // Send password reset email
     const resetURL = `${process.env.CLIENT_URL}/reset-password/${resetToken}`;
-    await sendPasswordResetEmail(user.email, resetURL);
+    const emailResult = await sendPasswordResetEmail(user.email, resetURL);
+    
+    if (!emailResult) {
+      return res.status(500).json({
+        success: false,
+        message: "Failed to send password reset email. Please check your email configuration or try again later."
+      });
+    }
 
     // Return success response
     return res.status(200).json({
@@ -330,8 +350,10 @@ export const resetPassword = async (req, res) => {
     // Save the updated user
     await user.save();
 
-    // Optionally send a confirmation email
-    await sendResetSuccessEmail(user.email);
+    // Optionally send a confirmation email (non-blocking)
+    sendResetSuccessEmail(user.email).catch(err => {
+      console.warn('Failed to send password reset success email (non-critical):', err);
+    });
 
     // Return success response
     return res.status(200).json({
